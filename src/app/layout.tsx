@@ -13,13 +13,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="pt-BR">
       <body>
-        <header className="nav">
-          <Link href="/" className="brand"><span className="logo">◎</span>Prospecção</Link>
-          <NavLinks />
-          <span className="sp" />
-          {quota !== null && <span className={`chip ${level}`}>Buscas restantes: <b>{quota}</b></span>}
-        </header>
-        <main>{children}</main>
+        <div className="shell">
+          <aside className="side">
+            <Link href="/" className="brand"><span className="logo">◎</span>Gerador de Sites</Link>
+            <NavLinks />
+            <span className="sp" />
+            {quota !== null && (
+              <div className={`quota ${level}`}>
+                <span className="mut">Buscas restantes</span>
+                <b>{quota}</b>
+                <span className="mut">este mês</span>
+              </div>
+            )}
+          </aside>
+          <main>{children}</main>
+        </div>
       </body>
     </html>
   );
