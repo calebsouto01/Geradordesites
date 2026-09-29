@@ -5,6 +5,15 @@
 }
 * { box-sizing:border-box; }
 html { color-scheme:dark; }
+:root[data-theme="light"] {
+  color-scheme:light;
+  --bg:#f4f5f9; --bg2:#ffffff; --card:#ffffff; --card2:#eef0f6; --line:#e2e5ee; --line2:#cfd4e2;
+  --fg:#161a26; --mut:#667089; --acc:#5457e8; --acc2:#7c4df0;
+}
+:root[data-theme="light"] body { background:radial-gradient(1000px 500px at 80% -10%,rgba(99,102,241,.10),transparent),var(--bg); }
+:root[data-theme="light"] input::placeholder { color:#9aa3b8; }
+:root[data-theme="light"] .rcard:hover, :root[data-theme="light"] .lcard:hover { box-shadow:0 6px 20px rgba(30,40,80,.08); }
+:root[data-theme="light"] .toast { box-shadow:0 10px 30px rgba(30,40,80,.15); }
 body { margin:0; color:var(--fg); font:15px/1.5 Inter,system-ui,-apple-system,sans-serif;
   background:radial-gradient(1000px 500px at 80% -10%,rgba(99,102,241,.16),transparent),var(--bg); min-height:100vh; }
 a { color:inherit; text-decoration:none; }
@@ -24,7 +33,7 @@ h2 { margin:0 0 4px; letter-spacing:-.02em; }
 .navlink { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px; color:var(--mut); font-weight:500; transition:.15s; }
 .navlink .ico { width:20px; text-align:center; font-size:17px; }
 .navlink:hover { color:var(--fg); background:var(--card); }
-.navlink.on { color:#fff; background:linear-gradient(135deg,rgba(99,102,241,.35),rgba(139,92,246,.2)); box-shadow:inset 0 0 0 1px rgba(99,102,241,.5); }
+.navlink.on { color:var(--fg); background:linear-gradient(135deg,rgba(99,102,241,.35),rgba(139,92,246,.2)); box-shadow:inset 0 0 0 1px rgba(99,102,241,.5); }
 .quota { display:flex; flex-direction:column; align-items:center; padding:14px; border-radius:12px; background:var(--card); border:1px solid var(--line); }
 .quota b { font-size:28px; letter-spacing:-.02em; }
 .quota.low b { color:var(--warn); } .quota.zero b { color:var(--bad); }
@@ -122,3 +131,8 @@ label.f { display:flex; flex-direction:column; gap:5px; font-size:12px; color:va
 .barrow { display:grid; grid-template-columns:130px 1fr 30px; gap:12px; align-items:center; }
 .track { height:10px; border-radius:99px; background:var(--bg2); overflow:hidden; }
 .track div { height:100%; border-radius:99px; transition:width .4s; }
+
+.themebtn { display:flex; align-items:center; gap:10px; width:100%; justify-content:flex-start; background:var(--card); color:var(--fg);
+  border:1px solid var(--line); font-weight:500; }
+.themebtn:hover { background:var(--card2); }
+@media (max-width:760px){ .themebtn{width:auto;padding:8px 10px;} }
