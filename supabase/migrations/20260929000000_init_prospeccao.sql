@@ -107,3 +107,5 @@ create function public.touch_updated_at() returns trigger language plpgsql
 set search_path = '' as $$ begin new.updated_at = now(); return new; end $$;
 create trigger leads_touch before update on public.leads
   for each row execute function public.touch_updated_at();
+
+revoke all on function public.handle_new_user() from public, anon, authenticated;
