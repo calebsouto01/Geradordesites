@@ -6,6 +6,7 @@ const items = [
   ["/", "Prospecção", "◎"],
   ["/busca", "Busca", "⌕"],
   ["/funil", "Funil", "▦"],
+  ["/scripts", "Scripts de ligação", "☏"],
 ] as const;
 
 export default function NavLinks() {
