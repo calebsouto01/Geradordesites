@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateContent, makeSlug } from "@/lib/site/generate";
 import { writeCopy } from "@/lib/site/copy";
+import { applyExtras } from "@/lib/site/sections";
 import { themeFromAccent } from "@/lib/site/palette";
 import { fetchPlaceProfile } from "@/lib/site/places";
 import type { LayoutKey, Profile, Theme } from "@/lib/site/types";
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
   }
   if (Array.isArray(body?.horarios) && body.horarios.length) content = { ...content, hours: body.horarios.slice(0, 7).filter((h: unknown) => ok(h, 80)) };
   if (ok(body?.about, 600) && body.about.trim()) { content.about = { ...content.about, text: body.about.trim() }; sources.sobre = "informado pelo usuário"; }
+  content = applyExtras(content, body?.extras);
   content.sources = sources;
 
   // Créditos cobrados no servidor, só depois de gerar com sucesso.

@@ -1,5 +1,9 @@
 export type LayoutKey = "classico" | "moderno" | "vitrine";
 
+export type SectionKey = "numeros" | "sobre" | "servicos" | "diferenciais" | "comofunciona" | "planos" | "catalogo" | "promo" | "equipe" | "galeria" | "depoimentos" | "faq" | "cta" | "contato";
+export type SectionCfg = { key: SectionKey; on: boolean };
+export type PriceItem = { name: string; price: string; text: string };
+
 export type Theme = { accent: string; accent2: string; onAccent: string; surface: string; text: string };
 
 export type Photo = { name: string; width: number; height: number; author: string; url?: string };
@@ -25,6 +29,14 @@ export type SiteContent = {
   logoUrl?: string;
   photos?: Photo[];
   faq?: { q: string; a: string }[];
+  years?: number;
+  differentials?: { title: string; text: string }[];
+  steps?: { title: string; text: string }[];
+  plans?: PriceItem[];
+  catalog?: PriceItem[];
+  team?: { name: string; role: string }[];
+  promo?: { title: string; text: string };
+  sections?: SectionCfg[];
   sources?: Record<string, string>;
   hero: { headline: string; subheadline: string; cta: string };
   about: { title: string; text: string };

@@ -1,12 +1,13 @@
-import { Acc, Footer, Nav, Rating, stars, waLink, type Ctx } from "../shared";
+import { Acc, Footer, Heading, Nav, Rating, renderSections, stars, waLink, type Ctx } from "../shared";
 
-const Wave = ({ flip }: { flip?: boolean }) => (
-  <svg className={`vi-wave ${flip ? "flip" : ""}`} viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden><path d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z" fill="currentColor" /></svg>
+const Wave = () => (
+  <svg className="vi-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden><path d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z" fill="currentColor" /></svg>
 );
 
-// Vitrine: divertido e comercial. Entrada com "pulo", foto flutuante, ondas entre seções, carrossel e confete.
+// Vitrine: divertido e comercial. Venda primeiro: serviços, promoção, cardápio e chamada para o WhatsApp.
 export default function Vitrine({ c, photo }: Ctx) {
   const wa = waLink(c), b = c.business, ph = c.photos ?? [];
+  const L = "vitrine" as const;
   return (
     <div className="lay-vitrine">
       <Nav c={c} />
@@ -31,61 +32,32 @@ export default function Vitrine({ c, photo }: Ctx) {
       </header>
       <Wave />
 
-      <section className="st-sec vi-sec">
-        <div className="st-wrap">
-          <h2 className="vi-title" data-rv><mark>{c.services.title}</mark></h2>
-          <div className="st-tiles">
-            {c.services.items.map((s, i) => <div key={i} className="st-tile" data-rv><h3>{s.title}</h3><p>{s.text}</p></div>)}
-          </div>
-          <p className="st-lead vi-about" data-rv>{c.about.text}</p>
-        </div>
-      </section>
-
-      {ph.length > 1 && (
-        <section className="st-sec vi-alt">
-          <div className="st-wrap">
-            <h2 className="vi-title" data-rv><mark>Um pouco do nosso dia</mark></h2>
+      {renderSections(c, L, {
+        servicos: () => (
+          <section className="st-sec vi-sec"><div className="st-wrap">
+            <Heading layout={L}>{c.services.title}</Heading>
+            <div className="st-tiles">{c.services.items.map((s, i) => <div key={i} className="st-tile" data-rv><h3>{s.title}</h3><p>{s.text}</p></div>)}</div>
+          </div></section>
+        ),
+        sobre: () => <section className="st-sec vi-alt"><div className="st-wrap"><Heading layout={L}>{c.about.title}</Heading><p className="st-lead" data-rv>{c.about.text}</p></div></section>,
+        galeria: () => (
+          <section className="st-sec vi-alt"><div className="st-wrap">
+            <Heading layout={L}>Um pouco do nosso dia</Heading>
             <div className="vi-car" data-car data-rv>
               <div className="vi-track">{ph.slice(1).map((_, i) => <img key={i} src={photo(i + 1)} data-full={photo(i + 1)} alt={`Foto ${i + 1}`} loading="lazy" />)}</div>
               <button type="button" className="vi-arrow l" data-car-prev aria-label="Anterior">‹</button>
               <button type="button" className="vi-arrow r" data-car-next aria-label="Próxima">›</button>
             </div>
-          </div>
-        </section>
-      )}
-
-      <section className="st-cta"><div className="st-wrap"><h2 data-rv>Vamos conversar?</h2>{wa && <a className="st-btn inv" href={wa} data-confetti>{c.hero.cta}</a>}</div></section>
-
-      {c.reviews.items.length > 0 && (
-        <section className="st-sec vi-sec">
-          <div className="st-wrap">
-            <h2 className="vi-title" data-rv><mark>{c.reviews.title}</mark></h2>
-            <div className="st-grid">
-              {c.reviews.items.map((r, i) => (
-                <figure key={i} className="vi-bubble" data-rv><div className="st-stars">{stars(r.rating)}</div><blockquote>{r.text}</blockquote><figcaption>— {r.author}</figcaption></figure>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {c.faq && c.faq.length > 0 && (
-        <section className="st-sec vi-alt">
-          <div className="st-wrap st-narrow"><h2 className="vi-title" data-rv><mark>Perguntas frequentes</mark></h2><Acc c={c} /></div>
-        </section>
-      )}
-
-      <section className="st-sec vi-sec">
-        <div className="st-wrap st-two">
-          <div className="vi-info" data-rv>
-            <h2>Onde estamos</h2>
-            <p className="st-lead">{b.address || "Endereço em breve."}</p>
-            {b.phone && <p><b>Telefone:</b> {b.phone}</p>}
-            <a className="st-btn" href={b.mapsUrl}>Abrir no mapa</a>
-          </div>
-          {c.hours.length > 0 && <div className="vi-info" data-rv><h2>Horários</h2><ul className="st-hours">{c.hours.map((h, i) => <li key={i}>{h}</li>)}</ul></div>}
-        </div>
-      </section>
+          </div></section>
+        ),
+        depoimentos: () => (
+          <section className="st-sec vi-sec"><div className="st-wrap">
+            <Heading layout={L}>{c.reviews.title}</Heading>
+            <div className="st-grid">{c.reviews.items.map((r, i) => <figure key={i} className="vi-bubble" data-rv><div className="st-stars">{stars(r.rating)}</div><blockquote>{r.text}</blockquote><figcaption>— {r.author}</figcaption></figure>)}</div>
+          </div></section>
+        ),
+        faq: () => <section className="st-sec vi-alt"><div className="st-wrap st-narrow"><Heading layout={L}>Perguntas frequentes</Heading><Acc c={c} /></div></section>,
+      })}
       <Footer c={c} />
       {wa && <div className="vi-sticky" data-sticky><a className="st-btn" href={wa} data-confetti>{c.hero.cta}</a></div>}
     </div>

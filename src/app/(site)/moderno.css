@@ -41,3 +41,13 @@
 .st.fx [data-rv].in { opacity:1; transform:none; filter:none; }
 .st.fx .mo-card[data-rv].in { transition:transform .15s ease-out, opacity .7s ease, filter .7s ease, border-color .3s; }
 @media (max-width:640px){ .mo-hero { padding:80px 0 64px; } .mo-hero h1 { font-size:clamp(30px,9vw,40px); } .mo-track { font-size:16px; } }
+/* seções novas — Moderno: escuro, neon e monoespaçado */
+.lay-moderno { counter-reset:sec; }
+.mo-head h2::before { counter-increment:sec; content:counter(sec,decimal-leading-zero); font:700 14px ui-monospace,monospace; color:var(--accent); margin-right:16px; vertical-align:middle; }
+.lay-moderno .sx-num { background:#0e1119; border-bottom:1px solid rgba(255,255,255,.08); padding:48px 0; }
+.lay-moderno .sx-nums b { font-family:ui-monospace,monospace; text-shadow:0 0 30px color-mix(in srgb,var(--accent) 60%,transparent); } .lay-moderno .sx-nums span { color:#8f97ad; text-transform:uppercase; letter-spacing:.08em; font-size:12px; }
+.lay-moderno .sx-card,.lay-moderno .sx-plan { background:linear-gradient(160deg,#171b27,#11141c); border-color:#232838; color:#eef0f6; } .lay-moderno .sx-card p,.lay-moderno .sx-plan p,.lay-moderno .sx-steps p,.lay-moderno .sx-cat p,.lay-moderno .sx-member span { color:#aab1c6; }
+.lay-moderno .sx-plan:hover { border-color:var(--accent); box-shadow:0 0 34px color-mix(in srgb,var(--accent) 30%,transparent); } .lay-moderno .sx-plan { transition:border-color .3s, box-shadow .3s; }
+.lay-moderno .sx-steps li::before { background:linear-gradient(var(--accent),transparent); } .lay-moderno .sx-steps span { box-shadow:0 0 22px color-mix(in srgb,var(--accent) 60%,transparent); }
+.lay-moderno .sx-cat li { border-color:rgba(255,255,255,.14); } .lay-moderno .sx-promo { border:1px solid var(--accent); box-shadow:0 0 60px color-mix(in srgb,var(--accent) 35%,transparent); }
+.lay-moderno .st-map { filter:invert(.92) hue-rotate(180deg) saturate(.6); }

@@ -17,3 +17,7 @@
 .st.fx [data-rv] { opacity:0; transform:translateY(24px); transition:opacity .9s ease var(--d,0ms), transform .9s cubic-bezier(.2,.7,.2,1) var(--d,0ms); }
 .st.fx [data-rv].in { opacity:1; transform:none; }
 .lay-classico .fq-q:hover { color:var(--accent); }
+/* seções novas — Clássico: sóbrio e elegante */
+.lay-classico .sx-num { background:var(--surface); border-block:1px solid #e6e8f0; padding:44px 0; } .lay-classico .sx-nums b { font-family:Georgia,'Times New Roman',serif; font-weight:400; }
+.lay-classico .sx-card { border-top:3px solid var(--accent); transition:transform .35s, box-shadow .35s; } .lay-classico .sx-card:hover { transform:translateY(-5px); box-shadow:0 16px 36px rgba(20,25,60,.12); }
+.lay-classico .sx-plan { border-top:3px solid var(--accent); }

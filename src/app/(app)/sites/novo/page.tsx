@@ -7,9 +7,11 @@ import AssistantPanel, { type DraftSummary, type Step } from "@/components/site/
 import { generateContent, suggestLayout } from "@/lib/site/generate";
 import { themeFromAccent } from "@/lib/site/palette-client";
 import type { LayoutKey, Profile, SiteContent } from "@/lib/site/types";
+import { applyExtras, parsePairs, parsePrices, parseTeam } from "@/lib/site/sections";
 
 type Lead = { id: number; name: string; phone: string | null; address: string | null };
-type Data = { name: string; category: string; address: string; phone: string; hours: string; servicos: string; about: string; accent: string; logoUrl: string; photos: string[] };
+type Data = { name: string; category: string; address: string; phone: string; hours: string; servicos: string; about: string; accent: string; logoUrl: string; photos: string[];
+  years: string; steps: string; differentials: string; plans: string; catalog: string; team: string; promoTitle: string; promoText: string };
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "modelo", label: "Modelo" }, { key: "cliente", label: "Cliente" }, { key: "dados", label: "Dados" }, { key: "revisao", label: "Revisão" },
@@ -21,7 +23,7 @@ const LAYOUTS: { key: LayoutKey; label: string; hint: string; ideal: string }[] 
   { key: "vitrine", label: "Vitrine", hint: "Cartões grandes e coloridos", ideal: "Restaurantes, salões, comércio" },
 ];
 
-const EMPTY: Data = { name: "", category: "", address: "", phone: "", hours: "", servicos: "", about: "", accent: "#6366f1", logoUrl: "", photos: [] };
+const EMPTY: Data = { name: "", category: "", address: "", phone: "", hours: "", servicos: "", about: "", accent: "#6366f1", logoUrl: "", photos: [], years: "", steps: "", differentials: "", plans: "", catalog: "", team: "", promoTitle: "", promoText: "" };
 
 const DEMO_PROFILE = {
   name: "Academia Vida Ativa (caso fictício)", category: "Academia", address: "Rua das Palmeiras, 120 — Centro, Fortaleza — CE",
@@ -33,6 +35,11 @@ const DEMO_PROFILE = {
   ],
 };
 
+const extrasOf = (d: Data) => ({
+  years: Number(d.years) || undefined, steps: parsePairs(d.steps), differentials: parsePairs(d.differentials),
+  plans: parsePrices(d.plans), catalog: parsePrices(d.catalog), team: parseTeam(d.team),
+  promo: d.promoTitle.trim() ? { title: d.promoTitle.trim(), text: d.promoText.trim() } : undefined,
+});
 const lines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
 const parseServices = (s: string) => lines(s).map((l) => { const [t, ...r] = l.split("—"); return { title: t.trim(), text: r.join("—").trim() }; }).filter((x) => x.title);
 const toBase64 = (f: File) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] ?? ""); r.onerror = rej; r.readAsDataURL(f); });
@@ -90,6 +97,7 @@ export default function NovoSite() {
         name: p.name ?? "", category: p.category ?? "", address: p.address ?? "", phone: p.phone ?? "",
         hours: (p.hours ?? []).join("\n"), servicos: auto.services.items.map((s) => `${s.title} — ${s.text}`).join("\n"),
         about: auto.about.text, accent: auto.theme.accent, logoUrl: "", photos: [],
+        years: "", steps: "", differentials: "", plans: "", catalog: "", team: "", promoTitle: "", promoText: "",
       });
     })();
   }, [step, leadId, loadedFor, layout]);
@@ -103,6 +111,7 @@ export default function NovoSite() {
     const sv = parseServices(data.servicos);
     if (sv.length) c.services = { ...c.services, items: sv };
     if (data.logoUrl) c.logoUrl = data.logoUrl;
+    Object.assign(c, applyExtras(c, extrasOf(data)));
     c.photos = data.photos.map((url) => ({ name: "", url, width: 0, height: 0, author: "Enviada pelo cliente" }));
     return { content: c, template };
   }, [base, data, layout]);
@@ -157,7 +166,7 @@ export default function NovoSite() {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         leadId, layout, theme: themeFromAccent(data.accent), logoUrl: data.logoUrl || undefined, extraPhotos: data.photos,
-        servicos: parseServices(data.servicos), horarios: lines(data.hours), about: data.about,
+        servicos: parseServices(data.servicos), horarios: lines(data.hours), about: data.about, extras: extrasOf(data),
         profile: { name: data.name, category: data.category, address: data.address, phone: data.phone },
       }),
     });
@@ -250,6 +259,20 @@ export default function NovoSite() {
                   <label className="f">Cor principal
                     <input type="color" value={data.accent} onChange={(e) => set("accent", e.target.value)} style={{ height: 44, padding: 4 }} />
                   </label>
+                  <details className="f wide extras">
+                    <summary>Extras opcionais — libere seções extras no site</summary>
+                    <p className="mut">Preencha só o que o negócio tiver. Seções sem dados não aparecem.</p>
+                    <div className="fgrid">
+                      <label className="f">Anos de história<input inputMode="numeric" value={data.years} onChange={(e) => set("years", e.target.value.replace(/\D/g, ""))} /></label>
+                      <label className="f">Promoção — título<input placeholder="Ex.: Matrícula grátis em março" value={data.promoTitle} onChange={(e) => set("promoTitle", e.target.value)} /></label>
+                      <label className="f wide">Promoção — descrição<input value={data.promoText} onChange={(e) => set("promoText", e.target.value)} /></label>
+                      <label className="f wide">Planos e preços (uma linha cada: Nome — R$ preço — descrição)<textarea rows={3} value={data.plans} onChange={(e) => set("plans", e.target.value)} /></label>
+                      <label className="f wide">Cardápio / catálogo (Item — R$ preço — descrição)<textarea rows={3} value={data.catalog} onChange={(e) => set("catalog", e.target.value)} /></label>
+                      <label className="f wide">Como funciona (Título — descrição, um por linha)<textarea rows={3} value={data.steps} onChange={(e) => set("steps", e.target.value)} /></label>
+                      <label className="f wide">Diferenciais (Título — descrição)<textarea rows={3} value={data.differentials} onChange={(e) => set("differentials", e.target.value)} /></label>
+                      <label className="f wide">Equipe (Nome — função)<textarea rows={3} value={data.team} onChange={(e) => set("team", e.target.value)} /></label>
+                    </div>
+                  </details>
                   <div className="f wide">Fotos do negócio (até 6)
                     <label className="upl">+ Adicionar foto<input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) upload(f, "foto"); }} /></label>
                     <div className="thumbs">{data.photos.map((u, i) => <div key={u} className="tb"><img src={u} alt="" /><button type="button" onClick={() => set("photos", data.photos.filter((_, j) => j !== i))} aria-label="Remover">✕</button></div>)}</div>

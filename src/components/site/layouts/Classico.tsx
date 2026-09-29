@@ -1,8 +1,9 @@
-import { Acc, Footer, Nav, Rating, stars, waLink, type Ctx } from "../shared";
+import { Acc, Footer, Heading, Nav, Rating, renderSections, stars, waLink, type Ctx } from "../shared";
 
-// Clássico: elegante e sóbrio. Títulos com traço, cartões suaves, depoimentos em citação.
+// Clássico: elegante e sóbrio. Confiança primeiro: sobre, diferenciais, serviços, equipe, depoimentos.
 export default function Classico({ c, photo }: Ctx) {
   const wa = waLink(c), b = c.business, ph = c.photos ?? [];
+  const L = "classico" as const;
   return (
     <div className="lay-classico">
       <Nav c={c} />
@@ -19,73 +20,35 @@ export default function Classico({ c, photo }: Ctx) {
         </div>
       </header>
 
-      <section className="st-sec">
-        <div className="st-wrap st-two">
-          <div>
-            <span className="cl-eyebrow" data-rv>Sobre nós</span>
-            <h2 data-rv>{c.about.title}</h2>
-            <p className="st-lead" data-rv>{c.about.text}</p>
-          </div>
-          {ph.length > 1 && <img className="st-side" data-rv src={photo(1)} alt={b.name} loading="lazy" data-full={photo(1)} />}
-        </div>
-      </section>
-
-      <section className="st-sec alt">
-        <div className="st-wrap">
-          <span className="cl-eyebrow" data-rv>O que fazemos</span>
-          <h2 data-rv>{c.services.title}</h2>
-          <div className="st-grid">
-            {c.services.items.map((s, i) => (
-              <div key={i} className="st-card cl-card" data-rv><span className="cl-num">{i + 1}</span><h3>{s.title}</h3><p>{s.text}</p></div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {ph.length > 2 && (
-        <section className="st-sec">
-          <div className="st-wrap">
-            <span className="cl-eyebrow" data-rv>Galeria</span>
-            <h2 data-rv>Conheça o espaço</h2>
-            <div className="st-gal">
-              {ph.slice(2).map((_, i) => <img key={i} data-rv src={photo(i + 2)} data-full={photo(i + 2)} alt={`Foto ${i + 1}`} loading="lazy" />)}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {c.reviews.items.length > 0 && (
-        <section className="st-sec alt">
-          <div className="st-wrap st-narrow">
-            <span className="cl-eyebrow" data-rv>Depoimentos</span>
-            <h2 data-rv>{c.reviews.title}</h2>
+      {renderSections(c, L, {
+        sobre: () => (
+          <section className="st-sec"><div className="st-wrap st-two">
+            <div><Heading layout={L} eyebrow="Sobre nós">{c.about.title}</Heading><p className="st-lead" data-rv>{c.about.text}</p></div>
+            {ph.length > 1 && <img className="st-side" data-rv src={photo(1)} alt={b.name} loading="lazy" data-full={photo(1)} />}
+          </div></section>
+        ),
+        servicos: () => (
+          <section className="st-sec"><div className="st-wrap">
+            <Heading layout={L} eyebrow="O que fazemos">{c.services.title}</Heading>
+            <div className="st-grid">{c.services.items.map((s, i) => <div key={i} className="st-card cl-card" data-rv><span className="cl-num">{i + 1}</span><h3>{s.title}</h3><p>{s.text}</p></div>)}</div>
+          </div></section>
+        ),
+        galeria: () => (
+          <section className="st-sec"><div className="st-wrap">
+            <Heading layout={L} eyebrow="Galeria">Conheça o espaço</Heading>
+            <div className="st-gal">{ph.slice(1).map((_, i) => <img key={i} data-rv src={photo(i + 1)} data-full={photo(i + 1)} alt={`Foto ${i + 1}`} loading="lazy" />)}</div>
+          </div></section>
+        ),
+        depoimentos: () => (
+          <section className="st-sec alt"><div className="st-wrap st-narrow">
+            <Heading layout={L} eyebrow="Depoimentos">{c.reviews.title}</Heading>
             {c.reviews.items.map((r, i) => (
-              <figure key={i} className="cl-quote" data-rv>
-                <blockquote>{r.text}</blockquote>
-                <figcaption><span className="st-stars">{stars(r.rating)}</span> {r.author} · avaliação no Google</figcaption>
-              </figure>
+              <figure key={i} className="cl-quote" data-rv><blockquote>{r.text}</blockquote><figcaption><span className="st-stars">{stars(r.rating)}</span> {r.author} · avaliação no Google</figcaption></figure>
             ))}
-          </div>
-        </section>
-      )}
-
-      {c.faq && c.faq.length > 0 && (
-        <section className="st-sec">
-          <div className="st-wrap st-narrow"><span className="cl-eyebrow" data-rv>Dúvidas</span><h2 data-rv>Perguntas frequentes</h2><Acc c={c} /></div>
-        </section>
-      )}
-
-      <section className="st-sec alt">
-        <div className="st-wrap st-two">
-          <div data-rv>
-            <span className="cl-eyebrow">Contato</span><h2>Onde estamos</h2>
-            <p className="st-lead">{b.address || "Endereço em breve."}</p>
-            {b.phone && <p><b>Telefone:</b> {b.phone}</p>}
-            <a className="st-btn" href={b.mapsUrl}>Abrir no mapa</a>
-          </div>
-          {c.hours.length > 0 && <div data-rv><h2>Horários</h2><ul className="st-hours">{c.hours.map((h, i) => <li key={i}>{h}</li>)}</ul></div>}
-        </div>
-      </section>
+          </div></section>
+        ),
+        faq: () => <section className="st-sec"><div className="st-wrap st-narrow"><Heading layout={L} eyebrow="Dúvidas">Perguntas frequentes</Heading><Acc c={c} /></div></section>,
+      })}
       <Footer c={c} />
     </div>
   );
