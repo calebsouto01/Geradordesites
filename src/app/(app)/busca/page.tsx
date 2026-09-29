@@ -25,7 +25,7 @@ export default function Buscar() {
   const load = useCallback(async () => {
     const [{ data }, { data: rem }] = await Promise.all([
       supabase.from("search_results").select("*").eq("status", "novo").order("rating", { ascending: false }),
-      supabase.rpc("quota_remaining"),
+      supabase.rpc("credits_remaining"),
     ]);
     setResults((data as Result[]) ?? []);
     setRemaining(rem as number | null);
@@ -84,7 +84,7 @@ export default function Buscar() {
             {["3.5", "4.0", "4.5", "4.8"].map((n) => <option key={n} value={n}>★ {n}+</option>)}
           </select>
         </label>
-        <button disabled={busy || remaining === 0}>{busy ? "Buscando…" : "Buscar"}</button>
+        <button disabled={busy || (remaining ?? 0) < 3}>{busy ? "Buscando…" : "Buscar · 3 créditos"}</button>
       </form>
       {err && <p className="err">{err}</p>}
 

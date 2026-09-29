@@ -45,6 +45,11 @@ export default function Prospeccao() {
       </div>
 
       <div className="panel" style={{ marginBottom: 22 }}>
+        <h2 style={{ fontSize: 16 }}>Plano e créditos</h2>
+        <span className="mut">Plano Inicial · R$ 119/mês · 90 créditos. Cada busca custa 3 créditos e cada site gerado custa 3 créditos.</span>
+      </div>
+
+      <div className="panel" style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 16 }}>Leads por etapa</h2>
         <div className="bars">
           {STAGES.map(([k, label, color]) => (

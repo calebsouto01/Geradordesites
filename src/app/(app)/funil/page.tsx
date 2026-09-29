@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -8,6 +9,19 @@ const STAGES = [
   ["negociacao", "Negociação", "#fb923c"], ["fechado", "Fechado — Cliente", "#22c55e"],
   ["perdido", "Perdido", "#ef4444"],
 ] as const;
+
+type SiteInfo = { id: number; lead_id: number; slug: string; status: string; views: number; last_viewed_at: string | null };
+
+const DEMO_PROFILE = {
+  name: "Academia Vida Ativa (caso fictício)", category: "Academia", address: "Rua das Palmeiras, 120 — Centro, Fortaleza — CE",
+  phone: "(85) 90000-0000", rating: 4.8, ratingCount: 213,
+  hours: ["segunda-feira: 05:30–22:00", "terça-feira: 05:30–22:00", "quarta-feira: 05:30–22:00", "quinta-feira: 05:30–22:00", "sexta-feira: 05:30–21:00", "sábado: 08:00–13:00", "domingo: Fechado"],
+  reviews: [
+    { author: "Cliente A", rating: 5, text: "Professores atenciosos e equipamentos sempre em ótimo estado. Recomendo demais!" },
+    { author: "Cliente B", rating: 5, text: "Ambiente limpo e acolhedor, os horários de aula cabem na minha rotina." },
+    { author: "Cliente C", rating: 4, text: "Ótima estrutura e preço justo. Melhor academia do bairro." },
+  ],
+};
 
 type Lead = {
   id: number; name: string; phone: string | null; origin: string; stage: string;
@@ -32,12 +46,47 @@ export default function Funil() {
   const [open, setOpen] = useState<number | null>(null);
   const [dragId, setDragId] = useState<number | null>(null);
   const [over, setOver] = useState<string | null>(null);
+  const [sites, setSites] = useState<Record<number, SiteInfo>>({});
+  const [busyLead, setBusyLead] = useState<number | null>(null);
+  const [toast, setToast] = useState("");
+  const flash = (t: string) => { setToast(t); setTimeout(() => setToast(""), 3000); };
+
+  async function loadSites() {
+    const { data } = await supabase.from("sites").select("id, lead_id, slug, status, views, last_viewed_at");
+    setSites(Object.fromEntries(((data as SiteInfo[]) ?? []).map((x) => [x.lead_id, x])));
+  }
+
+  async function generate(id: number) {
+    setBusyLead(id);
+    const res = await fetch("/api/sites/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: id }) });
+    const json = await res.json().catch(() => ({}));
+    setBusyLead(null);
+    if (!res.ok) return flash(json.error ?? "Erro ao gerar o site");
+    flash(json.created ? "Site gerado (3 créditos)" : "Este lead já tem site");
+    await loadSites();
+  }
+
+  async function copyMessage(l: Lead, s: SiteInfo) {
+    const text = `Oi! Preparei uma prévia do site da ${l.name}: ${window.location.origin}/p/${s.slug}`;
+    try { await navigator.clipboard.writeText(text); flash("Mensagem copiada"); } catch { flash(text); }
+  }
+
+  async function createDemo() {
+    const { error } = await supabase.from("leads").insert({
+      name: DEMO_PROFILE.name, phone: DEMO_PROFILE.phone, address: DEMO_PROFILE.address, profile: DEMO_PROFILE, origin: "Caso de teste",
+    });
+    if (error) return flash(error.message);
+    const { data } = await supabase.from("leads").select("*").order("created_at");
+    setLeads((data as Lead[]) ?? []);
+  }
 
   useEffect(() => {
     supabase.from("leads").select("*").order("created_at").then(({ data }) => {
       setLeads((data as Lead[]) ?? []);
       setLoaded(true);
     });
+    loadSites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   async function patch(id: number, changes: Partial<Lead>) {
@@ -61,6 +110,7 @@ export default function Funil() {
       <div className="pagehead">
         <h1>Funil de vendas</h1>
         <span className="mut">Arraste os cards entre as etapas ou use o menu do card.</span>
+        <div style={{ marginTop: 10 }}><button className="ghost sm" onClick={createDemo}>+ Criar caso de teste (fictício)</button></div>
       </div>
 
       <div className="stats">
@@ -109,6 +159,25 @@ export default function Funil() {
                       </a>
                     </div>
                   )}
+                  <div className="row" style={{ marginTop: 8, gap: 6 }}>
+                    {!sites[l.id] ? (
+                      <button className="sm" disabled={busyLead === l.id} onClick={() => generate(l.id)}>
+                        {busyLead === l.id ? "Gerando…" : "Gerar site · 3 créditos"}
+                      </button>
+                    ) : (
+                      <>
+                        <Link href={`/sites/${sites[l.id].id}`}><button className="sm">Editar site</button></Link>
+                        <a href={`/p/${sites[l.id].slug}?nv=1`} target="_blank" rel="noreferrer"><button className="ghost sm">Prévia</button></a>
+                        <button className="ghost sm" onClick={() => copyMessage(l, sites[l.id])}>Copiar msg</button>
+                      </>
+                    )}
+                  </div>
+                  {sites[l.id] && (
+                    <div className="mut" style={{ marginTop: 6 }}>
+                      {sites[l.id].status === "publicado" ? "Publicado" : "Prévia"} ·{" "}
+                      {sites[l.id].views ? `👁 ${sites[l.id].views}× (último: ${new Date(sites[l.id].last_viewed_at!).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })})` : "ainda não visualizado"}
+                    </div>
+                  )}
                   {open === l.id && (
                     <div className="details">
                       <label className="f">Etapa
@@ -141,6 +210,7 @@ export default function Funil() {
           );
         })}
       </div>
+      {toast && <div className="toast">{toast}</div>}
     </>
   );
 }

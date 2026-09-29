@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     p_min_rating: minRating,
   });
   if (quotaError) {
-    const exceeded = quotaError.message.includes("quota_exceeded");
+    const exceeded = quotaError.message.includes("insufficient_credits");
     return NextResponse.json(
-      { error: exceeded ? "Cota mensal de buscas esgotada." : "Erro ao validar a cota." },
+      { error: exceeded ? "Créditos insuficientes: cada busca custa 3." : "Erro ao validar a cota." },
       { status: exceeded ? 429 : 500 },
     );
   }
