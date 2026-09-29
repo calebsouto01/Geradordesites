@@ -16,7 +16,8 @@ export default function SiteRender({ c, preview, expiresAt, slug, template, phot
   c: SiteContent; preview: boolean; expiresAt?: string | null; slug: string; template: string; photoUrl?: (i: number) => string;
 }) {
   const t = { ...themeFromAccent(c.theme.accent), ...c.theme };
-  const Layout = LAYOUTS[layoutOf(template, c)];
+  const key = layoutOf(template, c);
+  const Layout = LAYOUTS[key];
   const photo = photoUrl ?? ((i: number) => c.photos?.[i]?.url ?? `/api/photo?slug=${encodeURIComponent(slug)}&i=${i}`);
   return (
     <div className="st" style={{ ["--accent" as string]: t.accent, ["--accent2" as string]: t.accent2, ["--on" as string]: t.onAccent, ["--surface" as string]: t.surface, ["--text" as string]: t.text }}>
@@ -28,7 +29,7 @@ export default function SiteRender({ c, preview, expiresAt, slug, template, phot
       {preview && <div className="st-mark" aria-hidden>PRÉVIA</div>}
       <Layout c={c} photo={photo} />
       {c.business.whatsapp && <a className="st-float" href={`https://wa.me/${c.business.whatsapp}`} aria-label="WhatsApp">WhatsApp</a>}
-      <SiteEffects />
+      <SiteEffects layout={key} />
     </div>
   );
 }

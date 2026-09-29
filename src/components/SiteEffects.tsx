@@ -1,23 +1,18 @@
 "use client";
 import { useEffect } from "react";
+import type { LayoutKey } from "@/lib/site/types";
+import * as fx from "./site/effects";
 
-// Único JavaScript dos sites: revelar ao rolar e ampliar fotos da galeria.
-export default function SiteEffects() {
+// Cada layout tem o seu próprio conjunto de efeitos.
+export default function SiteEffects({ layout }: { layout: LayoutKey }) {
   useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>(".rv");
-    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.12 });
-    els.forEach((el) => io.observe(el));
-    const onClick = (ev: MouseEvent) => {
-      const img = (ev.target as HTMLElement).closest<HTMLImageElement>(".st-gal img");
-      if (!img) return;
-      const box = document.createElement("div");
-      box.className = "st-lb";
-      box.innerHTML = `<img src="${img.dataset.full ?? img.src}" alt="">`;
-      box.onclick = () => box.remove();
-      document.body.appendChild(box);
-    };
-    document.addEventListener("click", onClick);
-    return () => { io.disconnect(); document.removeEventListener("click", onClick); };
-  }, []);
+    const root = document.querySelector<HTMLElement>(".st");
+    if (!root) return;
+    const offs = [fx.accordion(), fx.lightbox(), fx.counters(), fx.navShadow()];
+    if (layout === "classico") offs.push(fx.reveal(root, 110));
+    if (layout === "moderno") offs.push(fx.reveal(root, 70), fx.progressBar(), fx.tilt(), fx.spotlight(), fx.magnetic());
+    if (layout === "vitrine") offs.push(fx.reveal(root, 120), fx.carousel(), fx.confetti(), fx.stickyCta());
+    return () => offs.forEach((f) => f());
+  }, [layout]);
   return null;
 }

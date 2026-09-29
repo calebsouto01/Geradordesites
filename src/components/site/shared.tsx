@@ -1,4 +1,4 @@
-import type { Photo, SiteContent } from "@/lib/site/types";
+import type { SiteContent } from "@/lib/site/types";
 
 export type Ctx = { c: SiteContent; photo: (i: number) => string };
 
@@ -13,81 +13,34 @@ export function Nav({ c }: { c: SiteContent }) {
     <nav className="st-nav">
       <div className="st-wrap st-navin">
         {c.logoUrl ? <img className="st-logo" src={c.logoUrl} alt={c.business.name} /> : <b className="st-brand">{c.business.name}</b>}
-        {wa && <a className="st-btn sm" href={wa}>WhatsApp</a>}
+        {wa && <a className="st-btn sm" href={wa} data-mag>WhatsApp</a>}
       </div>
     </nav>
   );
 }
 
-export function Gallery({ photos, photo, title = "Conheça o espaço" }: { photos: Photo[]; photo: (i: number) => string; title?: string }) {
-  if (!photos.length) return null;
-  return (
-    <section className="st-sec">
-      <div className="st-wrap">
-        <h2 className="rv">{title}</h2>
-        <div className="st-gal">
-          {photos.map((p, i) => (
-            <img key={`${p.name}${i}`} className="rv" src={photo(i)} alt={`${title} ${i + 1}`} loading="lazy" data-full={photo(i)} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function Reviews({ c }: { c: SiteContent }) {
-  if (!c.reviews.items.length) return null;
-  return (
-    <section className="st-sec alt">
-      <div className="st-wrap">
-        <h2 className="rv">{c.reviews.title}</h2>
-        <div className="st-grid">
-          {c.reviews.items.map((r, i) => (
-            <figure key={i} className="st-card rv">
-              <div className="st-stars">{stars(r.rating)}</div>
-              <blockquote>“{r.text}”</blockquote>
-              <figcaption>{r.author} · avaliação no Google</figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function Faq({ c }: { c: SiteContent }) {
-  if (!c.faq?.length) return null;
-  return (
-    <section className="st-sec">
-      <div className="st-wrap st-narrow">
-        <h2 className="rv">Perguntas frequentes</h2>
-        {c.faq.map((f, i) => (
-          <details key={i} className="st-faq rv"><summary>{f.q}</summary><p>{f.a}</p></details>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export function Location({ c }: { c: SiteContent }) {
+// Números com contagem animada (o texto final já vem no HTML, então funciona sem JavaScript).
+export function Rating({ c }: { c: SiteContent }) {
   const b = c.business;
+  if (!b.rating) return null;
   return (
-    <section className="st-sec alt">
-      <div className="st-wrap st-two">
-        <div className="rv">
-          <h2>Onde estamos</h2>
-          <p className="st-lead">{b.address || "Endereço em breve."}</p>
-          {b.phone && <p><b>Telefone:</b> {b.phone}</p>}
-          <a className="st-btn" href={b.mapsUrl}>Abrir no mapa</a>
+    <div className="st-rating">
+      <span>{stars(b.rating)}</span> <b data-count={b.rating} data-dec="1">{b.rating}</b> no Google
+      {b.ratingCount ? <> · <b data-count={b.ratingCount}>{b.ratingCount}</b> avaliações</> : null}
+    </div>
+  );
+}
+
+export function Acc({ c }: { c: SiteContent }) {
+  return (
+    <>
+      {(c.faq ?? []).map((f, i) => (
+        <div key={i} className="fq" data-rv>
+          <button type="button" className="fq-q" aria-expanded="false"><span>{f.q}</span><i aria-hidden /></button>
+          <div className="fq-a"><div><p>{f.a}</p></div></div>
         </div>
-        {c.hours.length > 0 && (
-          <div className="rv">
-            <h2>Horários</h2>
-            <ul className="st-hours">{c.hours.map((h, i) => <li key={i}>{h}</li>)}</ul>
-          </div>
-        )}
-      </div>
-    </section>
+      ))}
+    </>
   );
 }
 
@@ -99,10 +52,4 @@ export function Footer({ c }: { c: SiteContent }) {
       {authors.length > 0 && <div className="st-attr">Fotos: {authors.join(", ")} · via Google Maps</div>}
     </footer>
   );
-}
-
-export function Rating({ c }: { c: SiteContent }) {
-  const b = c.business;
-  if (!b.rating) return null;
-  return <div className="st-rating"><span>{stars(b.rating)}</span> <b>{b.rating}</b> no Google{b.ratingCount ? ` · ${b.ratingCount} avaliações` : ""}</div>;
 }

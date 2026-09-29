@@ -1,0 +1,19 @@
+/* CLÁSSICO — elegante: entrada suave em subida, títulos com traço, cartões e citações. */
+.lay-classico .st-hero { position:relative; background-size:cover; background-position:center; color:#fff; background-image:linear-gradient(135deg,var(--accent),var(--accent2)); padding:100px 0 88px; }
+.lay-classico .st-hero h1 { font-size:clamp(34px,6vw,58px); max-width:780px; } .lay-classico .st-hero p { font-size:19px; max-width:620px; opacity:.93; }
+.lay-classico .st-btn:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.18); }
+.cl-eyebrow { display:inline-flex; align-items:center; gap:10px; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:10px; }
+.cl-eyebrow::before { content:""; width:34px; height:2px; background:var(--accent); }
+.cl-card { position:relative; transition:transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; border-top:3px solid var(--accent); }
+.cl-card:hover { transform:translateY(-6px); box-shadow:0 18px 40px rgba(20,25,60,.12); }
+.cl-num { display:inline-grid; place-items:center; width:34px; height:34px; border-radius:50%; background:color-mix(in srgb,var(--accent) 14%,#fff); color:var(--accent); font-weight:800; margin-bottom:12px; }
+.cl-card h3 { font-size:19px; color:var(--text); }
+.st-side { border-radius:20px; width:100%; aspect-ratio:4/3; object-fit:cover; box-shadow:0 20px 50px rgba(20,25,60,.15); }
+.lay-classico .st-gal img { transition:transform .5s ease, box-shadow .5s; } .lay-classico .st-gal img:hover { transform:scale(1.03); box-shadow:0 14px 34px rgba(0,0,0,.2); }
+.cl-quote { margin:26px 0; padding-left:26px; border-left:3px solid var(--accent); }
+.cl-quote blockquote { margin:0 0 8px; font-size:20px; line-height:1.5; font-style:italic; color:#333a52; position:relative; }
+.cl-quote figcaption { font-size:14px; color:#7a819a; }
+/* animação de entrada: suave, de baixo para cima, em sequência */
+.st.fx [data-rv] { opacity:0; transform:translateY(24px); transition:opacity .9s ease var(--d,0ms), transform .9s cubic-bezier(.2,.7,.2,1) var(--d,0ms); }
+.st.fx [data-rv].in { opacity:1; transform:none; }
+.lay-classico .fq-q:hover { color:var(--accent); }
