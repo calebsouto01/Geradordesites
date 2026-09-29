@@ -154,6 +154,11 @@ export default function Funil() {
                   </div>
                   {l.owner && <div className="mut" style={{ marginTop: 6 }}>👤 {l.owner}</div>}
                   {l.stage === "perdido" && l.lost_reason && <div className="mut" style={{ marginTop: 6 }}>Motivo: {l.lost_reason}</div>}
+                  {STAGES.findIndex(([k]) => k === l.stage) < STAGES.length - 2 && (
+                    <button className="ghost sm" style={{ marginTop: 8, width: "100%" }} onClick={() => patch(l.id, { stage: STAGES[STAGES.findIndex(([k]) => k === l.stage) + 1][0] })}>
+                      Avançar para {STAGES[STAGES.findIndex(([k]) => k === l.stage) + 1][1]} →
+                    </button>
+                  )}
                   {l.phone && (
                     <div style={{ marginTop: 8 }}>
                       <a className="wa" href={`https://wa.me/55${l.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">

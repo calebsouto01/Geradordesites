@@ -79,3 +79,30 @@ body { margin:0; background:#fff; color:#1a1d29; font:16px/1.65 Inter,system-ui,
 .lay-vitrine .st-tile h3 { font-size:22px; } .lay-vitrine .st-tile p { opacity:.92; }
 .lay-vitrine .st-cta { background:var(--text); color:#fff; text-align:center; padding:70px 0; } .lay-vitrine .st-cta h2 { font-size:clamp(28px,5vw,44px); }
 .lay-vitrine .st-btn.ghost { color:var(--accent); }
+
+/* ===== Mobile ===== */
+@media (max-width:640px){
+  body { font-size:16px; }
+  .st-wrap { padding:0 18px; }
+  .st-banner { font-size:12px; padding:8px 12px; }
+  .st-nav .st-navin { height:54px; } .st-logo { height:32px; } .st-brand { font-size:15px; max-width:62%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .st-sec { padding:48px 0; }
+  .st-hero p { font-size:17px; }
+  .lay-classico .st-hero { padding:56px 0 52px; }
+  .lay-moderno .st-hero { padding:70px 0 60px; }
+  .lay-moderno .st-hero h1 { font-size:clamp(30px,9vw,40px); }
+  .lay-vitrine .st-hero { padding:36px 0; }
+  .lay-vitrine .st-shot { aspect-ratio:4/3; border-radius:20px; }
+  .lay-vitrine .st-tile { min-height:0; padding:22px; border-radius:20px; }
+  .lay-vitrine .st-cta { padding:48px 0; }
+  .st-actions { flex-direction:column; align-items:stretch; margin:22px 0 18px; } .st-actions .st-btn { text-align:center; }
+  .st-btn { padding:15px 22px; }
+  .st-two { gap:26px; }
+  .st-side { aspect-ratio:16/10; }
+  .st-gal { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .st-gal img { border-radius:10px; }
+  .st-lead { font-size:17px; }
+  .st-float { right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); padding:13px 18px; }
+  .st-foot { padding-bottom:84px; }
+  .st-mark { font-size:34vw; }
+}
