@@ -204,6 +204,7 @@ export default function Scripts() {
         ))}
       </div>
 
+      <div className="callmap-layout">
       <div className="callmap-flow">
         <div className="callmap-row"><NodeCard id="abertura" extra={stateFor("abertura")} onPick={goTo} /></div>
         <div className="callmap-hint">↓ conforme a resposta</div>
@@ -254,6 +255,7 @@ export default function Scripts() {
         <div style={{ marginTop: 16 }}>
           <button className="ghost sm" onClick={() => setPath(["abertura"])}>↺ reiniciar</button>
         </div>
+      </div>
       </div>
     </>
   );
