@@ -1,72 +1,22 @@
 "use client";
 import { useState } from "react";
 
-type NodeId =
-  | "abertura" | "no_time" | "diagnostico" | "valor" | "planos"
-  | "duvida_dominio" | "obj_preco" | "obj_mensal" | "obj_pensar" | "interesse"
-  | "fechamento" | "ganhou" | "perdido";
-
-type Opt = { label: string; to: NodeId };
+type Opt = { label: string; to: string };
 type Node = { badge: string; title: string; script: React.ReactNode; tip?: string; next: Opt[] };
+type Kind = "good" | "bad" | "end";
+type FlowItem =
+  | { t: "node"; id: string; first?: boolean }
+  | { t: "hint"; text: string }
+  | { t: "branch"; items: { id: string; kind?: Kind }[] };
 
-const NODES: Record<NodeId, Node> = {
-  abertura: {
-    badge: "Abertura fria · passo 1",
-    title: "Pedido de permissão",
-    script: <p>“Oi, boa tarde! Aqui é o Kaleb. Vi a [nome do negócio] aqui perto e queria fazer um contato rápido — posso roubar 2 minutinhos, ou prefere que eu ligue em outro momento?”</p>,
-    tip: "Pedir permissão reduz a resistência automática de quem recebe uma ligação sem esperar. Não pule essa etapa em público frio.",
-    next: [
-      { label: "Cliente topou conversar", to: "diagnostico" },
-      { label: "“Não é um bom momento”", to: "no_time" },
-    ],
-  },
+/* ---------- etapas compartilhadas pelos dois scripts ---------- */
+const SHARED: Record<string, Node> = {
   no_time: {
     badge: "Reagendar",
     title: "Não é um bom momento",
     script: <p>“Sem problema! Que horário fica melhor pra eu te ligar de novo — hoje mais tarde ou amanhã?”</p>,
     tip: "Nunca desligue sem sair com um horário marcado. Anote e volte exatamente nesse horário.",
     next: [],
-  },
-  diagnostico: {
-    badge: "Diagnóstico · passo 2",
-    title: "Antes do pitch",
-    script: <p>“Legal! Eu crio sites pra negócios locais, e queria te fazer uma pergunta rápida: hoje, quando alguém quer saber horário, plano ou onde fica o local, como essa pessoa descobre isso? É tudo pelo WhatsApp ou Instagram?”</p>,
-    tip: "Não avance sem ouvir a resposta — é ela que alimenta a próxima fala.",
-    next: [{ label: "Cliente respondeu → seguir", to: "valor" }],
-  },
-  valor: {
-    badge: "Valor · passo 3",
-    title: "O que o site resolve",
-    script: (
-      <>
-        <p>“É exatamente isso que o site resolve. Ele vira um vendedor disponível 24 horas, sem custo de folha — toda essa dúvida de horário e localização a pessoa resolve sozinha, direto na página.”</p>
-        <ul>
-          <li>Primeira impressão profissional — quem pesquisa no Google confia mais num site bem feito do que só um perfil de rede social.</li>
-          <li>Reduz atrito na conversão — a pessoa já chega decidida, sem 5 trocas de mensagem.</li>
-          <li>Vira diferencial — a maioria dos concorrentes locais só tem Instagram, não site.</li>
-        </ul>
-      </>
-    ),
-    tip: "Deixe o cliente reagir aqui antes de falar de preço.",
-    next: [{ label: "Seguir → apresentar planos", to: "planos" }],
-  },
-  planos: {
-    badge: "Oferta · passo 4",
-    title: "Apresentar os planos",
-    script: (
-      <>
-        <p><b>Plano Completo</b> — R$1.200 na criação + R$147/mês (inclui domínio + alterações sempre que precisar). Ideal pra quem mexe no site com frequência (promoção, horário, novidade sazonal).</p>
-        <p><b>Plano Base</b> — R$827 já com o site e o domínio do primeiro ano inclusos, sem separar valores. Renovação do domínio: R$90/ano. Alteração avulsa, quando precisar: R$97.</p>
-      </>
-    ),
-    tip: "Se o cliente perguntar sobre o domínio, use a analogia do aluguel de placa — sem isso ele não entende por que precisa renovar.",
-    next: [
-      { label: "“Tá caro”", to: "obj_preco" },
-      { label: "“Pago todo mês?”", to: "obj_mensal" },
-      { label: "“Como funciona o domínio?”", to: "duvida_dominio" },
-      { label: "“Vou pensar”", to: "obj_pensar" },
-      { label: "“Bora fechar”", to: "interesse" },
-    ],
   },
   duvida_dominio: {
     badge: "Dúvida comum",
@@ -117,7 +67,7 @@ const NODES: Record<NodeId, Node> = {
     next: [{ label: "Seguir → fechamento", to: "fechamento" }],
   },
   fechamento: {
-    badge: "Fechamento · passo 5",
+    badge: "Fechamento",
     title: "Pergunta de fechamento",
     script: <p>“Baseado no que conversamos, qual plano faz mais sentido pra vocês: o Completo ou o Base? Já consigo começar essa semana e entrego pronto em [prazo combinado].”</p>,
     tip: "Pergunta sempre no formato de escolha assumida, nunca “você quer fechar?” — isso reduz a chance de um não seco.",
@@ -152,110 +102,276 @@ const NODES: Record<NodeId, Node> = {
   },
 };
 
-const ORDER: NodeId[] = [
-  "abertura", "no_time", "diagnostico", "valor", "planos",
-  "duvida_dominio", "obj_preco", "obj_mensal", "obj_pensar", "interesse",
-  "fechamento", "ganhou", "perdido",
+/* ---------- Script 1: abordagem clássica (pedido de permissão) ---------- */
+const NODES_1: Record<string, Node> = {
+  ...SHARED,
+  abertura: {
+    badge: "Abertura fria · passo 1",
+    title: "Pedido de permissão",
+    script: <p>“Oi, boa tarde! Aqui é o Kaleb. Vi a [nome do negócio] aqui perto e queria fazer um contato rápido — posso roubar 2 minutinhos, ou prefere que eu ligue em outro momento?”</p>,
+    tip: "Pedir permissão reduz a resistência automática de quem recebe uma ligação sem esperar. Não pule essa etapa em público frio.",
+    next: [
+      { label: "Cliente topou conversar", to: "diagnostico" },
+      { label: "“Não é um bom momento”", to: "no_time" },
+    ],
+  },
+  diagnostico: {
+    badge: "Diagnóstico · passo 2",
+    title: "Antes do pitch",
+    script: <p>“Legal! Eu crio sites pra negócios locais, e queria te fazer uma pergunta rápida: hoje, quando alguém quer saber horário, plano ou onde fica o local, como essa pessoa descobre isso? É tudo pelo WhatsApp ou Instagram?”</p>,
+    tip: "Não avance sem ouvir a resposta — é ela que alimenta a próxima fala.",
+    next: [{ label: "Cliente respondeu → seguir", to: "valor" }],
+  },
+  valor: {
+    badge: "Valor · passo 3",
+    title: "O que o site resolve",
+    script: (
+      <>
+        <p>“É exatamente isso que o site resolve. Ele vira um vendedor disponível 24 horas, sem custo de folha — toda essa dúvida de horário e localização a pessoa resolve sozinha, direto na página.”</p>
+        <ul>
+          <li>Primeira impressão profissional — quem pesquisa no Google confia mais num site bem feito do que só um perfil de rede social.</li>
+          <li>Reduz atrito na conversão — a pessoa já chega decidida, sem 5 trocas de mensagem.</li>
+          <li>Vira diferencial — a maioria dos concorrentes locais só tem Instagram, não site.</li>
+        </ul>
+      </>
+    ),
+    tip: "Deixe o cliente reagir aqui antes de falar de preço.",
+    next: [{ label: "Seguir → apresentar planos", to: "planos" }],
+  },
+  planos: {
+    badge: "Oferta · passo 4",
+    title: "Apresentar os planos",
+    script: (
+      <>
+        <p><b>Plano Completo</b> — R$1.200 na criação + R$147/mês (inclui domínio + alterações sempre que precisar). Ideal pra quem mexe no site com frequência (promoção, horário, novidade sazonal).</p>
+        <p><b>Plano Base</b> — R$827 já com o site e o domínio do primeiro ano inclusos, sem separar valores. Renovação do domínio: R$90/ano. Alteração avulsa, quando precisar: R$97.</p>
+      </>
+    ),
+    tip: "Se o cliente perguntar sobre o domínio, use a analogia do aluguel de placa — sem isso ele não entende por que precisa renovar.",
+    next: [
+      { label: "“Tá caro”", to: "obj_preco" },
+      { label: "“Pago todo mês?”", to: "obj_mensal" },
+      { label: "“Como funciona o domínio?”", to: "duvida_dominio" },
+      { label: "“Vou pensar”", to: "obj_pensar" },
+      { label: "“Bora fechar”", to: "interesse" },
+    ],
+  },
+};
+
+const FLOW_1: FlowItem[] = [
+  { t: "node", id: "abertura", first: true },
+  { t: "hint", text: "↓ conforme a resposta" },
+  { t: "branch", items: [{ id: "diagnostico" }, { id: "no_time", kind: "end" }] },
+  { t: "node", id: "valor" },
+  { t: "node", id: "planos" },
+  { t: "hint", text: "↓ conforme a resposta do cliente" },
+  { t: "branch", items: ["obj_preco", "obj_mensal", "duvida_dominio", "obj_pensar", "interesse"].map((id) => ({ id })) },
+  { t: "hint", text: "↓ qualquer caminho leva ao fechamento" },
+  { t: "node", id: "fechamento" },
+  { t: "hint", text: "↓ resultado" },
+  { t: "branch", items: [{ id: "ganhou", kind: "good" }, { id: "perdido", kind: "bad" }] },
 ];
 
-function NodeCard({ id, extra = "", onPick }: { id: NodeId; extra?: string; onPick: (id: NodeId) => void }) {
-  const n = NODES[id];
-  return (
-    <button className={`panel callmap-node ${extra}`} onClick={() => onPick(id)}>
-      <span className="callmap-badge">{n.badge}</span>
-      <span className="callmap-title">{n.title}</span>
-    </button>
-  );
-}
+/* ---------- Script 2: abertura com motivo + prévia grátis ---------- */
+const NODES_2: Record<string, Node> = {
+  ...SHARED,
+  abertura2: {
+    badge: "Abertura com motivo · passo 1",
+    title: "Motivo + dado real do negócio",
+    script: (
+      <>
+        <p>“Oi, [nome do contato]? Aqui é [seu nome], da [sua empresa]. Vou direto ao ponto: pesquisando [categoria] em [cidade], vi que a [negócio] tem nota [nota] no Google, com [nº] avaliações — uma reputação que poucos têm na região.”</p>
+        <p>“Só que, quando alguém clica pra saber mais, não encontra um site com horário, preço e fotos, e esse cliente acaba indo pro concorrente que tem. Preparei uma prévia de como o site de vocês ficaria e queria te mandar. Pode ser pelo WhatsApp?”</p>
+      </>
+    ),
+    tip: "Sem “tudo bem?” e sem pedir permissão: a ligação começa com um dado real e um motivo. Preencha nota e avaliações com os dados do lead na Busca.",
+    next: [
+      { label: "Aceitou receber a prévia", to: "oferta" },
+      { label: "“Quem é você?”", to: "quem_e" },
+      { label: "“Já tenho Instagram”", to: "obj_instagram" },
+      { label: "“Não é um bom momento”", to: "no_time" },
+    ],
+  },
+  quem_e: {
+    badge: "Dúvida comum",
+    title: "“Quem é você?”",
+    script: <p>“Eu crio sites pra negócios locais. Vi que a [negócio] tem uma ótima avaliação e ainda não tem site, então montei uma prévia por conta própria pra mostrar como ficaria. Posso te mandar?”</p>,
+    tip: "Responda em uma frase e volte para a oferta da prévia.",
+    next: [{ label: "Seguir → oferta da prévia", to: "oferta" }],
+  },
+  obj_instagram: {
+    badge: "Contorno de objeção",
+    title: "“Já tenho Instagram”",
+    script: <p>“O Instagram é ótimo pra quem já conhece vocês. Mas quem pesquisa no Google [categoria] em [cidade] procura horário, preço e localização, e nem sempre abre rede social pra isso. O site pega esse cliente que hoje vai pro concorrente. Deixa eu te mostrar a prévia, sem compromisso?”</p>,
+    tip: "Não desvalorize o Instagram: posicione o site como complemento que captura quem busca no Google.",
+    next: [{ label: "Seguir → oferta da prévia", to: "oferta" }],
+  },
+  oferta: {
+    badge: "Oferta · passo 2",
+    title: "Prévia gratuita",
+    script: <p>“É uma página só, com o nome de vocês, as fotos que já estão no Google, horário e botão de WhatsApp. Não tem custo e não tem compromisso: se gostarem, a gente conversa; se não, fica de cortesia. Qual o melhor WhatsApp pra eu enviar?”</p>,
+    tip: "Envie com marca d'água de “prévia” e limite a uma página, para a cortesia não virar site de graça.",
+    next: [{ label: "Prévia enviada → retorno", to: "reacao" }],
+  },
+  reacao: {
+    badge: "Retorno · passo 3",
+    title: "Reação à prévia",
+    script: <p>“Conseguiu ver? O que achou de ver a [negócio] assim, com o site no ar?”</p>,
+    tip: "Ligue ou chame 10 a 15 minutos depois do envio. Deixe o cliente falar: a reação dele mostra se o interesse é real.",
+    next: [
+      { label: "Gostou → entender o cenário", to: "diagnostico2" },
+      { label: "“Quanto custa?”", to: "planos2" },
+    ],
+  },
+  diagnostico2: {
+    badge: "Diagnóstico · passo 4",
+    title: "Onde o cliente se perde hoje",
+    script: <p>“Hoje, quando alguém quer saber horário, preço ou onde fica, como essa pessoa descobre? É tudo por Instagram e WhatsApp? Quantas mensagens até ela se decidir?”</p>,
+    tip: "Depois da prévia, a pergunta serve para o cliente perceber a perda, não para você descobrir o que ele já sente.",
+    next: [{ label: "Cliente respondeu → valor", to: "valor2" }],
+  },
+  valor2: {
+    badge: "Valor · passo 5",
+    title: "O que o site resolve",
+    script: <p>“O site vira um vendedor que trabalha 24 horas: a pessoa tira a dúvida sozinha e quem chega no seu WhatsApp já vem decidido. É o que você acabou de ver na prévia, só que no ar.”</p>,
+    tip: "Curto e ligado ao que ele já viu. Não repita o pitch inteiro.",
+    next: [{ label: "Seguir → planos", to: "planos2" }],
+  },
+  planos2: {
+    badge: "Oferta · passo 6",
+    title: "Apresentar os planos",
+    script: (
+      <>
+        <p><b>Plano Completo</b> — [valor de criação] + [mensalidade]/mês, com domínio e alterações sempre que precisar.</p>
+        <p><b>Plano Base</b> — [valor único], com site e domínio do primeiro ano. Renovação do domínio: [valor]/ano. Alteração avulsa: [valor].</p>
+      </>
+    ),
+    tip: "Substitua os colchetes pelos seus valores. Se perguntarem do domínio, use a analogia do aluguel de placa.",
+    next: [
+      { label: "“Tá caro”", to: "obj_preco" },
+      { label: "“Pago todo mês?”", to: "obj_mensal" },
+      { label: "“Como funciona o domínio?”", to: "duvida_dominio" },
+      { label: "“Vou pensar”", to: "obj_pensar" },
+      { label: "“Bora fechar”", to: "interesse" },
+    ],
+  },
+};
+
+const FLOW_2: FlowItem[] = [
+  { t: "node", id: "abertura2", first: true },
+  { t: "hint", text: "↓ conforme a resposta" },
+  { t: "branch", items: [{ id: "oferta" }, { id: "quem_e" }, { id: "obj_instagram" }, { id: "no_time", kind: "end" }] },
+  { t: "node", id: "reacao" },
+  { t: "node", id: "diagnostico2" },
+  { t: "node", id: "valor2" },
+  { t: "node", id: "planos2" },
+  { t: "hint", text: "↓ conforme a resposta do cliente" },
+  { t: "branch", items: ["obj_preco", "obj_mensal", "duvida_dominio", "obj_pensar", "interesse"].map((id) => ({ id })) },
+  { t: "hint", text: "↓ qualquer caminho leva ao fechamento" },
+  { t: "node", id: "fechamento" },
+  { t: "hint", text: "↓ resultado" },
+  { t: "branch", items: [{ id: "ganhou", kind: "good" }, { id: "perdido", kind: "bad" }] },
+];
+
+const SCRIPTS = {
+  1: { label: "Script 1", sub: "Pedido de permissão", nodes: NODES_1, flow: FLOW_1, start: "abertura" },
+  2: { label: "Script 2", sub: "Motivo + prévia grátis", nodes: NODES_2, flow: FLOW_2, start: "abertura2" },
+} as const;
+type ScriptKey = keyof typeof SCRIPTS;
+const KEYS: ScriptKey[] = [1, 2];
 
 export default function Scripts() {
-  const [path, setPath] = useState<NodeId[]>(["abertura"]);
+  const [key, setKey] = useState<ScriptKey>(1);
+  const S = SCRIPTS[key];
+  const [path, setPath] = useState<string[]>([S.start]);
   const current = path[path.length - 1];
-  const n = NODES[current];
+  const n = S.nodes[current];
 
-  function goTo(id: NodeId) {
+  function choose(k: ScriptKey) {
+    setKey(k);
+    setPath([SCRIPTS[k].start]);
+  }
+
+  function goTo(id: string) {
     const i = path.indexOf(id);
     setPath(i !== -1 ? path.slice(0, i + 1) : [...path, id]);
   }
 
-  function jump(id: NodeId) {
-    const i = path.indexOf(id);
-    setPath(i !== -1 ? path.slice(0, i + 1) : [id]);
-  }
-
-  const stateFor = (id: NodeId, kind?: "good" | "bad" | "end") => {
+  const stateFor = (id: string, kind?: Kind) => {
     if (id === current) return "on";
     if (path.includes(id)) return "done";
     return kind ?? "";
+  };
+
+  const card = (id: string, kind?: Kind) => {
+    const node = S.nodes[id];
+    return (
+      <button className={`panel callmap-node ${stateFor(id, kind)}`} onClick={() => goTo(id)}>
+        <span className="callmap-badge">{node.badge}</span>
+        <span className="callmap-title">{node.title}</span>
+      </button>
+    );
   };
 
   return (
     <>
       <div className="pagehead">
         <h1>Scripts de ligação</h1>
-        <span className="mut">Clique nas respostas do cliente — o mapa marca o caminho percorrido e te guia de volta ao fechamento.</span>
+        <span className="mut">Escolha um script e clique nas respostas do cliente — o mapa marca o caminho percorrido e te guia até o fechamento.</span>
       </div>
 
-      <div className="callmap-chips">
-        {ORDER.map((id) => (
-          <button key={id} className={`callmap-chip ${id === current ? "on" : path.includes(id) ? "done" : ""}`} onClick={() => jump(id)}>
-            {NODES[id].title}
+      <div className="callmap-tabs" role="tablist">
+        {KEYS.map((k) => (
+          <button key={k} role="tab" aria-selected={k === key} className={`callmap-tab ${k === key ? "on" : ""}`} onClick={() => choose(k)}>
+            <b>{SCRIPTS[k].label}</b>
+            <span>{SCRIPTS[k].sub}</span>
           </button>
         ))}
       </div>
 
       <div className="callmap-layout">
-      <div className="callmap-flow">
-        <div className="callmap-row"><NodeCard id="abertura" extra={stateFor("abertura")} onPick={goTo} /></div>
-        <div className="callmap-hint">↓ conforme a resposta</div>
-        <div className="callmap-branch">
-          <div className="callmap-col"><div className={`callmap-stem ${path.includes("diagnostico") || path.includes("no_time") ? "on" : ""}`} /><NodeCard id="diagnostico" extra={stateFor("diagnostico")} onPick={goTo} /></div>
-          <div className="callmap-col"><div className={`callmap-stem ${path.includes("no_time") ? "on" : ""}`} /><NodeCard id="no_time" extra={stateFor("no_time", "end")} onPick={goTo} /></div>
+        <div className="callmap-flow">
+          {S.flow.map((item, i) => {
+            if (item.t === "hint") return <div key={i} className="callmap-hint">{item.text}</div>;
+            if (item.t === "node") {
+              return (
+                <div key={i} style={{ display: "contents" }}>
+                  {!item.first && <div className={`callmap-stem ${path.includes(item.id) ? "on" : ""}`} />}
+                  <div className="callmap-row">{card(item.id)}</div>
+                </div>
+              );
+            }
+            return (
+              <div key={i} className="callmap-branch">
+                {item.items.map(({ id, kind }) => (
+                  <div className="callmap-col" key={id}>
+                    <div className={`callmap-stem ${path.includes(id) ? "on" : ""}`} />
+                    {card(id, kind)}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
 
-        <div className={`callmap-stem ${path.includes("valor") ? "on" : ""}`} />
-        <div className="callmap-row"><NodeCard id="valor" extra={stateFor("valor")} onPick={goTo} /></div>
-        <div className={`callmap-stem ${path.includes("planos") ? "on" : ""}`} />
-        <div className="callmap-row"><NodeCard id="planos" extra={stateFor("planos")} onPick={goTo} /></div>
-
-        <div className="callmap-hint">↓ conforme a resposta do cliente</div>
-        <div className="callmap-branch">
-          {(["obj_preco", "obj_mensal", "duvida_dominio", "obj_pensar", "interesse"] as NodeId[]).map((id) => (
-            <div className="callmap-col" key={id}>
-              <div className={`callmap-stem ${path.includes(id) ? "on" : ""}`} />
-              <NodeCard id={id} extra={stateFor(id)} onPick={goTo} />
+        <div className="panel callmap-detail">
+          <span className="callmap-badge">{n.badge}</span>
+          <h2 style={{ fontSize: 17, margin: "4px 0 14px" }}>{n.title}</h2>
+          <div className="script">{n.script}</div>
+          {n.tip && <div className="callmap-tip"><b>dica →</b><span>{n.tip}</span></div>}
+          {n.next.length > 0 && (
+            <div className="callmap-opts">
+              {n.next.map((o) => (
+                <button key={o.to} className="callmap-opt" onClick={() => goTo(o.to)}>
+                  <span>{o.label}</span><span>→</span>
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="callmap-hint">↓ qualquer caminho leva ao fechamento</div>
-        <div className={`callmap-stem ${path.includes("fechamento") ? "on" : ""}`} />
-
-        <div className="callmap-row"><NodeCard id="fechamento" extra={stateFor("fechamento")} onPick={goTo} /></div>
-        <div className="callmap-hint">↓ resultado</div>
-        <div className="callmap-branch">
-          <div className="callmap-col"><div className={`callmap-stem ${path.includes("ganhou") ? "on" : ""}`} /><NodeCard id="ganhou" extra={stateFor("ganhou", "good")} onPick={goTo} /></div>
-          <div className="callmap-col"><div className={`callmap-stem ${path.includes("perdido") ? "on" : ""}`} /><NodeCard id="perdido" extra={stateFor("perdido", "bad")} onPick={goTo} /></div>
-        </div>
-      </div>
-
-      <div className="panel callmap-detail">
-        <span className="callmap-badge">{n.badge}</span>
-        <h2 style={{ fontSize: 17, margin: "4px 0 14px" }}>{n.title}</h2>
-        <div className="script">{n.script}</div>
-        {n.tip && <div className="callmap-tip"><b>dica →</b><span>{n.tip}</span></div>}
-        {n.next.length > 0 && (
-          <div className="callmap-opts">
-            {n.next.map((o) => (
-              <button key={o.to} className="callmap-opt" onClick={() => goTo(o.to)}>
-                <span>{o.label}</span><span>→</span>
-              </button>
-            ))}
+          )}
+          <div style={{ marginTop: 16 }}>
+            <button className="ghost sm" onClick={() => setPath([S.start])}>↺ reiniciar</button>
           </div>
-        )}
-        <div style={{ marginTop: 16 }}>
-          <button className="ghost sm" onClick={() => setPath(["abertura"])}>↺ reiniciar</button>
         </div>
-      </div>
       </div>
     </>
   );
