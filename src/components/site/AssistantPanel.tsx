@@ -2,21 +2,22 @@
 import { useEffect, useRef, useState } from "react";
 
 type Msg = { role: "user" | "assistant"; text: string };
-export type Step = "modelo" | "cliente" | "dados" | "revisao";
+export type Step = "cliente" | "modelo" | "secoes" | "dados" | "revisao";
 
 export type DraftSummary = {
-  layout?: string; nome?: string; categoria?: string; telefone: boolean; endereco: boolean;
+  secoes?: number; layout?: string; nome?: string; categoria?: string; telefone: boolean; endereco: boolean;
   horarios: number; servicos: number; logo: boolean; fotos: number; cores: boolean;
 };
 
 const GUIDE: Record<Step, (d: DraftSummary) => string> = {
-  modelo: () => "Oi! Vou te guiar. Primeiro escolha o modelo do site: Moderno combina com academias e barbearias, Clássico com clínicas e serviços, Vitrine com restaurantes e salões.",
-  cliente: (d) => d.nome ? `Você escolheu o modelo ${d.layout}. Agora selecione o cliente da lista ou cadastre um novo manualmente. O telefone vira o botão de WhatsApp.` : "Agora o cliente: escolha um da sua lista ou cadastre manualmente. O telefone vira o botão de WhatsApp.",
+  cliente: () => "Oi! Vou te guiar em 5 passos. Primeiro o cliente: escolha um da sua lista ou cadastre manualmente. O telefone vira o botão de WhatsApp do site.",
+  modelo: (d) => `Agora o modelo do site para ${d.nome ?? "seu cliente"}. Já sugeri um pela categoria. Moderno combina com academias e barbearias, Clássico com clínicas e serviços, Vitrine com restaurantes e salões.`,
+  secoes: (d) => `O modelo ${d.layout} já traz as seções padrão (fixas). Se quiser, marque outras, como planos, cardápio, equipe ou promoção. No próximo passo você preenche só o que escolher.`,
   dados: (d) => {
     const falta = [!d.logo && "o logo (define as cores da marca)", !d.horarios && "os horários", !d.servicos && "os serviços", !d.telefone && "o telefone"].filter(Boolean);
-    return falta.length ? `Revise os dados de ${d.nome ?? "seu cliente"}. Ainda falta: ${falta.join(", ")}. Se não tiver o logo, envie uma foto da fachada ou um print do Instagram.` : `Dados completos de ${d.nome ?? "seu cliente"}. Revise os textos e siga para a revisão.`;
+    return falta.length ? `Preencha os dados de ${d.nome ?? "seu cliente"}. Ainda falta: ${falta.join(", ")}. Onde a seção aceita foto, há um campo de imagem. No fim, você pode pedir uma copy personalizada à IA.` : `Dados de ${d.nome ?? "seu cliente"} completos. Se quiser um texto sob medida, ligue a chave de copy personalizada e escreva um briefing.`;
   },
-  revisao: (d) => `Confira a prévia. Modelo ${d.layout}, ${d.fotos} foto(s) enviada(s), ${d.servicos} serviço(s). Estando bom, gere o site: são 3 créditos.`,
+  revisao: (d) => `Hora da conferência: ${d.secoes ?? 0} seções ativas, ${d.fotos} foto(s), modelo ${d.layout}. Veja os avisos na lista; estando bom, gere o site (3 créditos).`,
 };
 
 export default function AssistantPanel({ step, draft, open, onToggle }: { step: Step; draft: DraftSummary; open: boolean; onToggle: () => void }) {

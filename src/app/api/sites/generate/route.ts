@@ -30,7 +30,10 @@ export async function POST(request: Request) {
   const layout = (["classico", "moderno", "vitrine"] as const).includes(body?.layout) ? (body.layout as LayoutKey) : undefined;
   const gen = generateContent(profile, layout);
   const template = gen.template;
-  let content = await writeCopy(profile, gen.content);
+  // Chave da IA: o usuário decide se quer copy personalizada (com briefing opcional) ou o texto padrão por regras.
+  const aiCopy = body?.aiCopy !== false;
+  const brief = typeof body?.aiBrief === "string" ? body.aiBrief.slice(0, 500) : undefined;
+  let content = aiCopy ? await writeCopy(profile, gen.content, undefined, brief) : gen.content;
 
   // Itens confirmados no chat de criação (cores, logo, fotos do usuário, serviços e horários).
   const ok = (v: unknown, n: number) => typeof v === "string" && v.length <= n;

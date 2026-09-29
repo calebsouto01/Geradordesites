@@ -6,7 +6,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   depoimentos: "Depoimentos", faq: "Perguntas frequentes", cta: "Chamada para o WhatsApp", contato: "Contato e mapa",
 };
 
-const ALL: SectionKey[] = ["numeros", "sobre", "servicos", "diferenciais", "comofunciona", "planos", "catalogo", "promo", "equipe", "galeria", "depoimentos", "faq", "cta", "contato"];
+export const ALL_SECTIONS: SectionKey[] = ["numeros", "sobre", "servicos", "diferenciais", "comofunciona", "planos", "catalogo", "promo", "equipe", "galeria", "depoimentos", "faq", "cta", "contato"];
 
 // Ordem padrão de cada layout: cada um conta a história do negócio de um jeito.
 const ORDER: Record<LayoutKey, SectionKey[]> = {
@@ -17,14 +17,14 @@ const ORDER: Record<LayoutKey, SectionKey[]> = {
 
 export function defaultSections(layout: LayoutKey): SectionCfg[] {
   const first = ORDER[layout];
-  return [...first.map((key) => ({ key, on: true })), ...ALL.filter((k) => !first.includes(k)).map((key) => ({ key, on: false }))];
+  return [...first.map((key) => ({ key, on: true })), ...ALL_SECTIONS.filter((k) => !first.includes(k)).map((key) => ({ key, on: false }))];
 }
 
 // Se o usuário personalizou, usa a lista dele (completando o que faltar); senão, a ordem do layout.
 export function resolveSections(c: SiteContent, layout: LayoutKey): SectionCfg[] {
   if (!c.sections?.length) return defaultSections(layout);
-  const known = c.sections.filter((s) => ALL.includes(s.key));
-  return [...known, ...ALL.filter((k) => !known.some((s) => s.key === k)).map((key) => ({ key, on: false }))];
+  const known = c.sections.filter((s) => ALL_SECTIONS.includes(s.key));
+  return [...known, ...ALL_SECTIONS.filter((k) => !known.some((s) => s.key === k)).map((key) => ({ key, on: false }))];
 }
 
 export function numbersOf(c: SiteContent) {
@@ -49,6 +49,9 @@ export function differentialsOf(c: SiteContent) {
   return out.slice(0, 4);
 }
 
+// Fotos disponíveis para a galeria: a primeira vira capa quando não há foto de capa própria.
+export const poolOf = (c: SiteContent) => (c.photos?.length ?? 0) - (!c.media?.hero && (c.photos?.length ?? 0) > 0 ? 1 : 0);
+
 export function hasData(key: SectionKey, c: SiteContent): boolean {
   switch (key) {
     case "numeros": return numbersOf(c).length > 0;
@@ -60,7 +63,7 @@ export function hasData(key: SectionKey, c: SiteContent): boolean {
     case "catalogo": return Boolean(c.catalog?.length);
     case "promo": return Boolean(c.promo?.title);
     case "equipe": return Boolean(c.team?.length);
-    case "galeria": return (c.photos?.length ?? 0) > 1;
+    case "galeria": return poolOf(c) > 0;
     case "depoimentos": return c.reviews.items.length > 0;
     case "faq": return Boolean(c.faq?.length);
     case "cta": return Boolean(c.business.whatsapp);
@@ -90,6 +93,19 @@ export function applyExtras(c: SiteContent, x: Record<string, unknown> | undefin
   const pl = prices(x.plans); if (pl?.length) out.plans = pl;
   const ct = prices(x.catalog); if (ct?.length) out.catalog = ct;
   if (Array.isArray(x.team)) { const t = x.team.slice(0, 8).map((i) => ({ name: str((i as { name?: string }).name, 80), role: str((i as { role?: string }).role, 80) })).filter((i) => i.name); if (t.length) out.team = t; }
+  const url = (v: unknown) => (typeof v === "string" && /^https:\/\//.test(v) && v.length <= 500 ? v : undefined);
+  const list = (v: unknown, n: number) => (Array.isArray(v) ? v.slice(0, n).map((u) => url(u) ?? "") : undefined);
+  const m = x.media as { hero?: unknown; sobre?: unknown; promo?: unknown; equipe?: unknown; catalogo?: unknown } | undefined;
+  if (m) {
+    const media: NonNullable<SiteContent["media"]> = {};
+    if (url(m.hero)) media.hero = url(m.hero); if (url(m.sobre)) media.sobre = url(m.sobre); if (url(m.promo)) media.promo = url(m.promo);
+    const eq = list(m.equipe, 8); if (eq?.some(Boolean)) media.equipe = eq; const ca = list(m.catalogo, 12); if (ca?.some(Boolean)) media.catalogo = ca;
+    if (Object.keys(media).length) out.media = media;
+  }
+  if (Array.isArray(x.sections)) {
+    const valid = (x.sections as { key?: unknown; on?: unknown }[]).filter((s) => typeof s.key === "string" && (ALL_SECTIONS as string[]).includes(s.key)).map((s) => ({ key: s.key as SectionKey, on: Boolean(s.on) }));
+    if (valid.length) out.sections = valid;
+  }
   const pr = x.promo as { title?: string; text?: string } | undefined;
   if (pr?.title) out.promo = { title: str(pr.title, 80), text: str(pr.text, 200) };
   return out;

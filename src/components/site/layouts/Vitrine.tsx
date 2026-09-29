@@ -7,6 +7,8 @@ const Wave = () => (
 // Vitrine: divertido e comercial. Venda primeiro: serviços, promoção, cardápio e chamada para o WhatsApp.
 export default function Vitrine({ c, photo }: Ctx) {
   const wa = waLink(c), b = c.business, ph = c.photos ?? [];
+  const off = c.media?.hero ? 0 : 1;
+  const heroImg = c.media?.hero ?? (ph.length ? photo(0) : null);
   const L = "vitrine" as const;
   return (
     <div className="lay-vitrine">
@@ -24,8 +26,8 @@ export default function Vitrine({ c, photo }: Ctx) {
             </div>
             <div data-rv><Rating c={c} /></div>
           </div>
-          <div className={`st-shot vi-float ${ph.length ? "" : "empty"}`} data-rv>
-            {ph.length ? <img src={photo(0)} alt={b.name} data-full={photo(0)} /> : <span>{b.name}</span>}
+          <div className={`st-shot vi-float ${heroImg ? "" : "empty"}`} data-rv>
+            {heroImg ? <img src={heroImg} alt={b.name} data-full={heroImg} /> : <span>{b.name}</span>}
             {b.rating && <div className="vi-sticker">★ {b.rating}</div>}
           </div>
         </div>
@@ -39,12 +41,12 @@ export default function Vitrine({ c, photo }: Ctx) {
             <div className="st-tiles">{c.services.items.map((s, i) => <div key={i} className="st-tile" data-rv><h3>{s.title}</h3><p>{s.text}</p></div>)}</div>
           </div></section>
         ),
-        sobre: () => <section className="st-sec vi-alt"><div className="st-wrap"><Heading layout={L}>{c.about.title}</Heading><p className="st-lead" data-rv>{c.about.text}</p></div></section>,
+        sobre: () => <section className="st-sec vi-alt"><div className="st-wrap st-two"><div><Heading layout={L}>{c.about.title}</Heading><p className="st-lead" data-rv>{c.about.text}</p></div>{c.media?.sobre && <img className="st-side vi-side" data-rv src={c.media.sobre} data-full={c.media.sobre} alt={b.name} loading="lazy" />}</div></section>,
         galeria: () => (
           <section className="st-sec vi-alt"><div className="st-wrap">
             <Heading layout={L}>Um pouco do nosso dia</Heading>
             <div className="vi-car" data-car data-rv>
-              <div className="vi-track">{ph.slice(1).map((_, i) => <img key={i} src={photo(i + 1)} data-full={photo(i + 1)} alt={`Foto ${i + 1}`} loading="lazy" />)}</div>
+              <div className="vi-track">{ph.slice(off).map((_, i) => <img key={i} src={photo(i + off)} data-full={photo(i + off)} alt={`Foto ${i + 1}`} loading="lazy" />)}</div>
               <button type="button" className="vi-arrow l" data-car-prev aria-label="Anterior">‹</button>
               <button type="button" className="vi-arrow r" data-car-next aria-label="Próxima">›</button>
             </div>

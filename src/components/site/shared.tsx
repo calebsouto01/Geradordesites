@@ -112,7 +112,7 @@ export function Catalogo({ c, layout }: G) {
   return (
     <Sec><Heading layout={layout} eyebrow="Nossas opções">Cardápio e catálogo</Heading>
       <ul className="sx-cat">{(c.catalog ?? []).map((p, i) => (
-        <li key={i} data-rv><div><b>{p.name}</b>{p.text && <p>{p.text}</p>}</div>{p.price && <span>{p.price}</span>}</li>
+        <li key={i} data-rv>{c.media?.catalogo?.[i] && <img src={c.media.catalogo[i]} alt={p.name} loading="lazy" data-full={c.media.catalogo[i]} />}<div><b>{p.name}</b>{p.text && <p>{p.text}</p>}</div>{p.price && <span>{p.price}</span>}</li>
       ))}</ul>
     </Sec>
   );
@@ -121,7 +121,7 @@ export function Catalogo({ c, layout }: G) {
 export function Promo({ c }: G) {
   const wa = waLink(c);
   return (
-    <section className="st-sec sx-promo-wrap"><div className="st-wrap"><div className="sx-promo" data-rv>
+    <section className="st-sec sx-promo-wrap"><div className="st-wrap"><div className={`sx-promo ${c.media?.promo ? "hasimg" : ""}`} data-rv style={c.media?.promo ? { backgroundImage: `linear-gradient(135deg,color-mix(in srgb,var(--accent) 80%,#000 20%),color-mix(in srgb,var(--accent2) 65%,transparent)),url(${c.media.promo})` } : undefined}>
       <span>Promoção</span><h2>{c.promo?.title}</h2>{c.promo?.text && <p>{c.promo.text}</p>}{wa && <a className="st-btn inv" href={wa} data-confetti>Aproveitar</a>}
     </div></div></section>
   );
@@ -130,7 +130,7 @@ export function Promo({ c }: G) {
 export function Equipe({ c, layout }: G) {
   return (
     <Sec alt><Heading layout={layout} eyebrow="Quem atende você">Nossa equipe</Heading>
-      <div className="sx-team">{(c.team ?? []).map((m, i) => <div key={i} className="sx-member" data-rv><i>{initials(m.name)}</i><b>{m.name}</b><span>{m.role}</span></div>)}</div>
+      <div className="sx-team">{(c.team ?? []).map((m, i) => <div key={i} className="sx-member" data-rv>{c.media?.equipe?.[i] ? <img src={c.media.equipe[i]} alt={m.name} loading="lazy" /> : <i>{initials(m.name)}</i>}<b>{m.name}</b><span>{m.role}</span></div>)}</div>
     </Sec>
   );
 }

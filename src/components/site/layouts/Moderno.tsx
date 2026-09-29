@@ -3,6 +3,8 @@ import { Acc, Footer, Heading, Nav, Rating, renderSections, stars, waLink, type 
 // Moderno: tecnológico. Impacto primeiro: números, serviços, passo a passo e planos.
 export default function Moderno({ c, photo }: Ctx) {
   const wa = waLink(c), b = c.business, ph = c.photos ?? [];
+  const off = c.media?.hero ? 0 : 1;
+  const heroImg = c.media?.hero ?? (ph.length ? photo(0) : null);
   const L = "moderno" as const;
   const words = c.hero.headline.split(" ");
   const marquee = [...c.services.items.map((s) => s.title), b.category || b.name].filter(Boolean);
@@ -10,7 +12,7 @@ export default function Moderno({ c, photo }: Ctx) {
     <div className="lay-moderno">
       <div className="mo-progress" data-progress aria-hidden />
       <Nav c={c} />
-      <header className="mo-hero" data-spot style={ph.length ? { backgroundImage: `linear-gradient(180deg,rgba(8,10,16,.6),rgba(8,10,16,.94)),url(${photo(0)})` } : undefined}>
+      <header className="mo-hero" data-spot style={heroImg ? { backgroundImage: `linear-gradient(180deg,rgba(8,10,16,.6),rgba(8,10,16,.94)),url(${heroImg})` } : undefined}>
         <div className="mo-glow" aria-hidden />
         <div className="st-wrap">
           <span className="st-tag">{b.category || "Negócio local"}</span>
@@ -26,7 +28,7 @@ export default function Moderno({ c, photo }: Ctx) {
       <div className="mo-marq" aria-hidden><div className="mo-track">{[...marquee, ...marquee, ...marquee, ...marquee].map((m, i) => <span key={i}>{m} <em>✦</em></span>)}</div></div>
 
       {renderSections(c, L, {
-        sobre: () => <section className="st-sec"><div className="st-wrap"><Heading layout={L}>Sobre</Heading><p className="st-lead" data-rv>{c.about.text}</p></div></section>,
+        sobre: () => <section className="st-sec"><div className="st-wrap st-two"><div><Heading layout={L}>Sobre</Heading><p className="st-lead" data-rv>{c.about.text}</p></div>{c.media?.sobre && <img className="st-side mo-side" data-rv src={c.media.sobre} data-full={c.media.sobre} alt={b.name} loading="lazy" />}</div></section>,
         servicos: () => (
           <section className="st-sec alt"><div className="st-wrap">
             <Heading layout={L}>{c.services.title}</Heading>
@@ -36,7 +38,7 @@ export default function Moderno({ c, photo }: Ctx) {
         galeria: () => (
           <section className="st-sec"><div className="st-wrap">
             <Heading layout={L}>No dia a dia</Heading>
-            <div className="mo-masonry">{ph.slice(1).map((_, i) => <div key={i} className="mo-tile" data-rv><img src={photo(i + 1)} data-full={photo(i + 1)} alt={`Foto ${i + 1}`} loading="lazy" /></div>)}</div>
+            <div className="mo-masonry">{ph.slice(off).map((_, i) => <div key={i} className="mo-tile" data-rv><img src={photo(i + off)} data-full={photo(i + off)} alt={`Foto ${i + 1}`} loading="lazy" /></div>)}</div>
           </div></section>
         ),
         depoimentos: () => (

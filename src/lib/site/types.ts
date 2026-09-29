@@ -37,6 +37,7 @@ export type SiteContent = {
   team?: { name: string; role: string }[];
   promo?: { title: string; text: string };
   sections?: SectionCfg[];
+  media?: { hero?: string; sobre?: string; promo?: string; equipe?: string[]; catalogo?: string[] };
   sources?: Record<string, string>;
   hero: { headline: string; subheadline: string; cta: string };
   about: { title: string; text: string };
