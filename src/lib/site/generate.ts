@@ -1,4 +1,5 @@
-import type { Profile, SiteContent } from "./types";
+import { themeFromAccent } from "./palette";
+import type { LayoutKey, Profile, SiteContent } from "./types";
 
 type Preset = {
   key: string; match: RegExp; accent: string;
@@ -76,12 +77,17 @@ export function whatsappFrom(phone?: string) {
   return d.startsWith("55") && d.length >= 12 ? d : `55${d}`;
 }
 
+export function suggestLayout(category?: string): LayoutKey {
+  const k = pickPreset(category).key;
+  return k === "academia" ? "moderno" : k === "salao" || k === "comida" ? "vitrine" : "classico";
+}
+
 export function pickPreset(category?: string) {
   return PRESETS.find((p) => p.match.test(category ?? "")) ?? GENERIC;
 }
 
 // Gerador por regras: usa só o que existe nos dados; onde não há, usa texto neutro editável.
-export function generateContent(p: Profile): { content: SiteContent; template: string } {
+export function generateContent(p: Profile, layout?: LayoutKey): { content: SiteContent; template: LayoutKey } {
   const preset = pickPreset(p.category);
   const query = encodeURIComponent(`${p.name} ${p.address ?? ""}`.trim());
   const good = (p.reviews ?? []).filter((r) => r.rating >= 4 && r.text.length > 20).slice(0, 3);
@@ -91,14 +97,20 @@ export function generateContent(p: Profile): { content: SiteContent; template: s
       whatsapp: whatsappFrom(p.phone), rating: p.rating ?? null, ratingCount: p.ratingCount ?? null,
       mapsUrl: p.mapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${query}`,
     },
-    theme: { accent: preset.accent },
+    theme: themeFromAccent(preset.accent),
+    photos: p.photos ?? [],
+    faq: [
+      ...(p.address ? [{ q: "Onde fica?", a: p.address }] : []),
+      ...(p.hours?.length ? [{ q: "Qual o horário de funcionamento?", a: p.hours.join(" · ") }] : []),
+      ...(p.phone ? [{ q: "Como falar com vocês?", a: `Pelo WhatsApp ou telefone ${p.phone}.` }] : []),
+    ],
     hero: { headline: preset.headline(p.name), subheadline: preset.sub(p.name), cta: preset.cta },
     about: { title: `Sobre a ${p.name}`, text: p.summary || preset.about(p.name) },
     services: { title: "O que oferecemos", items: preset.services },
     reviews: { title: "O que dizem nossos clientes", items: good },
     hours: p.hours ?? [],
   };
-  return { content, template: preset.key };
+  return { content, template: layout ?? suggestLayout(p.category) };
 }
 
 export function makeSlug(name: string) {

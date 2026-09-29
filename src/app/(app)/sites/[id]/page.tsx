@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { SiteContent, SiteRow } from "@/lib/site/types";
+import type { LayoutKey, SiteContent, SiteRow } from "@/lib/site/types";
+import { themeFromAccent } from "@/lib/site/palette-client";
 
 export default function EditarSite({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -74,8 +75,20 @@ export default function EditarSite({ params }: { params: Promise<{ id: string }>
         <label className="f">WhatsApp (com DDD, só números)
           <input value={c.business.whatsapp} onChange={(e) => set("business", { ...c.business, whatsapp: e.target.value.replace(/\D/g, "") })} />
         </label>
+        <label className="f">Layout (trocar não gasta crédito)
+          <select value={site.template} onChange={async (e) => {
+            const template = e.target.value as LayoutKey;
+            const { error } = await supabase.from("sites").update({ template }).eq("id", id);
+            if (!error) setSite({ ...site, template });
+            flash(error ? "Erro ao trocar o layout" : "Layout alterado");
+          }}>
+            <option value="classico">Clássico</option>
+            <option value="moderno">Moderno</option>
+            <option value="vitrine">Vitrine</option>
+          </select>
+        </label>
         <label className="f">Cor principal
-          <input type="color" value={c.theme.accent} onChange={(e) => set("theme", { accent: e.target.value })} style={{ height: 42, padding: 4 }} />
+          <input type="color" value={c.theme.accent} onChange={(e) => set("theme", themeFromAccent(e.target.value))} style={{ height: 42, padding: 4 }} />
         </label>
         <div className="row">
           <button onClick={save}>Salvar</button>

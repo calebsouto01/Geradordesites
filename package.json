@@ -19,11 +19,13 @@
   },
   "homepage": "https://github.com/calebsouto01/geradordesites#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "next": "^16.3.7",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

@@ -10,7 +10,7 @@ export async function fetchPlaceProfile(placeId: string, fallback: Profile): Pro
     headers: {
       "X-Goog-Api-Key": key,
       "X-Goog-FieldMask":
-        "displayName,formattedAddress,nationalPhoneNumber,rating,userRatingCount,primaryTypeDisplayName,editorialSummary,regularOpeningHours.weekdayDescriptions,reviews,googleMapsUri",
+        "displayName,formattedAddress,nationalPhoneNumber,rating,userRatingCount,primaryTypeDisplayName,editorialSummary,regularOpeningHours.weekdayDescriptions,reviews,googleMapsUri,photos",
     },
   });
   if (!res.ok) return fallback;
@@ -25,6 +25,9 @@ export async function fetchPlaceProfile(placeId: string, fallback: Profile): Pro
     summary: d.editorialSummary?.text,
     hours: d.regularOpeningHours?.weekdayDescriptions ?? [],
     mapsUrl: d.googleMapsUri,
+    photos: ((d.photos ?? []) as { name: string; widthPx: number; heightPx: number; authorAttributions?: { displayName?: string }[] }[])
+      .slice(0, 6)
+      .map((p) => ({ name: p.name, width: p.widthPx, height: p.heightPx, author: p.authorAttributions?.[0]?.displayName ?? "Google Maps" })),
     reviews: ((d.reviews ?? []) as Review[]).map((r) => ({
       author: r.authorAttribution?.displayName ?? "Cliente",
       text: (r.text?.text ?? "").slice(0, 240),

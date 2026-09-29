@@ -28,5 +28,5 @@ export default async function SitePage({ params, searchParams }: { params: Promi
   if (!site) notFound();
   // ?nv=1 = visita do próprio dono (não conta como visualização do cliente)
   if (!(await searchParams).nv) await createClient().rpc("track_view", { p_slug: slug });
-  return <SiteRender c={site.content} preview={site.status === "previa"} expiresAt={site.expires_at} />;
+  return <SiteRender c={site.content} preview={site.status === "previa"} expiresAt={site.expires_at} slug={slug} template={site.template} />;
 }
