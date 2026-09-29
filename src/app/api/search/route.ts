@@ -20,9 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Parâmetros inválidos." }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return NextResponse.json({ error: "não autenticado" }, { status: 401 });
+  const supabase = createClient();
 
   // Cota mensal checada no servidor (função SQL) antes de gastar a API do Google.
   const { data: remaining, error: quotaError } = await supabase.rpc("consume_search", {
@@ -63,7 +61,6 @@ export async function POST(request: Request) {
   const rows = places
     .filter((p) => !p.websiteUri && (p.rating ?? 0) >= minRating)
     .map((p) => ({
-      user_id: auth.user.id,
       place_id: p.id,
       name: p.displayName?.text ?? "Sem nome",
       address: p.formattedAddress ?? null,
