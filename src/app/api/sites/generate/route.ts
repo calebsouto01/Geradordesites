@@ -21,7 +21,11 @@ export async function POST(request: Request) {
   if (existing) return NextResponse.json({ site: existing, created: false });
 
   const base: Profile = lead.profile ?? { name: lead.name, address: lead.address ?? undefined, phone: lead.phone ?? undefined };
-  const profile = !lead.profile && lead.place_id ? await fetchPlaceProfile(lead.place_id, base) : base;
+  const fetched = !lead.profile && lead.place_id ? await fetchPlaceProfile(lead.place_id, base) : base;
+  // Dados revisados pelo usuário na tela de edição têm prioridade sobre os do Google.
+  const str = (v: unknown, n: number) => (typeof v === "string" && v.trim() && v.length <= n ? v.trim() : undefined);
+  const edit = body?.profile ?? {};
+  const profile: Profile = { ...fetched, name: str(edit.name, 120) ?? fetched.name, category: str(edit.category, 80) ?? fetched.category, address: str(edit.address, 200) ?? fetched.address, phone: str(edit.phone, 30) ?? fetched.phone };
   const layout = (["classico", "moderno", "vitrine"] as const).includes(body?.layout) ? (body.layout as LayoutKey) : undefined;
   const gen = generateContent(profile, layout);
   const template = gen.template;
@@ -41,6 +45,7 @@ export async function POST(request: Request) {
     sources.servicos = "informado pelo usuário";
   }
   if (Array.isArray(body?.horarios) && body.horarios.length) content = { ...content, hours: body.horarios.slice(0, 7).filter((h: unknown) => ok(h, 80)) };
+  if (ok(body?.about, 600) && body.about.trim()) { content.about = { ...content.about, text: body.about.trim() }; sources.sobre = "informado pelo usuário"; }
   content.sources = sources;
 
   // Créditos cobrados no servidor, só depois de gerar com sucesso.

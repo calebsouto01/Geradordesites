@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import CreationChat from "@/components/site/CreationChat";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -49,7 +48,6 @@ export default function Funil() {
   const [over, setOver] = useState<string | null>(null);
   const [sites, setSites] = useState<Record<number, SiteInfo>>({});
   const [busyLead, setBusyLead] = useState<number | null>(null);
-  const [chatLead, setChatLead] = useState<Lead | null>(null);
   const [toast, setToast] = useState("");
   const flash = (t: string) => { setToast(t); setTimeout(() => setToast(""), 3000); };
 
@@ -168,9 +166,7 @@ export default function Funil() {
                   )}
                   <div className="row" style={{ marginTop: 8, gap: 6 }}>
                     {!sites[l.id] ? (
-                      <button className="sm" disabled={busyLead === l.id} onClick={() => setChatLead(l)}>
-                        Criar site · 3 créditos
-                      </button>
+                      <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Criar site · 3 créditos</button></Link>
                     ) : (
                       <>
                         <Link href={`/sites/${sites[l.id].id}`}><button className="sm">Editar site</button></Link>
@@ -217,10 +213,6 @@ export default function Funil() {
           );
         })}
       </div>
-      {chatLead && (
-        <CreationChat leadId={chatLead.id} leadName={chatLead.name} onClose={() => setChatLead(null)}
-          onDone={async () => { setChatLead(null); flash("Site gerado (3 créditos)"); await loadSites(); }} />
-      )}
       {toast && <div className="toast">{toast}</div>}
     </>
   );

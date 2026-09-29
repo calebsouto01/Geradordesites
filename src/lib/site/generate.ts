@@ -1,4 +1,4 @@
-import { themeFromAccent } from "./palette";
+import { themeFromAccent } from "./palette-client";
 import type { LayoutKey, Profile, SiteContent } from "./types";
 
 type Preset = {

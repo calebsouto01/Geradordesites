@@ -1,5 +1,5 @@
 import type { LayoutKey, SiteContent } from "@/lib/site/types";
-import { themeFromAccent } from "@/lib/site/palette";
+import { themeFromAccent } from "@/lib/site/palette-client";
 import { suggestLayout } from "@/lib/site/generate";
 import Classico from "./site/layouts/Classico";
 import Moderno from "./site/layouts/Moderno";
