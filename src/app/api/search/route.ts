@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { allow, tooMany } from "@/lib/rate";
 
 type Place = {
   id: string;
@@ -20,7 +21,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Parâmetros inválidos." }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return NextResponse.json({ error: "Faça login para continuar." }, { status: 401 });
+  if (!(await allow(supabase, "search", auth.user.id, 10, 60))) return tooMany();
 
   // Cota mensal checada no servidor (função SQL) antes de gastar a API do Google.
   const { data: remaining, error: quotaError } = await supabase.rpc("consume_search", {

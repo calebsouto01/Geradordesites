@@ -144,3 +144,18 @@ export function stickyCta(): Off {
   on(); window.addEventListener("scroll", on, { passive: true });
   return () => window.removeEventListener("scroll", on);
 }
+
+// Métricas do cliente final: 1 visualização por sessão e cliques em WhatsApp e mapa.
+export function tracking(slug: string): Off {
+  const send = (kind: string) => { try { navigator.sendBeacon("/api/site/event", new Blob([JSON.stringify({ slug, kind })], { type: "application/json" })); } catch { /* sem métrica */ } };
+  const key = `view:${slug}`;
+  try { if (!sessionStorage.getItem(key)) { sessionStorage.setItem(key, "1"); send("view"); } } catch { send("view"); }
+  const onClick = (e: MouseEvent) => {
+    const a = (e.target as HTMLElement).closest<HTMLAnchorElement>("a[href]");
+    if (!a) return;
+    if (a.href.includes("wa.me")) send("whatsapp");
+    else if (a.href.includes("google.com/maps")) send("mapa");
+  };
+  document.addEventListener("click", onClick);
+  return () => document.removeEventListener("click", onClick);
+}

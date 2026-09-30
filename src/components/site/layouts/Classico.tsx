@@ -1,7 +1,7 @@
 import { Acc, Footer, Heading, Nav, Rating, renderSections, stars, waLink, type Ctx } from "../shared";
 
 // Clássico: elegante e sóbrio. Confiança primeiro: sobre, diferenciais, serviços, equipe, depoimentos.
-export default function Classico({ c, photo }: Ctx) {
+export default function Classico({ c, photo, slug }: Ctx) {
   const wa = waLink(c), b = c.business, ph = c.photos ?? [];
   const off = c.media?.hero ? 0 : 1;                       // a 1ª foto vira capa se não há foto própria
   const pool = ph.slice(off);
@@ -55,7 +55,7 @@ export default function Classico({ c, photo }: Ctx) {
         ),
         faq: () => <section className="st-sec"><div className="st-wrap st-narrow"><Heading layout={L} eyebrow="Dúvidas">Perguntas frequentes</Heading><Acc c={c} /></div></section>,
       })}
-      <Footer c={c} />
+      <Footer c={c} slug={slug} />
     </div>
   );
 }

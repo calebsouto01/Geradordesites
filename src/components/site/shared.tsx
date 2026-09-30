@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { LayoutKey, SectionKey, SiteContent } from "@/lib/site/types";
 import { differentialsOf, hasData, numbersOf, resolveSections } from "@/lib/site/sections";
 
-export type Ctx = { c: SiteContent; photo: (i: number) => string };
+export type Ctx = { c: SiteContent; photo: (i: number) => string; slug?: string };
 
 export const stars = (n: number) => "★".repeat(Math.round(n)) + "☆".repeat(5 - Math.round(n));
 
@@ -46,12 +46,13 @@ export function Acc({ c }: { c: SiteContent }) {
   );
 }
 
-export function Footer({ c }: { c: SiteContent }) {
+export function Footer({ c, slug }: { c: SiteContent; slug?: string }) {
   const authors = [...new Set((c.photos ?? []).map((p) => p.author))].slice(0, 4);
   return (
     <footer className="st-foot">
       <div>© {new Date().getFullYear()} {c.business.name}</div>
       {authors.length > 0 && <div className="st-attr">Fotos: {authors.join(", ")} · via Google Maps</div>}
+      {slug && slug !== "rascunho" && <div className="st-attr"><a href={`/denuncia?slug=${encodeURIComponent(slug)}`} style={{ color: "inherit" }}>Denunciar este site</a></div>}
     </footer>
   );
 }

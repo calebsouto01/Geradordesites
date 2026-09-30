@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAnonClient } from "@/lib/supabase/anon";
 import SiteRender from "@/components/SiteRender";
 import type { SiteRow } from "@/lib/site/types";
 
 export const dynamic = "force-dynamic";
 
 async function load(slug: string) {
-  const { data } = await createClient().rpc("get_site", { p_slug: slug });
+  const { data } = await createAnonClient().rpc("get_site", { p_slug: slug });
   return (data as SiteRow | null) ?? null;
 }
 
@@ -27,6 +27,6 @@ export default async function SitePage({ params, searchParams }: { params: Promi
   const site = await load(slug);
   if (!site) notFound();
   // ?nv=1 = visita do próprio dono (não conta como visualização do cliente)
-  if (!(await searchParams).nv) await createClient().rpc("track_view", { p_slug: slug });
-  return <SiteRender c={site.content} preview={site.status === "previa"} expiresAt={site.expires_at} slug={slug} template={site.template} />;
+  const track = !(await searchParams).nv;
+  return <SiteRender c={site.content} preview={site.status === "previa"} expiresAt={site.expires_at} slug={slug} template={site.template} track={track} />;
 }

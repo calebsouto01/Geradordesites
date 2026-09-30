@@ -46,7 +46,7 @@ export default function Prospeccao() {
 
       <div className="panel" style={{ marginBottom: 22 }}>
         <h2 style={{ fontSize: 16 }}>Plano e créditos</h2>
-        <span className="mut">Plano Inicial · R$ 119/mês · 90 créditos. Cada busca custa 3 créditos e cada site gerado custa 3 créditos.</span>
+        <span className="mut">Plano Inicial · R$ 49,90/mês · 45 créditos. Cada busca custa 3 créditos e cada site gerado custa 3 créditos.</span>
       </div>
 
       <div className="panel" style={{ marginBottom: 22 }}>

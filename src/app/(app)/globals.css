@@ -341,3 +341,7 @@ details.extras { border:1px solid var(--line); border-radius:12px; padding:12px 
 .checks li { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; background:var(--bg2); border:1px solid var(--line); } .checks li > div { flex:1; display:flex; flex-direction:column; min-width:0; } .checks li span { font-size:13px; }
 .checks li i { font-style:normal; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:700; flex:none; background:var(--line2); color:var(--fg); }
 .checks li.ok i { background:var(--ok); color:#fff; } .checks li.warn { border-color:rgba(245,158,11,.5); } .checks li.warn i { background:var(--warn); color:#111; } .checks li.off { opacity:.8; }
+
+.who { display:flex; flex-direction:column; gap:6px; align-items:stretch; font-size:12px; } .who span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; }
+a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
+@media (max-width:760px){ .who { flex-direction:row; align-items:center; order:4; } .who span { display:none; } }

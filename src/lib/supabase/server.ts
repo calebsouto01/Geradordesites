@@ -1,8 +1,15 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-// Modo sem login: cliente anônimo, sem sessão.
-export const createClient = () =>
-  createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  );
+// Cliente com a sessão do usuário (cookies). Use nas rotas e páginas autenticadas.
+export async function createClient() {
+  const store = await cookies();
+  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    cookies: {
+      getAll: () => store.getAll(),
+      setAll(list) {
+        try { list.forEach(({ name, value, options }) => store.set(name, value, options)); } catch { /* Server Component: o proxy renova a sessão */ }
+      },
+    },
+  });
+}

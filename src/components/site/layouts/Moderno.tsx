@@ -1,7 +1,7 @@
 import { Acc, Footer, Heading, Nav, Rating, renderSections, stars, waLink, type Ctx } from "../shared";
 
 // Moderno: tecnológico. Impacto primeiro: números, serviços, passo a passo e planos.
-export default function Moderno({ c, photo }: Ctx) {
+export default function Moderno({ c, photo, slug }: Ctx) {
   const wa = waLink(c), b = c.business, ph = c.photos ?? [];
   const off = c.media?.hero ? 0 : 1;
   const heroImg = c.media?.hero ?? (ph.length ? photo(0) : null);
@@ -49,7 +49,7 @@ export default function Moderno({ c, photo }: Ctx) {
         ),
         faq: () => <section className="st-sec"><div className="st-wrap st-narrow"><Heading layout={L}>Perguntas frequentes</Heading><Acc c={c} /></div></section>,
       })}
-      <Footer c={c} />
+      <Footer c={c} slug={slug} />
     </div>
   );
 }

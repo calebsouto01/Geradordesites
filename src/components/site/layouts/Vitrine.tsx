@@ -5,7 +5,7 @@ const Wave = () => (
 );
 
 // Vitrine: divertido e comercial. Venda primeiro: serviços, promoção, cardápio e chamada para o WhatsApp.
-export default function Vitrine({ c, photo }: Ctx) {
+export default function Vitrine({ c, photo, slug }: Ctx) {
   const wa = waLink(c), b = c.business, ph = c.photos ?? [];
   const off = c.media?.hero ? 0 : 1;
   const heroImg = c.media?.hero ?? (ph.length ? photo(0) : null);
@@ -60,7 +60,7 @@ export default function Vitrine({ c, photo }: Ctx) {
         ),
         faq: () => <section className="st-sec vi-alt"><div className="st-wrap st-narrow"><Heading layout={L}>Perguntas frequentes</Heading><Acc c={c} /></div></section>,
       })}
-      <Footer c={c} />
+      <Footer c={c} slug={slug} />
       {wa && <div className="vi-sticky" data-sticky><a className="st-btn" href={wa} data-confetti>{c.hero.cta}</a></div>}
     </div>
   );

@@ -12,8 +12,8 @@ export function layoutOf(template: string, c: SiteContent): LayoutKey {
   return template in LAYOUTS ? (template as LayoutKey) : suggestLayout(c.business.category);
 }
 
-export default function SiteRender({ c, preview, expiresAt, slug, template, photoUrl }: {
-  c: SiteContent; preview: boolean; expiresAt?: string | null; slug: string; template: string; photoUrl?: (i: number) => string;
+export default function SiteRender({ c, preview, expiresAt, slug, template, photoUrl, track }: {
+  c: SiteContent; preview: boolean; expiresAt?: string | null; slug: string; template: string; photoUrl?: (i: number) => string; track?: boolean;
 }) {
   const t = { ...themeFromAccent(c.theme.accent), ...c.theme };
   const key = layoutOf(template, c);
@@ -27,9 +27,9 @@ export default function SiteRender({ c, preview, expiresAt, slug, template, phot
         </div>
       )}
       {preview && <div className="st-mark" aria-hidden>PRÉVIA</div>}
-      <Layout c={c} photo={photo} />
+      <Layout c={c} photo={photo} slug={slug} />
       {c.business.whatsapp && <a className="st-float" href={`https://wa.me/${c.business.whatsapp}`} aria-label="WhatsApp">WhatsApp</a>}
-      <SiteEffects layout={key} />
+      <SiteEffects layout={key} track={track ? slug : undefined} />
     </div>
   );
 }
