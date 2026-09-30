@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { allow, tooMany } from "@/lib/rate";
+import { allowUser, tooMany } from "@/lib/rate";
 import { fetchPlaceProfile } from "@/lib/site/places";
 import type { Profile } from "@/lib/site/types";
 
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "Faça login para continuar." }, { status: 401 });
-  if (!(await allow(supabase, "prefill", auth.user.id, 30, 60))) return tooMany();
+  if (!(await allowUser(supabase, "prefill", 30, 60))) return tooMany();
   const { data: lead } = await supabase.from("leads").select("*").eq("id", leadId).single();
   if (!lead) return NextResponse.json({ error: "Lead não encontrado." }, { status: 404 });
   const base: Profile = lead.profile ?? { name: lead.name, address: lead.address ?? undefined, phone: lead.phone ?? undefined };

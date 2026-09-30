@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAnonClient } from "@/lib/supabase/anon";
-import { allow, clientIp } from "@/lib/rate";
+import { allowIp } from "@/lib/rate";
 import type { SiteRow } from "@/lib/site/types";
 
 const WIDTHS = [480, 900, 1600];
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   if (!slug || !Number.isInteger(i) || i < 0 || i > 5 || !key) return new NextResponse(null, { status: 404 });
 
   const supabase = createAnonClient();
-  if (!(await allow(supabase, "photo", clientIp(request), 240, 60))) return new NextResponse(null, { status: 429 });
+  if (!(await allowIp(supabase, "photo", request, 240, 60))) return new NextResponse(null, { status: 429 });
   const { data } = await supabase.rpc("get_site", { p_slug: slug });
   const photo = (data as SiteRow | null)?.content.photos?.[i];
   if (!photo || !/^places\/[\w-]+\/photos\/[\w-]+$/.test(photo.name)) return new NextResponse(null, { status: 404 });

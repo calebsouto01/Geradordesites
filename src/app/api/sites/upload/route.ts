@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
 import { extractPalette } from "@/lib/site/palette";
-import { allow, tooMany } from "@/lib/rate";
+import { allowUser, tooMany } from "@/lib/rate";
 
 const TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 const MAX = 5 * 1024 * 1024;
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "Faça login para continuar." }, { status: 401 });
-  if (!(await allow(supabase, "upload", auth.user.id, 20, 60))) return tooMany();
+  if (!(await allowUser(supabase, "upload", 20, 60))) return tooMany();
 
   const body = await request.json().catch(() => null);
   const mediaType = String(body?.mediaType ?? "");

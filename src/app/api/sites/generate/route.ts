@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { allow, tooMany } from "@/lib/rate";
+import { allowUser, tooMany } from "@/lib/rate";
 import { generateContent, makeSlug } from "@/lib/site/generate";
 import { writeCopy } from "@/lib/site/copy";
 import { applyExtras } from "@/lib/site/sections";
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "Faça login para continuar." }, { status: 401 });
-  if (!(await allow(supabase, "generate", auth.user.id, 6, 60))) return tooMany();
+  if (!(await allowUser(supabase, "generate", 6, 60))) return tooMany();
   const { data: lead } = await supabase.from("leads").select("*").eq("id", leadId).single();
   if (!lead) return NextResponse.json({ error: "Lead não encontrado." }, { status: 404 });
 

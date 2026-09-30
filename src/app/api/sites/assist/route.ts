@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SKILL } from "@/lib/site/assistant/skill";
 import { createClient } from "@/lib/supabase/server";
-import { allow, tooMany } from "@/lib/rate";
+import { allowUser, tooMany } from "@/lib/rate";
 
 const MAX_TURNS = 12;
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "Faça login para continuar." }, { status: 401 });
-  if (!(await allow(supabase, "assist", auth.user.id, 20, 60))) return tooMany();
+  if (!(await allowUser(supabase, "assist", 20, 60))) return tooMany();
   const body = await request.json().catch(() => null);
   const messages: Msg[] = Array.isArray(body?.messages) ? body.messages.slice(-24) : [];
   const step = STEPS.includes(body?.step) ? (body.step as string) : "cliente";
