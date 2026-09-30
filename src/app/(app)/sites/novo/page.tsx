@@ -3,6 +3,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ImageSlot from "@/components/ImageSlot";
+import { uploadImage } from "@/lib/client/upload";
 import AssistantPanel, { type DraftSummary, type Step } from "@/components/site/AssistantPanel";
 import { generateContent, suggestLayout } from "@/lib/site/generate";
 import { themeFromAccent } from "@/lib/site/palette-client";
@@ -31,7 +33,7 @@ const WHAT: Record<SectionKey, string> = {
   numeros: "Nota, avaliações e anos de história (automático).", sobre: "Texto sobre o negócio. Aceita uma foto.", servicos: "Lista dos serviços ou produtos.",
   diferenciais: "Automático a partir dos dados; você pode escrever os seus.", comofunciona: "Passo a passo em 3 ou 4 etapas.", planos: "Planos e preços.",
   catalogo: "Cardápio ou catálogo. Aceita foto por item.", promo: "Uma promoção em destaque. Aceita imagem.", equipe: "Quem atende. Aceita foto por pessoa.",
-  galeria: "Fotos do espaço (as do Google entram ao gerar).", depoimentos: "Avaliações reais do Google.", faq: "Perguntas frequentes (automáticas).", cta: "Faixa para chamar no WhatsApp.", contato: "Endereço, horários e mapa.",
+  galeria: "Fotos do espaço (as do Google entram ao gerar).", depoimentos: "Avaliações reais do Google.", faq: "Perguntas frequentes (automáticas).", cta: "Faixa para chamar no WhatsApp.", formulario: "Visitantes enviam mensagem; ela chega no seu painel.", contato: "Endereço, horários e mapa.",
 };
 
 const emptyMedia = (): Media => ({ hero: "", sobre: "", promo: "", equipe: [], catalogo: [] });
@@ -51,7 +53,6 @@ const DEMO_PROFILE = {
 };
 
 const lines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
-const toBase64 = (f: File) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] ?? ""); r.onerror = rej; r.readAsDataURL(f); });
 
 const extrasOf = (d: Data, secs: SectionCfg[]) => ({
   years: Number(d.years) || undefined, steps: parsePairs(d.steps), differentials: parsePairs(d.differentials),
@@ -66,15 +67,6 @@ function Thumb({ k }: { k: LayoutKey }) {
     <div className={`thumb t-${k}`} aria-hidden>
       <i className="th-nav" /><i className="th-hero" /><b className="th-h" /><b className="th-p" />
       <span className="th-row"><i /><i /><i /></span>
-    </div>
-  );
-}
-
-function ImageSlot({ label, url, onFile, onClear, small }: { label: string; url?: string; onFile: (f: File) => void; onClear: () => void; small?: boolean }) {
-  return (
-    <div className={`imgslot ${small ? "sm" : ""}`}>
-      {url ? <div className="tb"><img src={url} alt="" /><button type="button" onClick={onClear} aria-label="Remover">✕</button></div> : null}
-      <label className="upl">{url ? "Trocar" : label}<input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onFile(f); }} /></label>
     </div>
   );
 }
@@ -137,15 +129,11 @@ export default function NovoSite() {
   }, [step, draft]);
 
   async function upload(file: File, kind: "logo" | "foto"): Promise<{ url: string; accent?: string } | null> {
-    setErr("");
-    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) { setErr("Envie uma imagem PNG, JPG ou WebP."); return null; }
-    if (file.size > 5 * 1024 * 1024) { setErr("A imagem deve ter até 5 MB."); return null; }
-    setBusy(true);
-    const res = await fetch("/api/sites/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, mediaType: file.type, data: await toBase64(file) }) });
-    const json = await res.json().catch(() => ({}));
+    setErr(""); setBusy(true);
+    const r = await uploadImage(file, kind);
     setBusy(false);
-    if (!res.ok) { setErr(json.error ?? "Erro ao enviar a imagem."); return null; }
-    return { url: json.url, accent: json.theme?.accent };
+    if (r.error || !r.url) { setErr(r.error ?? "Erro ao enviar a imagem."); return null; }
+    return { url: r.url, accent: r.accent };
   }
   const putSlot = async (f: File, apply: (url: string) => void) => { const r = await upload(f, "foto"); if (r) apply(r.url); };
   const setItem = (k: "equipe" | "catalogo", i: number, url: string) => setData((d) => { const a = [...d.media[k]]; a[i] = url; return { ...d, media: { ...d.media, [k]: a } }; });

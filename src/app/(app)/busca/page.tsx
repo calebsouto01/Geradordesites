@@ -9,6 +9,12 @@ type Result = {
   phone: string | null; rating: number | null; rating_count: number | null;
 };
 
+const score = (r: Result) => (r.rating ?? 0) * Math.log10((r.rating_count ?? 0) + 1);
+const prio = (r: Result) => {
+  const n = r.rating_count ?? 0, s = r.rating ?? 0;
+  return s >= 4.7 && n >= 100 ? { label: "alta", cls: "" } : s >= 4.5 && n >= 30 ? { label: "média", cls: "soon" } : { label: "baixa", cls: "late" };
+};
+
 export default function Buscar() {
   const supabase = createClient();
   const router = useRouter();
@@ -19,6 +25,7 @@ export default function Buscar() {
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState("");
   const [toast, setToast] = useState("");
+  const [next, setNext] = useState<{ token: string; params: { location: string; category: string; minRating: number } } | null>(null);
 
   const flash = (t: string) => { setToast(t); setTimeout(() => setToast(""), 2500); };
 
@@ -34,20 +41,27 @@ export default function Buscar() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function search(e: React.FormEvent) {
-    e.preventDefault();
+  async function run(params: { location: string; category: string; minRating: number }, pageToken?: string) {
     setBusy(true); setErr("");
     const res = await fetch("/api/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, minRating: Number(form.minRating) }),
+      body: JSON.stringify({ ...params, pageToken }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) setErr(json.error ?? "Erro na busca.");
-    else flash(json.found ? `${json.found} negócios sem site encontrados` : "Nenhum negócio novo sem site nesta busca");
+    else {
+      flash(json.found ? `${json.found} negócios sem site encontrados` : "Nenhum negócio novo sem site nesta busca");
+      setNext(json.nextPageToken ? { token: json.nextPageToken, params } : null);
+    }
     await load();
     router.refresh();
     setBusy(false);
+  }
+
+  function search(e: React.FormEvent) {
+    e.preventDefault();
+    return run({ ...form, minRating: Number(form.minRating) });
   }
 
   async function promote(r: Result) {
@@ -90,9 +104,9 @@ export default function Buscar() {
 
       <div className="grid">
         {busy && [0, 1, 2].map((i) => <div key={i} className="skel" />)}
-        {results.map((r) => (
+        {[...results].sort((a, b) => score(b) - score(a)).map((r) => (
           <article key={r.id} className="rcard">
-            <span className="badge">Sem site</span>
+            <span className="row" style={{ gap: 6 }}><span className="badge">Sem site</span><span className={`badge ${prio(r).cls}`} title="Prioridade estimada pela nota e pelo nº de avaliações">Prioridade {prio(r).label}</span></span>
             <h3>{r.name}</h3>
             <div className="rating">
               <Stars value={r.rating} />
@@ -107,6 +121,12 @@ export default function Buscar() {
           </article>
         ))}
       </div>
+
+      {next && !busy && (
+        <div style={{ textAlign: "center", marginTop: 18 }}>
+          <button className="ghost" disabled={(remaining ?? 0) < 3} onClick={() => run(next.params, next.token)}>Ver mais resultados desta busca · 3 créditos</button>
+        </div>
+      )}
 
       {loaded && !busy && !results.length && (
         <div className="empty">

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { LayoutKey, SectionKey, SiteContent } from "@/lib/site/types";
 import { differentialsOf, hasData, numbersOf, resolveSections } from "@/lib/site/sections";
+import LeadForm from "./LeadForm";
 
 export type Ctx = { c: SiteContent; photo: (i: number) => string; slug?: string };
 
@@ -136,6 +137,14 @@ export function Equipe({ c, layout }: G) {
   );
 }
 
+export function Formulario({ layout, slug }: G & { slug?: string }) {
+  return (
+    <Sec><Heading layout={layout} eyebrow="Fale conosco">Envie uma mensagem</Heading>
+      <div className="sx-formwrap" data-rv><LeadForm slug={slug ?? "rascunho"} /></div>
+    </Sec>
+  );
+}
+
 export function CtaBand({ c }: G) {
   const wa = waLink(c);
   return (
@@ -168,12 +177,12 @@ export function Contato({ c, layout }: G) {
 }
 
 // Percorre as seções na ordem do layout (ou do usuário), pulando as desligadas e as sem dados.
-export function renderSections(c: SiteContent, layout: LayoutKey, custom: Partial<Record<SectionKey, () => ReactNode>>) {
+export function renderSections(c: SiteContent, layout: LayoutKey, custom: Partial<Record<SectionKey, () => ReactNode>>, slug?: string) {
   const generic: Partial<Record<SectionKey, () => ReactNode>> = {
     numeros: () => <Numeros c={c} layout={layout} />, diferenciais: () => <Diferenciais c={c} layout={layout} />,
     comofunciona: () => <ComoFunciona c={c} layout={layout} />, planos: () => <Planos c={c} layout={layout} />,
     catalogo: () => <Catalogo c={c} layout={layout} />, promo: () => <Promo c={c} layout={layout} />,
-    equipe: () => <Equipe c={c} layout={layout} />, cta: () => <CtaBand c={c} layout={layout} />, contato: () => <Contato c={c} layout={layout} />,
+    equipe: () => <Equipe c={c} layout={layout} />, formulario: () => <Formulario c={c} layout={layout} slug={slug} />, cta: () => <CtaBand c={c} layout={layout} />, contato: () => <Contato c={c} layout={layout} />,
   };
   return resolveSections(c, layout)
     .filter((s) => s.on && hasData(s.key, c))

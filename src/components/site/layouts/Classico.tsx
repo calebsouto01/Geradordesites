@@ -54,7 +54,7 @@ export default function Classico({ c, photo, slug }: Ctx) {
           </div></section>
         ),
         faq: () => <section className="st-sec"><div className="st-wrap st-narrow"><Heading layout={L} eyebrow="Dúvidas">Perguntas frequentes</Heading><Acc c={c} /></div></section>,
-      })}
+      }, slug)}
       <Footer c={c} slug={slug} />
     </div>
   );

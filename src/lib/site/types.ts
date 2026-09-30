@@ -1,6 +1,6 @@
 export type LayoutKey = "classico" | "moderno" | "vitrine";
 
-export type SectionKey = "numeros" | "sobre" | "servicos" | "diferenciais" | "comofunciona" | "planos" | "catalogo" | "promo" | "equipe" | "galeria" | "depoimentos" | "faq" | "cta" | "contato";
+export type SectionKey = "numeros" | "sobre" | "servicos" | "diferenciais" | "comofunciona" | "planos" | "catalogo" | "promo" | "equipe" | "galeria" | "depoimentos" | "faq" | "cta" | "formulario" | "contato";
 export type SectionCfg = { key: SectionKey; on: boolean };
 export type PriceItem = { name: string; price: string; text: string };
 
@@ -47,7 +47,7 @@ export type SiteContent = {
 };
 
 export type SiteRow = {
-  id: number; lead_id: number; slug: string; status: "previa" | "publicado"; template: string;
+  id: number; lead_id: number; slug: string; status: "previa" | "publicado" | "bloqueado"; template: string;
   content: SiteContent; expires_at: string | null; views: number;
   first_viewed_at: string | null; last_viewed_at: string | null;
 };

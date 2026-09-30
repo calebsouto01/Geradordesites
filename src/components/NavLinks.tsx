@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  ["/", "Prospecção", "◎", "Início"],
+  ["/", "Início", "◎", "Início"],
   ["/busca", "Busca", "⌕", "Busca"],
   ["/sites", "Criar site", "✦", "Sites"],
   ["/funil", "Funil", "▦", "Funil"],

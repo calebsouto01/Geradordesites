@@ -48,7 +48,7 @@ export default function Moderno({ c, photo, slug }: Ctx) {
           </div></section>
         ),
         faq: () => <section className="st-sec"><div className="st-wrap st-narrow"><Heading layout={L}>Perguntas frequentes</Heading><Acc c={c} /></div></section>,
-      })}
+      }, slug)}
       <Footer c={c} slug={slug} />
     </div>
   );

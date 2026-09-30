@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   const location = String(body?.location ?? "").trim();
   const category = String(body?.category ?? "").trim();
   const minRating = Number(body?.minRating);
+  const pageToken = typeof body?.pageToken === "string" && body.pageToken.length < 2000 ? body.pageToken : undefined;
   if (!location || !category || !(minRating >= 0 && minRating <= 5) || location.length > 120 || category.length > 120) {
     return NextResponse.json({ error: "Parâmetros inválidos." }, { status: 400 });
   }
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": process.env.GOOGLE_PLACES_API_KEY!,
       "X-Goog-FieldMask":
-        "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri",
+        "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,nextPageToken",
     },
     body: JSON.stringify({
       textQuery: `${category} em ${location}`,
@@ -55,12 +56,13 @@ export async function POST(request: Request) {
       regionCode: "BR",
       minRating,
       pageSize: 20,
+      ...(pageToken ? { pageToken } : {}),
     }),
   });
   if (!res.ok) {
     return NextResponse.json({ error: "Falha ao consultar o Google.", remaining }, { status: 502 });
   }
-  const { places = [] } = (await res.json()) as { places?: Place[] };
+  const { places = [], nextPageToken } = (await res.json()) as { places?: Place[]; nextPageToken?: string };
 
   const rows = places
     .filter((p) => !p.websiteUri && (p.rating ?? 0) >= minRating)
@@ -77,5 +79,5 @@ export async function POST(request: Request) {
   if (rows.length) {
     await supabase.from("search_results").upsert(rows, { onConflict: "user_id,place_id", ignoreDuplicates: true });
   }
-  return NextResponse.json({ remaining, found: rows.length });
+  return NextResponse.json({ remaining, found: rows.length, nextPageToken: nextPageToken ?? null });
 }

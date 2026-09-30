@@ -59,7 +59,7 @@ export default function Vitrine({ c, photo, slug }: Ctx) {
           </div></section>
         ),
         faq: () => <section className="st-sec vi-alt"><div className="st-wrap st-narrow"><Heading layout={L}>Perguntas frequentes</Heading><Acc c={c} /></div></section>,
-      })}
+      }, slug)}
       <Footer c={c} slug={slug} />
       {wa && <div className="vi-sticky" data-sticky><a className="st-btn" href={wa} data-confetti>{c.hero.cta}</a></div>}
     </div>

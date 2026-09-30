@@ -3,16 +3,16 @@ import type { LayoutKey, SectionCfg, SectionKey, SiteContent } from "./types";
 export const SECTION_LABELS: Record<SectionKey, string> = {
   numeros: "Números em destaque", sobre: "Sobre", servicos: "Serviços", diferenciais: "Diferenciais", comofunciona: "Como funciona",
   planos: "Planos e preços", catalogo: "Cardápio / catálogo", promo: "Promoção", equipe: "Equipe", galeria: "Galeria de fotos",
-  depoimentos: "Depoimentos", faq: "Perguntas frequentes", cta: "Chamada para o WhatsApp", contato: "Contato e mapa",
+  depoimentos: "Depoimentos", faq: "Perguntas frequentes", cta: "Chamada para o WhatsApp", formulario: "Formulário de contato", contato: "Contato e mapa",
 };
 
-export const ALL_SECTIONS: SectionKey[] = ["numeros", "sobre", "servicos", "diferenciais", "comofunciona", "planos", "catalogo", "promo", "equipe", "galeria", "depoimentos", "faq", "cta", "contato"];
+export const ALL_SECTIONS: SectionKey[] = ["numeros", "sobre", "servicos", "diferenciais", "comofunciona", "planos", "catalogo", "promo", "equipe", "galeria", "depoimentos", "faq", "cta", "formulario", "contato"];
 
 // Ordem padrão de cada layout: cada um conta a história do negócio de um jeito.
 const ORDER: Record<LayoutKey, SectionKey[]> = {
-  classico: ["sobre", "diferenciais", "servicos", "equipe", "planos", "depoimentos", "galeria", "faq", "contato"],
-  moderno: ["numeros", "sobre", "servicos", "comofunciona", "planos", "galeria", "depoimentos", "faq", "contato"],
-  vitrine: ["servicos", "promo", "catalogo", "cta", "galeria", "depoimentos", "sobre", "faq", "contato"],
+  classico: ["sobre", "diferenciais", "servicos", "equipe", "planos", "depoimentos", "galeria", "faq", "formulario", "contato"],
+  moderno: ["numeros", "sobre", "servicos", "comofunciona", "planos", "galeria", "depoimentos", "faq", "formulario", "contato"],
+  vitrine: ["servicos", "promo", "catalogo", "cta", "galeria", "depoimentos", "sobre", "faq", "formulario", "contato"],
 };
 
 export function defaultSections(layout: LayoutKey): SectionCfg[] {
@@ -67,6 +67,7 @@ export function hasData(key: SectionKey, c: SiteContent): boolean {
     case "depoimentos": return c.reviews.items.length > 0;
     case "faq": return Boolean(c.faq?.length);
     case "cta": return Boolean(c.business.whatsapp);
+    case "formulario": return true;
     case "contato": return true;
   }
 }

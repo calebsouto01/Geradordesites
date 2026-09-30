@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const STAGES = [
@@ -71,6 +71,17 @@ export default function Funil() {
     try { await navigator.clipboard.writeText(text); flash("Mensagem copiada"); } catch { flash(text); }
   }
 
+  function exportCsv() {
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const head = ["Nome", "Telefone", "Origem", "Etapa", "Valor estimado", "Responsável", "Próximo contato", "Motivo da perda"];
+    const rows = leads.map((l) => [l.name, l.phone, l.origin, STAGES.find(([k]) => k === l.stage)?.[1] ?? l.stage, l.estimated_value, l.owner, l.next_contact, l.lost_reason]);
+    const csv = "\uFEFF" + [head, ...rows].map((r) => r.map(esc).join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
   async function createDemo() {
     const { error } = await supabase.from("leads").insert({
       name: DEMO_PROFILE.name, phone: DEMO_PROFILE.phone, address: DEMO_PROFILE.address, profile: DEMO_PROFILE, origin: "Caso de teste",
@@ -94,31 +105,14 @@ export default function Funil() {
     await supabase.from("leads").update(changes).eq("id", id);
   }
 
-  const stats = useMemo(() => {
-    const active = leads.filter((l) => !["fechado", "perdido"].includes(l.stage));
-    const won = leads.filter((l) => l.stage === "fechado");
-    const sum = (a: Lead[]) => a.reduce((s, l) => s + (l.estimated_value ?? 0), 0);
-    const closed = won.length + leads.filter((l) => l.stage === "perdido").length;
-    return {
-      active: active.length, pipeline: sum(active), won: sum(won),
-      rate: closed ? Math.round((won.length / closed) * 100) : null,
-    };
-  }, [leads]);
-
   return (
     <>
       <div className="pagehead">
         <h1>Funil de vendas</h1>
         <span className="mut">Arraste os cards entre as etapas ou use o menu do card.</span>
-        <div style={{ marginTop: 10 }}><button className="ghost sm" onClick={createDemo}>+ Criar caso de teste (fictício)</button></div>
+        <div className="row" style={{ marginTop: 10 }}><button className="ghost sm" onClick={createDemo}>+ Criar caso de teste (fictício)</button><button className="ghost sm" onClick={exportCsv} disabled={!leads.length}>Exportar CSV</button></div>
       </div>
 
-      <div className="stats">
-        <div className="stat"><div className="mut">Leads ativos</div><div className="n">{stats.active}</div></div>
-        <div className="stat"><div className="mut">Valor em aberto</div><div className="n">{brl(stats.pipeline)}</div></div>
-        <div className="stat"><div className="mut">Vendas fechadas</div><div className="n" style={{ color: "var(--ok)" }}>{brl(stats.won)}</div></div>
-        <div className="stat"><div className="mut">Taxa de fechamento</div><div className="n">{stats.rate === null ? "—" : `${stats.rate}%`}</div></div>
-      </div>
 
       {loaded && !leads.length && (
         <div className="empty">
