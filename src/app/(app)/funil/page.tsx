@@ -170,10 +170,10 @@ export default function Funil() {
                   )}
                   <div className="row" style={{ marginTop: 8, gap: 6, flexWrap: "wrap" }}>
                     {l.stage === "novo" && <button className="sm" onClick={() => patch(l.id, { stage: "contato_iniciado" })}>Contato feito →</button>}
-                    {["novo", "contato_iniciado"].includes(l.stage) && !sites[l.id] && (
-                      <Link href={`/sites/novo?lead=${l.id}`}><button className={l.stage === "novo" ? "ghost sm" : "sm"}>Gerar site · 3 créditos</button></Link>
+                    {l.stage === "contato_iniciado" && !sites[l.id] && (
+                      <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>
                     )}
-                    {["novo", "contato_iniciado"].includes(l.stage) && sites[l.id] && (
+                    {l.stage === "contato_iniciado" && sites[l.id] && (
                       <button className="sm" onClick={() => patch(l.id, { stage: "qualificado" })}>Site pronto → encaminhar proposta</button>
                     )}
                     {l.stage === "qualificado" && !sites[l.id] && <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>}
@@ -184,7 +184,7 @@ export default function Funil() {
                         <button className="ghost sm" onClick={() => { patch(l.id, { stage: "perdido" }); setOpen(l.id); }}>Não vendeu</button>
                       </>
                     )}
-                    {sites[l.id] && (
+                    {l.stage !== "novo" && sites[l.id] && (
                       <>
                         <Link href={`/sites/${sites[l.id].id}`}><button className="ghost sm">Editar site</button></Link>
                         <a href={`/p/${sites[l.id].slug}?nv=1`} target="_blank" rel="noreferrer"><button className="ghost sm">Prévia</button></a>
@@ -192,7 +192,7 @@ export default function Funil() {
                       </>
                     )}
                   </div>
-                  {sites[l.id] && (
+                  {l.stage !== "novo" && sites[l.id] && (
                     <div className="mut" style={{ marginTop: 6 }}>
                       {sites[l.id].status === "publicado" ? "Publicado" : "Prévia"} ·{" "}
                       {sites[l.id].views ? `👁 ${sites[l.id].views}× (último: ${new Date(sites[l.id].last_viewed_at!).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })})` : "ainda não visualizado"}
