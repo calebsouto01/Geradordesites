@@ -22,8 +22,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <ThemeToggle />
         <Link href="/plano" className={`quota ${level}`} title="Plano e créditos">
           <span className="mut">Créditos</span>
-          <b>{credits ?? 0}</b>
-          <span className="mut">ver plano</span>
+          <b>{(credits ?? 0) >= 100000 ? "∞" : credits ?? 0}</b>
+          <span className="mut">{(credits ?? 0) >= 100000 ? "acesso livre" : "ver plano"}</span>
         </Link>
         <div className="who">
           <span className="mut" title={auth.user.email ?? ""}>{auth.user.email}</span>
