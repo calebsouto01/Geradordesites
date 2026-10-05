@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import ImageSlot from "@/components/ImageSlot";
 import { uploadImage } from "@/lib/client/upload";
 import AssistantPanel, { type DraftSummary, type Step } from "@/components/site/AssistantPanel";
+import { cleanMapsUrl } from "@/lib/site/maps";
 import { generateContent, suggestLayout } from "@/lib/site/generate";
 import { themeFromAccent } from "@/lib/site/palette-client";
 import { ALL_SECTIONS, SECTION_LABELS, applyExtras, defaultSections, hasData, parsePairs, parsePrices, parseTeam } from "@/lib/site/sections";
@@ -84,7 +85,7 @@ export default function NovoSite() {
   const [mode, setMode] = useState<"lista" | "manual">("lista");
   const [q, setQ] = useState("");
   const [leadId, setLeadId] = useState<number | null>(null);
-  const [manual, setManual] = useState({ name: "", category: "", phone: "", address: "" });
+  const [manual, setManual] = useState({ name: "", category: "", phone: "", address: "", maps: "" });
   const [base, setBase] = useState<Profile | null>(null);
   const [data, setData] = useState<Data>(EMPTY);
   const [auto, setAuto] = useState({ about: "", servicos: "" });
@@ -165,7 +166,9 @@ export default function NovoSite() {
       else {
         if (!manual.name.trim()) return setErr("Informe o nome do negócio.");
         setBusy(true);
-        const profile = { name: manual.name.trim(), category: manual.category.trim() || undefined, address: manual.address.trim() || undefined, phone: manual.phone.trim() || undefined };
+        const maps = cleanMapsUrl(manual.maps);
+        if (manual.maps.trim() && !maps) return setErr("O link precisa ser do Google Maps.");
+        const profile = { name: manual.name.trim(), category: manual.category.trim() || undefined, address: manual.address.trim() || undefined, phone: manual.phone.trim() || undefined, mapsUrl: maps ?? undefined };
         const { data: row, error } = await supabase.from("leads").insert({ name: profile.name, phone: profile.phone ?? null, address: profile.address ?? null, origin: "Cadastro manual", profile }).select("id").single();
         setBusy(false);
         if (error || !row) return setErr("Não foi possível cadastrar o cliente.");
@@ -290,6 +293,7 @@ export default function NovoSite() {
                   <label className="f">Categoria<input placeholder="Ex.: academia, salão, clínica" value={manual.category} onChange={(e) => setManual({ ...manual, category: e.target.value })} /></label>
                   <label className="f">Telefone / WhatsApp<input inputMode="tel" placeholder="(85) 90000-0000" value={manual.phone} onChange={(e) => setManual({ ...manual, phone: e.target.value })} /></label>
                   <label className="f">Endereço<input value={manual.address} onChange={(e) => setManual({ ...manual, address: e.target.value })} /></label>
+                  <label className="f">Link do Google Maps<input type="url" inputMode="url" placeholder="https://maps.app.goo.gl/..." value={manual.maps} onChange={(e) => setManual({ ...manual, maps: e.target.value })} /></label>
                 </div>
               )}
             </div>

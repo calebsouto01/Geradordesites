@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { cleanMapsUrl } from "@/lib/site/maps";
 import CallPanel, { type CallLead, type CallResult } from "@/components/CallPanel";
 
 const STAGES = [
@@ -53,7 +54,7 @@ export default function Funil() {
   const [sbw, setSbw] = useState(0);
   const [calling, setCalling] = useState<Lead | null>(null);
   const [registering, setRegistering] = useState(false);
-  const [form, setForm] = useState({ name: "", category: "", phone: "", address: "" });
+  const [form, setForm] = useState({ name: "", category: "", phone: "", address: "", maps: "" });
   const [answering, setAnswering] = useState<Lead | null>(null);
   const [answer, setAnswer] = useState({ kind: "venda" as "venda" | "sem" | "pensando", value: "", reason: "", date: "" });
   const [busyLead, setBusyLead] = useState<number | null>(null);
@@ -158,12 +159,14 @@ export default function Funil() {
     e.preventDefault();
     const name = form.name.trim();
     if (!name) return flash("Informe o nome do negócio.");
-    const profile = { name, category: form.category.trim() || undefined, address: form.address.trim() || undefined, phone: form.phone.trim() || undefined };
+    const maps = cleanMapsUrl(form.maps);
+    if (form.maps.trim() && !maps) return flash("O link precisa ser do Google Maps.");
+    const profile = { name, category: form.category.trim() || undefined, address: form.address.trim() || undefined, phone: form.phone.trim() || undefined, mapsUrl: maps ?? undefined };
     const { error } = await supabase.from("leads").insert({ name, phone: profile.phone ?? null, address: profile.address ?? null, origin: "Cadastro manual", profile });
     if (error) return flash(error.message);
     const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
     setLeads((data as Lead[]) ?? []);
-    setForm({ name: "", category: "", phone: "", address: "" }); setRegistering(false);
+    setForm({ name: "", category: "", phone: "", address: "", maps: "" }); setRegistering(false);
     board.current?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     flash("Cliente cadastrado em A contatar");
   }
@@ -290,6 +293,7 @@ export default function Funil() {
               <label className="f">Categoria<input placeholder="Ex.: academia, salão, clínica" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
               <label className="f">Telefone / WhatsApp<input inputMode="tel" placeholder="(85) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
               <label className="f">Endereço<input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></label>
+              <label className="f">Link do Google Maps<input type="url" inputMode="url" placeholder="https://maps.app.goo.gl/..." value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} /></label>
               <button>Cadastrar cliente</button>
             </div>
           </form>
