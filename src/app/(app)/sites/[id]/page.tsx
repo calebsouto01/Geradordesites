@@ -82,7 +82,11 @@ export default function EditarSite({ params }: { params: Promise<{ id: string }>
   async function publish() {
     if (!(await save(true))) return flash("Erro ao publicar");
     const { error } = await supabase.from("sites").update({ status: "publicado", expires_at: null }).eq("id", id);
-    if (!error) setSite({ ...site!, status: "publicado" });
+    if (!error) {
+      setSite({ ...site!, status: "publicado" });
+      // Prévia/site publicado: o lead segue para "Encaminhar proposta" no funil.
+      await supabase.from("leads").update({ stage: "qualificado" }).eq("id", site!.lead_id).in("stage", ["novo", "contato_iniciado"]);
+    }
     flash(error ? "Erro ao publicar" : "Site publicado");
   }
 

@@ -128,6 +128,12 @@ export default function Funil() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
+  // Lead com site criado não fica em "A contatar" nem em "Contato iniciado": vai para "Encaminhar proposta".
+  useEffect(() => {
+    leads.filter((l) => ["novo", "contato_iniciado"].includes(l.stage) && sites[l.id]).forEach((l) => patch(l.id, { stage: "qualificado" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leads, sites]);
+
   async function patch(id: number, changes: Partial<Lead>) {
     setLeads((l) => l.map((x) => (x.id === id ? { ...x, ...changes } : x)));
     await supabase.from("leads").update(changes).eq("id", id);
@@ -246,7 +252,7 @@ export default function Funil() {
           );
         })}
       </div>
-      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
+      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
       {toast && <div className="toast">{toast}</div>}
     </>
   );

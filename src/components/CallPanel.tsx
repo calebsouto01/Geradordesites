@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import CallTree from "@/components/CallTree";
 import { KEYS, SCRIPTS, type ScriptKey } from "@/lib/scripts/data";
@@ -30,7 +31,7 @@ const CHANNELS: { id: CallChannel; label: string; icon: string }[] = [
 ];
 
 // Script de contato por cima do funil: dados do lead, canal (ligação, WhatsApp, e-mail) e encerramento do contato.
-export default function CallPanel({ lead, siteSlug, onClose, onFinish }: { lead: CallLead; siteSlug?: string | null; onClose: () => void; onFinish: (r: CallResult) => void }) {
+export default function CallPanel({ lead, siteSlug, siteId, onClose, onFinish }: { lead: CallLead; siteSlug?: string | null; siteId?: number | null; onClose: () => void; onFinish: (r: CallResult) => void }) {
   const [channel, setChannel] = useState<CallChannel>("ligacao");
   const [script, setScript] = useState<ScriptKey>(1);
   const state = useRef<{ key: ScriptKey; path: string[] }>({ key: 1, path: [] });
@@ -77,9 +78,10 @@ export default function CallPanel({ lead, siteSlug, onClose, onFinish }: { lead:
             )}
           </div>
           <div className="callactions">
+            <Link href={siteId ? `/sites/${siteId}` : `/sites/novo?lead=${lead.id}`}><button className="ghost sm">{siteId ? "Editar site" : "✦ Criar site"}</button></Link>
             <button className="sm" onClick={() => setEnding(true)}>Encerrar contato</button>
-            <button className="iconbtn" onClick={onClose} aria-label="Fechar">✕</button>
           </div>
+          <button className="iconbtn callclose" onClick={onClose} aria-label="Fechar">✕</button>
         </div>
 
         <div className="chantabs" role="tablist" aria-label="Canal de contato">
