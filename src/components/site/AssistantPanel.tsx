@@ -28,12 +28,28 @@ export default function AssistantPanel({ step, draft, open, onToggle }: { step: 
   const last = useRef<Step | null>(null);
   const draftRef = useRef(draft);
   draftRef.current = draft;
+  const msgsRef = useRef<Msg[]>([]);
+  msgsRef.current = msgs;
 
-  // Cada etapa começa com uma orientação do assistente.
+  async function ask(history: Msg[], entered: boolean, fallbackText: string) {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/sites/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: history, step, draft: draftRef.current, entered }) });
+      const json = await res.json().catch(() => ({}));
+      return typeof json.reply === "string" && json.reply ? json.reply : fallbackText;
+    } catch { return fallbackText; } finally { setBusy(false); }
+  }
+
+  // Cada etapa começa com uma orientação da IA com base no rascunho; o texto fixo só entra se a IA não responder.
   useEffect(() => {
     if (last.current === step) return;
     last.current = step;
-    setMsgs((m) => [...m, { role: "assistant", text: GUIDE[step](draftRef.current) }]);
+    const base = msgsRef.current;
+    (async () => {
+      const reply = await ask(base, true, GUIDE[step](draftRef.current));
+      setMsgs((m) => [...m, { role: "assistant", text: reply }]);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy, open]);
@@ -43,11 +59,9 @@ export default function AssistantPanel({ step, draft, open, onToggle }: { step: 
     const t = text.trim();
     if (!t || busy) return;
     const next = [...msgs, { role: "user" as const, text: t }];
-    setMsgs(next); setText(""); setBusy(true);
-    const res = await fetch("/api/sites/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: next, step, draft }) });
-    const json = await res.json().catch(() => ({}));
-    setBusy(false);
-    setMsgs([...next, { role: "assistant", text: json.reply ?? "Não consegui responder agora. Siga com as etapas ao lado." }]);
+    setMsgs(next); setText("");
+    const reply = await ask(next, false, "Não consegui responder agora. Siga com as etapas ao lado.");
+    setMsgs([...next, { role: "assistant", text: reply }]);
   }
 
   return (

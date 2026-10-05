@@ -26,6 +26,20 @@ function fallback(step: string, d: Draft) {
   return "Confira a lista completa. O que estiver com aviso não vai aparecer no site ou pode ficar melhor. Estando bom, gere o site (3 créditos).";
 }
 
+// A API exige começar com "user" e alternar papéis: descarta as saudações fixas do início e funde mensagens seguidas.
+function toApi(history: Msg[], entered: boolean, step: string, draft: Draft, turns: number) {
+  const list = history.slice(-10).map((m) => ({ role: m.role, content: String(m.text).slice(0, 2000) }));
+  while (list.length && list[0].role !== "user") list.shift();
+  const state = `Estado do sistema: ${JSON.stringify({ etapa: step, rascunho: draft, turno: turns })}`;
+  if (entered) list.push({ role: "user", content: `${state}\n\n(O usuário acabou de entrar na etapa "${step}". Oriente-o agora, de forma curta e específica ao rascunho, sem repetir o que já foi dito.)` });
+  else if (list.length) list[list.length - 1] = { role: "user", content: `${state}\n\nMensagem do usuário: ${list[list.length - 1].content}` };
+  return list.reduce<{ role: "user" | "assistant"; content: string }[]>((acc, m) => {
+    const prev = acc[acc.length - 1];
+    if (prev && prev.role === m.role) prev.content += `\n\n${m.content}`; else acc.push(m);
+    return acc;
+  }, []);
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
@@ -35,20 +49,19 @@ export async function POST(request: Request) {
   const messages: Msg[] = Array.isArray(body?.messages) ? body.messages.slice(-24) : [];
   const step = STEPS.includes(body?.step) ? (body.step as string) : "cliente";
   const draft: Draft = typeof body?.draft === "object" && body.draft ? body.draft : {};
+  const entered = body?.entered === true;
   const turns = messages.filter((m) => m.role === "user").length;
   if (turns > MAX_TURNS) return NextResponse.json({ reply: "Já conversamos bastante. Siga com as etapas ao lado e gere o site quando estiver pronto.", pronto_para_gerar: step === "revisao" });
 
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key || !messages.length) return NextResponse.json({ reply: fallback(step, draft), pronto_para_gerar: false });
+  if (!key || (!messages.length && !entered)) return NextResponse.json({ reply: fallback(step, draft), pronto_para_gerar: false });
 
   try {
     const client = new Anthropic({ apiKey: key });
     const res = await client.messages.create({
       model: "claude-sonnet-5-5", max_tokens: 600, system: SKILL,
       output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-      messages: [
-        ...messages.slice(-10).map((m, i, a) => ({ role: m.role, content: i === a.length - 1 && m.role === "user" ? `Estado do sistema: ${JSON.stringify({ etapa: step, rascunho: draft, turno: turns })}\n\nMensagem do usuário: ${m.text}` : m.text })),
-      ],
+      messages: toApi(messages, entered, step, draft, turns),
     } as never);
     const block = (res as { content: { type: string; text?: string }[] }).content.find((b) => b.type === "text");
     const out = JSON.parse(block?.text ?? "{}");
