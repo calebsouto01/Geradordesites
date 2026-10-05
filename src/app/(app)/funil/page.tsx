@@ -143,6 +143,16 @@ export default function Funil() {
     a.click(); URL.revokeObjectURL(a.href);
   }
 
+  async function removeLead(l: Lead) {
+    if (!window.confirm(`Excluir "${l.name}"? O site e o histórico de ligações desse contato também serão apagados.`)) return;
+    const { error } = await supabase.from("leads").delete().eq("id", l.id);
+    if (error) return flash("Não foi possível excluir o contato.");
+    setLeads((all) => all.filter((x) => x.id !== l.id));
+    setOpen((o) => (o === l.id ? null : o));
+    loadSites();
+    flash("Contato excluído");
+  }
+
   // Cadastro de cliente: só os dados que o sistema usa (nome, categoria, telefone e endereço).
   async function saveClient(e: React.FormEvent) {
     e.preventDefault();
@@ -213,9 +223,12 @@ export default function Funil() {
                   onDragStart={() => setDragId(l.id)} onDragEnd={() => { setDragId(null); setOver(null); }}>
                   <div className="top">
                     <strong>{l.name}</strong>
-                    <button className="iconbtn" aria-label="Detalhes" onClick={() => setOpen(open === l.id ? null : l.id)}>
-                      {open === l.id ? "▴" : "▾"}
-                    </button>
+                    <span className="row" style={{ gap: 0, flex: "none" }}>
+                      <button className="iconbtn" aria-label="Excluir contato" title="Excluir contato" onClick={() => removeLead(l)}>🗑</button>
+                      <button className="iconbtn" aria-label="Detalhes" onClick={() => setOpen(open === l.id ? null : l.id)}>
+                        {open === l.id ? "▴" : "▾"}
+                      </button>
+                    </span>
                   </div>
                   <div className="meta">
                     {l.estimated_value ? <b>{brl(l.estimated_value)}</b> : <span className="mut">Sem valor</span>}
