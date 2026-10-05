@@ -442,3 +442,11 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 
 .callactions { flex-direction:column; align-items:stretch; margin-right:30px; } .callactions a button, .callactions > button { width:100%; white-space:nowrap; }
 .callclose { position:absolute; top:10px; right:10px; z-index:2; }
+
+/* funil: barra de rolagem horizontal sempre visível (o quadro tem altura própria, não depende do fim da página) */
+@media (min-width:861px){
+  .board { max-height:calc(100vh - 230px); overflow:auto; scrollbar-width:auto; scrollbar-color:var(--line2) var(--bg2); padding-bottom:6px; }
+  .board::-webkit-scrollbar { height:12px; width:12px; } .board::-webkit-scrollbar-track { background:var(--bg2); border-radius:99px; }
+  .board::-webkit-scrollbar-thumb { background:var(--line2); border-radius:99px; border:2px solid var(--bg2); } .board::-webkit-scrollbar-thumb:hover { background:var(--mut); }
+  .col h3 { position:sticky; top:0; z-index:2; background:var(--bg2); padding:8px 4px 6px; margin:-6px 0 6px; }
+}
