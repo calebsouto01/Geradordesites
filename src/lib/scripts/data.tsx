@@ -271,10 +271,113 @@ const FLOW_2: FlowItem[] = [
   { t: "branch", items: [{ id: "ganhou", kind: "good" }, { id: "perdido", kind: "bad" }] },
 ];
 
+/* ---------- Opção 3: retorno de ligação (o cliente já foi contatado ou recebeu a prévia) ---------- */
+export const NODES_3: Record<string, Node> = {
+  ...SHARED,
+  abertura3: {
+    badge: "Retomada · passo 1",
+    title: "Retomando a conversa",
+    script: (
+      <>
+        <p>“Oi, [nome do contato]? Aqui é [seu nome], da [sua empresa]. A gente conversou [dia] sobre o site da [negócio] e você pediu pra eu retornar hoje. Peguei num bom momento?”</p>
+      </>
+    ),
+    tip: "Comece lembrando o combinado: quem pediu o retorno foi o cliente. Isso tira a cara de “ligação de vendedor”.",
+    next: [
+      { label: "Pode falar", to: "retomada" },
+      { label: "Atendeu a recepção", to: "atendente3" },
+      { label: "“Não lembro de você”", to: "lembrar" },
+      { label: "“Não é um bom momento”", to: "no_time" },
+    ],
+  },
+  atendente3: {
+    badge: "Atendente · chegar ao responsável",
+    title: "Falando com a recepção",
+    script: <p>“Oi, tudo bem? Aqui é [seu nome]. Estou retornando um contato com o [nome do dono] sobre o site da [negócio]. Ele está por aí? Se não estiver, qual o melhor horário pra eu encontrá-lo?”</p>,
+    tip: "Seja breve e fale do dono pelo nome. Se ele não estiver, saia da ligação com um horário e o nome de quem atendeu.",
+    next: [
+      { label: "Passou para o dono", to: "abertura3" },
+      { label: "Dono não está", to: "no_time" },
+    ],
+  },
+  lembrar: {
+    badge: "Dúvida comum",
+    title: "“Não lembro de você”",
+    script: <p>“Claro, sem problema! Eu crio sites pra negócios locais. Vi que a [negócio] tem [nota] estrelas no Google e ainda não tem site, e preparei uma prévia de como ficaria. A gente falou disso por telefone [dia]. Posso retomar rapidinho?”</p>,
+    tip: "Não se ofenda: explique em uma frase quem você é e volte ao assunto.",
+    next: [{ label: "Seguir → retomada", to: "retomada" }],
+  },
+  retomada: {
+    badge: "Retomada · passo 2",
+    title: "A prévia: já viu?",
+    script: <p>“Te mandei a prévia do site da [negócio] pelo WhatsApp. Você chegou a ver?”</p>,
+    tip: "A resposta define o caminho: quem viu fala do que achou; quem não viu precisa abrir a prévia com você na ligação.",
+    next: [
+      { label: "Já viu", to: "viu" },
+      { label: "Ainda não viu", to: "nao_viu" },
+    ],
+  },
+  nao_viu: {
+    badge: "Retomada · passo 3",
+    title: "Abrir a prévia juntos",
+    script: (
+      <>
+        <p>“Sem problema! Vou te mandar o link de novo agora, e enquanto você abre eu te explico. É só tocar no link, abre direto no celular.”</p>
+        <p>“Está vendo o nome da empresa lá em cima, com a nota e as avaliações? Embaixo estão os serviços e o botão do WhatsApp. O que você achou à primeira vista?”</p>
+      </>
+    ),
+    tip: "Reenvie o link durante a ligação (use “Copiar msg” no funil) e conduza o olhar do cliente pela página.",
+    next: [{ label: "Seguir → o que achou", to: "viu" }],
+  },
+  viu: {
+    badge: "Retomada · passo 4",
+    title: "“O que achou?”",
+    script: <p>“E aí, o que achou da prévia? Tem algo que você mudaria ou que sentiu falta?”</p>,
+    tip: "Pergunta aberta e depois silêncio. Quem fala primeiro costuma revelar a objeção real.",
+    next: [
+      { label: "Gostou", to: "interesse" },
+      { label: "Quer mudar algo", to: "obj_ajuste" },
+      { label: "“Achei caro”", to: "obj_preco" },
+      { label: "Precisa falar com sócio(a)", to: "obj_decisor" },
+      { label: "“Preciso pensar”", to: "obj_pensar" },
+    ],
+  },
+  obj_ajuste: {
+    badge: "Contorno de objeção",
+    title: "“Queria mudar uma coisa”",
+    script: <p>“Perfeito, é pra isso que serve a prévia! Me diz o que você quer ajustar — foto, texto, horário, cor — que eu mudo e te mando a nova versão ainda hoje. Se ficar do seu jeito, a gente fecha?”</p>,
+    tip: "Anote cada ajuste e confirme o prazo. Mudança pedida é sinal de interesse: feche o compromisso junto com ela.",
+    next: [{ label: "Seguir → fechamento", to: "fechamento" }],
+  },
+  obj_decisor: {
+    badge: "Contorno de objeção",
+    title: "“Preciso falar com meu sócio(a)”",
+    script: <p>“Faz todo sentido. Que tal eu mostrar a prévia pra vocês dois juntos? Pode ser por uma ligação rápida de 10 minutos [dia] às [hora]. Assim a decisão sai de uma vez e você não precisa explicar sozinho.”</p>,
+    tip: "Saia da ligação com data e hora marcadas com o outro decisor. Reenvie a prévia para ele(a) também.",
+    next: [{ label: "Seguir → fechamento", to: "fechamento" }],
+  },
+};
+
+const FLOW_3: FlowItem[] = [
+  { t: "node", id: "abertura3", first: true },
+  { t: "hint", text: "↓ conforme a resposta" },
+  { t: "branch", items: [{ id: "retomada" }, { id: "atendente3" }, { id: "lembrar" }, { id: "no_time", kind: "end" }] },
+  { t: "node", id: "retomada" },
+  { t: "hint", text: "↓ já viu a prévia?" },
+  { t: "branch", items: [{ id: "viu" }, { id: "nao_viu" }] },
+  { t: "hint", text: "↓ conforme a resposta do cliente" },
+  { t: "branch", items: ["interesse", "obj_ajuste", "obj_preco", "obj_decisor", "obj_pensar"].map((id) => ({ id })) },
+  { t: "hint", text: "↓ qualquer caminho leva ao fechamento" },
+  { t: "node", id: "fechamento" },
+  { t: "hint", text: "↓ resultado" },
+  { t: "branch", items: [{ id: "ganhou", kind: "good" }, { id: "perdido", kind: "bad" }] },
+];
+
 export const SCRIPTS = {
   1: { label: "Opção 1", sub: "Pedido de permissão", nodes: NODES_1, flow: FLOW_1, start: "abertura" },
   2: { label: "Opção 2", sub: "Motivo + prévia grátis", nodes: NODES_2, flow: FLOW_2, start: "abertura2" },
+  3: { label: "Opção 3", sub: "Retorno de ligação", nodes: NODES_3, flow: FLOW_3, start: "abertura3" },
 } as const;
 export type ScriptKey = keyof typeof SCRIPTS;
-export const KEYS: ScriptKey[] = [1, 2];
+export const KEYS: ScriptKey[] = [1, 2, 3];
 

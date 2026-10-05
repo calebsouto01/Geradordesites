@@ -2,14 +2,14 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { NODES_1, NODES_2, SHARED } from "@/lib/scripts/data";
+import { NODES_1, NODES_2, NODES_3, SHARED } from "@/lib/scripts/data";
 
 type Call = { id: number; lead_id: number | null; script: number; objections: string[]; outcome: string; created_at: string };
 type Lead = { id: number; stage: string; next_contact: string | null };
 type Row = { label: string; value: number; note?: string };
 
 const OUTCOME: Record<string, string> = { falou_dono: "Falou com o dono", atendente: "Falou com atendente", nao_atendeu: "Não atendeu", retorno: "Pediu retorno" };
-const objLabel = (id: string) => (NODES_1[id] ?? NODES_2[id] ?? SHARED[id])?.title.replace(/[“”"]/g, "") ?? id;
+const objLabel = (id: string) => (NODES_1[id] ?? NODES_2[id] ?? NODES_3[id] ?? SHARED[id])?.title.replace(/[“”"]/g, "") ?? id;
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
 
 // Barras horizontais: uma cor para categorias sem ordem; rampa (cls) só quando as linhas são etapas ordenadas.
@@ -71,7 +71,7 @@ export default function Operador() {
     const objCount: Record<string, number> = {};
     calls.forEach((c) => c.objections.forEach((o) => (objCount[o] = (objCount[o] ?? 0) + 1)));
     const objections: Row[] = Object.entries(objCount).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([id, n]) => ({ label: objLabel(id), value: n }));
-    const scripts: Row[] = [1, 2].map((k) => {
+    const scripts: Row[] = [1, 2, 3].map((k) => {
       const all = calls.filter((c) => c.script === k);
       const won = all.filter((c) => c.outcome === "falou_dono").length;
       return { label: `Opção ${k}`, value: all.length ? Math.round((won / all.length) * 100) : 0, note: `${won} de ${all.length} ligações falaram com o dono` };
