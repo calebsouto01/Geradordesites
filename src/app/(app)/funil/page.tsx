@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import CallPanel, { type CallLead, type CallResult } from "@/components/CallPanel";
 
 const STAGES = [
   ["novo", "A contatar", "#6366f1"], ["contato_iniciado", "Contato iniciado", "#38bdf8"],
@@ -34,6 +35,7 @@ const DEMO_PROFILE = {
 type Lead = {
   id: number; name: string; phone: string | null; origin: string; stage: string;
   estimated_value: number | null; owner: string | null; next_contact: string | null; lost_reason: string | null;
+  profile?: CallLead["profile"];
 };
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -55,6 +57,7 @@ export default function Funil() {
   const [dragId, setDragId] = useState<number | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [sites, setSites] = useState<Record<number, SiteInfo>>({});
+  const [calling, setCalling] = useState<Lead | null>(null);
   const [busyLead, setBusyLead] = useState<number | null>(null);
   const [toast, setToast] = useState("");
   const flash = (t: string) => { setToast(t); setTimeout(() => setToast(""), 3000); };
@@ -83,6 +86,17 @@ export default function Funil() {
   async function sendProposal(l: Lead, s: SiteInfo) {
     await copyMessage(l, s);
     if (l.stage !== "proposta_enviada") await patch(l.id, { stage: "proposta_enviada" });
+  }
+
+  // Registra a ligação no histórico e move o lead conforme o resultado.
+  async function finishCall(l: Lead, r: CallResult) {
+    const objections = r.path.filter((id) => id.startsWith("obj_") || id === "duvida_dominio");
+    const { error } = await supabase.from("calls").insert({ lead_id: l.id, script: r.script, path: r.path, objections, outcome: r.outcome });
+    if (error) return flash("Não foi possível salvar a ligação.");
+    if (r.outcome === "falou_dono" && l.stage === "novo") await patch(l.id, { stage: "contato_iniciado" });
+    if (r.outcome === "retorno" && r.returnDate) await patch(l.id, { next_contact: r.returnDate });
+    setCalling(null);
+    flash(r.outcome === "falou_dono" && l.stage === "novo" ? "Ligação registrada: lead em Contato iniciado" : "Ligação registrada");
   }
 
   function exportCsv() {
@@ -169,7 +183,9 @@ export default function Funil() {
                     </div>
                   )}
                   <div className="row" style={{ marginTop: 8, gap: 6, flexWrap: "wrap" }}>
-                    {l.stage === "novo" && <button className="sm" onClick={() => patch(l.id, { stage: "contato_iniciado" })}>Contato feito →</button>}
+                    {l.stage === "novo"
+                      ? <button className="sm" onClick={() => setCalling(l)}>Entrar em contato</button>
+                      : <button className="ghost sm" onClick={() => setCalling(l)}>Ver script</button>}
                     {l.stage === "contato_iniciado" && !sites[l.id] && (
                       <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>
                     )}
@@ -230,6 +246,7 @@ export default function Funil() {
           );
         })}
       </div>
+      {calling && <CallPanel lead={calling} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
       {toast && <div className="toast">{toast}</div>}
     </>
   );

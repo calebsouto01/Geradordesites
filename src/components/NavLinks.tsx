@@ -8,6 +8,7 @@ const items = [
   ["/sites", "Criar site", "✦", "Sites"],
   ["/funil", "Funil", "▦", "Funil"],
   ["/scripts", "Scripts de ligação", "☏", "Scripts"],
+  ["/operador", "Operador", "◔", "Operador"],
 ] as const;
 
 export default function NavLinks() {
