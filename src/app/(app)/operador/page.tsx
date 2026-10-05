@@ -74,7 +74,7 @@ export default function Operador() {
     const scripts: Row[] = [1, 2, 3].map((k) => {
       const all = calls.filter((c) => c.script === k);
       const won = all.filter((c) => c.outcome === "falou_dono").length;
-      return { label: `Opção ${k}`, value: all.length ? Math.round((won / all.length) * 100) : 0, note: `${won} de ${all.length} ligações falaram com o dono` };
+      return { label: `Script ${k}`, value: all.length ? Math.round((won / all.length) * 100) : 0, note: `${won} de ${all.length} ligações falaram com o dono` };
     });
     const called = new Set(calls.map((c) => c.lead_id));
     const stage = (ids: string[]) => leads.filter((l) => ids.includes(l.stage)).length;
@@ -154,8 +154,8 @@ export default function Operador() {
               {table ? <Table head="Etapa" rows={d.chain} /> : <Bars rows={d.chain} ramp empty="Sem dados." />}
             </div>
             <div className="panel">
-              <h2 style={{ fontSize: 16, margin: 0 }}>Modelo que mais chega ao dono (%)</h2>
-              {table ? <Table head="Modelo" rows={d.scripts} /> : <Bars rows={d.scripts} empty="Sem ligações." />}
+              <h2 style={{ fontSize: 16, margin: 0 }}>Script que mais chega ao dono (%)</h2>
+              {table ? <Table head="Script" rows={d.scripts} /> : <Bars rows={d.scripts} empty="Sem ligações." />}
             </div>
           </div>
         </>

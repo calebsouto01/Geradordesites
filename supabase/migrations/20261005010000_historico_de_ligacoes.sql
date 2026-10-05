@@ -14,3 +14,4 @@ create index calls_lead_idx on public.calls (lead_id);
 alter table public.calls enable row level security;
 create policy calls_own on public.calls for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 revoke all on public.calls from anon;
+alter table public.calls add column if not exists channel text not null default 'ligacao' check (channel in ('ligacao','whatsapp','email'));

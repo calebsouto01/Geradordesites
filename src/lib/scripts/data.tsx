@@ -374,9 +374,9 @@ const FLOW_3: FlowItem[] = [
 ];
 
 export const SCRIPTS = {
-  1: { label: "Opção 1", sub: "Pedido de permissão", nodes: NODES_1, flow: FLOW_1, start: "abertura" },
-  2: { label: "Opção 2", sub: "Motivo + prévia grátis", nodes: NODES_2, flow: FLOW_2, start: "abertura2" },
-  3: { label: "Opção 3", sub: "Retorno de ligação", nodes: NODES_3, flow: FLOW_3, start: "abertura3" },
+  1: { label: "Script 1", sub: "Pedido de permissão", nodes: NODES_1, flow: FLOW_1, start: "abertura" },
+  2: { label: "Script 2", sub: "Motivo + prévia grátis", nodes: NODES_2, flow: FLOW_2, start: "abertura2" },
+  3: { label: "Script 3", sub: "Retorno de ligação", nodes: NODES_3, flow: FLOW_3, start: "abertura3" },
 } as const;
 export type ScriptKey = keyof typeof SCRIPTS;
 export const KEYS: ScriptKey[] = [1, 2, 3];

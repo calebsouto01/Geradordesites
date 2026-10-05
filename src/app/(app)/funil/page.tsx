@@ -91,7 +91,7 @@ export default function Funil() {
   // Registra a ligação no histórico e move o lead conforme o resultado.
   async function finishCall(l: Lead, r: CallResult) {
     const objections = r.path.filter((id) => id.startsWith("obj_") || id === "duvida_dominio");
-    const { error } = await supabase.from("calls").insert({ lead_id: l.id, script: r.script, path: r.path, objections, outcome: r.outcome });
+    const { error } = await supabase.from("calls").insert({ lead_id: l.id, channel: r.channel, script: r.script, path: r.path, objections, outcome: r.outcome });
     if (error) return flash("Não foi possível salvar a ligação.");
     if (r.outcome === "falou_dono" && l.stage === "novo") await patch(l.id, { stage: "contato_iniciado" });
     if (r.outcome === "retorno" && r.returnDate) await patch(l.id, { next_contact: r.returnDate });

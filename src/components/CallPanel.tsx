@@ -1,11 +1,12 @@
 "use client";
 import { useRef, useState } from "react";
 import CallTree from "@/components/CallTree";
-import type { ScriptKey } from "@/lib/scripts/data";
+import { KEYS, SCRIPTS, type ScriptKey } from "@/lib/scripts/data";
 
 export type CallLead = { id: number; name: string; phone: string | null; stage: string; profile?: { category?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
 export type CallOutcome = "falou_dono" | "atendente" | "nao_atendeu" | "retorno";
-export type CallResult = { outcome: CallOutcome; script: ScriptKey; path: string[]; returnDate?: string };
+export type CallChannel = "ligacao" | "whatsapp" | "email";
+export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string };
 
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
@@ -22,42 +23,58 @@ const TEMPLATES: Tpl[] = [
   { id: "fechado", label: "Fechamento", text: (v) => `Fechado! 🎉 Vou começar o site da ${v.neg} agora e te aviso assim que estiver no ar. Obrigado pela confiança!` },
 ];
 
-// Painel por cima do funil: dados do lead, modelos de mensagem, árvore de negociação e encerramento da ligação.
+const CHANNELS: { id: CallChannel; label: string; icon: string }[] = [
+  { id: "ligacao", label: "Por ligação", icon: "📞" },
+  { id: "whatsapp", label: "Por WhatsApp", icon: "💬" },
+  { id: "email", label: "Por e-mail", icon: "✉️" },
+];
+
+// Script de contato por cima do funil: dados do lead, canal (ligação, WhatsApp, e-mail) e encerramento do contato.
 export default function CallPanel({ lead, siteSlug, onClose, onFinish }: { lead: CallLead; siteSlug?: string | null; onClose: () => void; onFinish: (r: CallResult) => void }) {
+  const [channel, setChannel] = useState<CallChannel>("ligacao");
+  const [script, setScript] = useState<ScriptKey>(1);
   const state = useRef<{ key: ScriptKey; path: string[] }>({ key: 1, path: [] });
   const [ret, setRet] = useState(tomorrow());
   const [ending, setEnding] = useState(false);
-  const [tpl, setTpl] = useState<string | null>(null);
+  const [tpl, setTpl] = useState<string>(TEMPLATES[0].id);
   const [msg, setMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const p = lead.profile;
-  const finish = (outcome: CallOutcome) => onFinish({ outcome, script: state.current.key, path: state.current.path, returnDate: outcome === "retorno" ? ret : undefined });
+  const vars = (): Vars => ({ neg: lead.name, nota: p?.rating ? String(p.rating).replace(".", ",") : "", link: siteSlug ? `${window.location.origin}/p/${siteSlug}` : "[link da prévia]" });
+  const finish = (outcome: CallOutcome) => onFinish({ outcome, channel, script: state.current.key, path: channel === "ligacao" ? state.current.path : [], returnDate: outcome === "retorno" ? ret : undefined });
 
-  function pick(t: Tpl) {
-    const link = siteSlug ? `${window.location.origin}/p/${siteSlug}` : "[link da prévia]";
-    setTpl(t.id); setCopied(false);
-    setMsg(t.text({ neg: lead.name, nota: p?.rating ? String(p.rating).replace(".", ",") : "", link }));
+  function pick(t: Tpl) { setTpl(t.id); setCopied(false); setMsg(t.text(vars())); }
+  function openChannel(c: CallChannel) {
+    setChannel(c);
+    if (c === "whatsapp" && !msg) pick(TEMPLATES[0]);
   }
-  async function copy() {
-    try { await navigator.clipboard.writeText(msg); setCopied(true); } catch { /* sem permissão */ }
-  }
+  async function copy() { try { await navigator.clipboard.writeText(msg); setCopied(true); } catch { /* sem permissão */ } }
   const digits = lead.phone?.replace(/\D/g, "");
 
   return (
     <div className="modal" onClick={onClose}>
-      <div className="chat wide" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Ligação para ${lead.name}`}>
+      <div className="chat wide" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Script de contato: ${lead.name}`}>
         <div className="callhead">
           <div className="callinfo">
+            <span className="callmsgs-t">Script de contato</span>
             <b>{lead.name}</b>
             <div className="mut">{[p?.category, p?.rating ? `★ ${p.rating} (${p.ratingCount ?? 0})` : null].filter(Boolean).join(" · ")}</div>
             {lead.phone && <a className="wa" href={`https://wa.me/55${digits}`} target="_blank" rel="noreferrer">WhatsApp {lead.phone}</a>}
             {p?.prospeccao?.observacao && <div className="mut">💡 {p.prospeccao.observacao}</div>}
           </div>
           <div className="callmsgs">
-            <span className="callmsgs-t">Modelos de mensagem</span>
-            <div className="callchips">
-              {TEMPLATES.map((t) => <button key={t.id} className={`callchip ${tpl === t.id ? "on" : ""}`} onClick={() => pick(t)}>{t.label}</button>)}
-            </div>
+            {channel === "ligacao" && (
+              <>
+                <span className="callmsgs-t">Script</span>
+                <div className="callchips" role="tablist" aria-label="Script">
+                  {KEYS.map((k) => (
+                    <button key={k} role="tab" aria-selected={k === script} className={`callchip scr ${k === script ? "on" : ""}`} onClick={() => setScript(k)}>
+                      <b>{SCRIPTS[k].label}</b><span>{SCRIPTS[k].sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <div className="callactions">
             <button className="sm" onClick={() => setEnding(true)}>Encerrar contato</button>
@@ -65,23 +82,43 @@ export default function CallPanel({ lead, siteSlug, onClose, onFinish }: { lead:
           </div>
         </div>
 
-        {tpl && (
-          <div className="msgbox">
-            <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} aria-label="Mensagem" />
-            <div className="msgbtns">
-              <button className="sm" onClick={copy}>{copied ? "Copiado ✓" : "Copiar"}</button>
-              {digits && <a href={`https://wa.me/55${digits}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noreferrer"><button className="ghost sm">Abrir no WhatsApp</button></a>}
-              <button className="iconbtn" onClick={() => setTpl(null)} aria-label="Fechar mensagem">✕</button>
+        <div className="chantabs" role="tablist" aria-label="Canal de contato">
+          {CHANNELS.map((c) => (
+            <button key={c.id} role="tab" aria-selected={c.id === channel} className={`chantab ${c.id === channel ? "on" : ""}`} onClick={() => openChannel(c.id)}>{c.icon} {c.label}</button>
+          ))}
+        </div>
+
+        {channel === "ligacao" && (
+          <div className="callbody">
+            <CallTree hideTabs scriptKey={script} initialPath={state.current.key === script ? state.current.path : undefined} onChange={(s) => { state.current = s; }} />
+          </div>
+        )}
+
+        {channel === "whatsapp" && (
+          <div className="callbody wapp">
+            <div className="wlist">
+              <span className="callmsgs-t">Modelos de mensagem</span>
+              {TEMPLATES.map((t) => <button key={t.id} className={`callchip ${tpl === t.id ? "on" : ""}`} onClick={() => pick(t)}>{t.label}</button>)}
+            </div>
+            <div className="wedit">
+              <span className="callmsgs-t">Mensagem (você pode editar)</span>
+              <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={8} aria-label="Mensagem" />
+              <div className="row" style={{ gap: 8 }}>
+                <button className="sm" onClick={copy}>{copied ? "Copiado ✓" : "Copiar"}</button>
+                {digits ? <a href={`https://wa.me/55${digits}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noreferrer"><button className="ghost sm">Abrir no WhatsApp</button></a> : <span className="mut">Lead sem telefone.</span>}
+              </div>
             </div>
           </div>
         )}
 
-        <div className="callbody"><CallTree onChange={(s) => { state.current = s; }} /></div>
+        {channel === "email" && (
+          <div className="callbody"><div className="panel"><b>Contato por e-mail</b><p className="mut" style={{ margin: "6px 0 0" }}>Em breve: modelos de e-mail. Por enquanto, use ligação ou WhatsApp.</p></div></div>
+        )}
 
         {ending && (
-          <div className="endsheet" role="dialog" aria-label="Como foi a ligação?">
+          <div className="endsheet" role="dialog" aria-label="Como foi o contato?">
             <div className="endcard">
-              <h3>Como foi a ligação?</h3>
+              <h3>Como foi o contato?</h3>
               <div className="outcomes">
                 <button className="outcome main" onClick={() => finish("falou_dono")}>
                   ✅ Falei com o dono<small>{lead.stage === "novo" ? "Avança para Contato iniciado" : "Registra no histórico"}</small>
@@ -96,7 +133,7 @@ export default function CallPanel({ lead, siteSlug, onClose, onFinish }: { lead:
                   </div>
                 </div>
               </div>
-              <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar para a ligação</button>
+              <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar</button>
             </div>
           </div>
         )}
