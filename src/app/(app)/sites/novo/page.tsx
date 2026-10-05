@@ -158,6 +158,20 @@ export default function NovoSite() {
     return true;
   }
 
+  // Lê o link do Maps no servidor e preenche os campos que vierem.
+  async function lookupMaps() {
+    setErr("");
+    if (!manual.maps.trim()) return setErr("Cole o link do Google Maps.");
+    setBusy(true);
+    const res = await fetch("/api/maps/resolve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: manual.maps }) });
+    const json = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) return setErr(json.error ?? "Não consegui ler o link.");
+    const p = json.profile as { name?: string; category?: string; phone?: string; address?: string };
+    setManual((m) => ({ ...m, name: p.name || m.name, category: p.category || m.category, phone: p.phone || m.phone, address: p.address || m.address, maps: json.mapsUrl || m.maps }));
+    if (!json.full) setErr("Só o nome foi lido do link. Complete o resto.");
+  }
+
   async function next() {
     setErr("");
     if (step === "cliente") {
@@ -289,11 +303,17 @@ export default function NovoSite() {
                 </>
               ) : (
                 <div className="fgrid" style={{ marginTop: 14 }}>
+                  <label className="f">Link do Google Maps (opcional)
+                    <span className="row" style={{ gap: 6 }}>
+                      <input style={{ flex: 1 }} type="url" inputMode="url" placeholder="https://maps.app.goo.gl/... ou https://share.google/..." value={manual.maps} onChange={(e) => setManual({ ...manual, maps: e.target.value })} />
+                      <button type="button" className="ghost sm" disabled={busy} onClick={lookupMaps}>Buscar dados</button>
+                    </span>
+                  </label>
                   <label className="f">Nome do negócio *<input value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} /></label>
                   <label className="f">Categoria<input placeholder="Ex.: academia, salão, clínica" value={manual.category} onChange={(e) => setManual({ ...manual, category: e.target.value })} /></label>
                   <label className="f">Telefone / WhatsApp<input inputMode="tel" placeholder="(85) 90000-0000" value={manual.phone} onChange={(e) => setManual({ ...manual, phone: e.target.value })} /></label>
                   <label className="f">Endereço<input value={manual.address} onChange={(e) => setManual({ ...manual, address: e.target.value })} /></label>
-                  <label className="f">Link do Google Maps<input type="url" inputMode="url" placeholder="https://maps.app.goo.gl/..." value={manual.maps} onChange={(e) => setManual({ ...manual, maps: e.target.value })} /></label>
+
                 </div>
               )}
             </div>

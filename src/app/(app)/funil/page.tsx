@@ -54,6 +54,7 @@ export default function Funil() {
   const [sbw, setSbw] = useState(0);
   const [calling, setCalling] = useState<Lead | null>(null);
   const [registering, setRegistering] = useState(false);
+  const [looking, setLooking] = useState(false);
   const [form, setForm] = useState({ name: "", category: "", phone: "", address: "", maps: "" });
   const [answering, setAnswering] = useState<Lead | null>(null);
   const [answer, setAnswer] = useState({ kind: "venda" as "venda" | "sem" | "pensando", value: "", reason: "", date: "" });
@@ -155,6 +156,19 @@ export default function Funil() {
   }
 
   // Cadastro de cliente: só os dados que o sistema usa (nome, categoria, telefone e endereço).
+  // Lê o link do Maps no servidor e preenche os campos que vierem.
+  async function lookupMaps() {
+    if (!form.maps.trim()) return flash("Cole o link do Google Maps.");
+    setLooking(true);
+    const res = await fetch("/api/maps/resolve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: form.maps }) });
+    const json = await res.json().catch(() => ({}));
+    setLooking(false);
+    if (!res.ok) return flash(json.error ?? "Não consegui ler o link.");
+    const p = json.profile as { name?: string; category?: string; phone?: string; address?: string };
+    setForm((f) => ({ ...f, name: p.name || f.name, category: p.category || f.category, phone: p.phone || f.phone, address: p.address || f.address, maps: json.mapsUrl || f.maps }));
+    flash(json.full ? "Dados preenchidos a partir do link" : "Só o nome foi lido do link. Complete o resto.");
+  }
+
   async function saveClient(e: React.FormEvent) {
     e.preventDefault();
     const name = form.name.trim();
@@ -289,11 +303,17 @@ export default function Funil() {
           <form className="chat" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()} onSubmit={saveClient} aria-label="Cadastrar cliente">
             <div className="chathead"><b>Cadastrar cliente</b><button type="button" className="iconbtn" onClick={() => setRegistering(false)} aria-label="Fechar">✕</button></div>
             <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              <label className="f">Link do Google Maps (opcional)
+                <span className="row" style={{ gap: 6 }}>
+                  <input style={{ flex: 1 }} type="url" inputMode="url" placeholder="https://maps.app.goo.gl/... ou https://share.google/..." value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} />
+                  <button type="button" className="ghost sm" disabled={looking} onClick={lookupMaps}>{looking ? "Lendo…" : "Buscar dados"}</button>
+                </span>
+              </label>
               <label className="f">Nome do negócio *<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus required /></label>
               <label className="f">Categoria<input placeholder="Ex.: academia, salão, clínica" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
               <label className="f">Telefone / WhatsApp<input inputMode="tel" placeholder="(85) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
               <label className="f">Endereço<input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></label>
-              <label className="f">Link do Google Maps<input type="url" inputMode="url" placeholder="https://maps.app.goo.gl/..." value={form.maps} onChange={(e) => setForm({ ...form, maps: e.target.value })} /></label>
+
               <button>Cadastrar cliente</button>
             </div>
           </form>

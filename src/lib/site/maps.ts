@@ -5,7 +5,7 @@ export function cleanMapsUrl(raw: string): string | null {
   try {
     const u = new URL(/^https?:\/\//i.test(v) ? v : `https://${v}`);
     const h = u.hostname.replace(/^www\./, "");
-    const ok = h === "maps.app.goo.gl" || h === "goo.gl" || h === "g.page" || h === "maps.google.com" || /^google\.[a-z.]+$/.test(h) && u.pathname.startsWith("/maps");
+    const ok = h === "maps.app.goo.gl" || h === "goo.gl" || h === "g.page" || h === "share.google" || h === "maps.google.com" || /^google\.[a-z.]+$/.test(h) && u.pathname.startsWith("/maps");
     return ok ? u.toString() : null;
   } catch { return null; }
 }
