@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cleanMapsUrl } from "@/lib/site/maps";
+import CreateSiteDialog from "@/components/CreateSiteDialog";
 import CallPanel, { type CallLead, type CallResult } from "@/components/CallPanel";
 
 const STAGES = [
@@ -56,6 +57,7 @@ export default function Funil() {
   const [registering, setRegistering] = useState(false);
   const [looking, setLooking] = useState(false);
   const [form, setForm] = useState({ name: "", category: "", phone: "", address: "", maps: "" });
+  const [creating, setCreating] = useState<Lead | null>(null);
   const [answering, setAnswering] = useState<Lead | null>(null);
   const [answer, setAnswer] = useState({ kind: "venda" as "venda" | "sem" | "pensando", value: "", reason: "", date: "" });
   const [busyLead, setBusyLead] = useState<number | null>(null);
@@ -102,7 +104,7 @@ export default function Funil() {
   // Uma única ação por etapa; o resto fica no menu do card.
   function action(l: Lead) {
     if (l.stage === "novo") return <button className="sm" onClick={() => setCalling(l)}>Entrar em contato</button>;
-    if (l.stage === "contato_iniciado") return <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar prévia · 3 créditos</button></Link>;
+    if (l.stage === "contato_iniciado") return <button className="sm" onClick={() => setCreating(l)}>Gerar prévia · 3 créditos</button>;
     if (l.stage === "qualificado") return <button className="sm" onClick={() => patch(l.id, { stage: "proposta_enviada" })}>Proposta enviada ✓</button>;
     if (l.stage === "proposta_enviada") return <button className="sm" onClick={() => { setAnswer({ kind: "venda", value: l.estimated_value ? String(l.estimated_value) : "", reason: "", date: "" }); setAnswering(l); }}>Registrar resposta</button>;
     return null;
@@ -344,7 +346,8 @@ export default function Funil() {
           </div>
         </div>
       )}
-      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
+      {creating && <CreateSiteDialog lead={creating} onClose={() => setCreating(null)} />}
+      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onCreateSite={() => { setCreating(calling); setCalling(null); }} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
       {toast && <div className="toast">{toast}</div>}
     </>
   );

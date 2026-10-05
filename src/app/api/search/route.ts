@@ -10,6 +10,7 @@ type Place = {
   rating?: number;
   userRatingCount?: number;
   websiteUri?: string;
+  photos?: { name: string }[];
 };
 
 export async function POST(request: Request) {
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": process.env.GOOGLE_PLACES_API_KEY!,
       "X-Goog-FieldMask":
-        "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,nextPageToken",
+        "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.rating,places.userRatingCount,places.websiteUri,places.photos,nextPageToken",
     },
     body: JSON.stringify({
       textQuery: `${category} em ${location}`,
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
       phone: p.nationalPhoneNumber ?? null,
       rating: p.rating ?? null,
       rating_count: p.userRatingCount ?? null,
+      photos: (p.photos ?? []).slice(0, 3).map((x) => x.name),
     }));
 
   // Já vistos (promovidos/descartados/em lista) não duplicam.

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { allowUser, tooMany } from "@/lib/rate";
 import { generateContent, makeSlug } from "@/lib/site/generate";
-import { writeCopy } from "@/lib/site/copy";
+import { writeCopy, writeCopyPremium } from "@/lib/site/copy";
 import { applyExtras } from "@/lib/site/sections";
 import { themeFromAccent } from "@/lib/site/palette";
 import { fetchPlaceProfile } from "@/lib/site/places";
@@ -37,7 +37,16 @@ export async function POST(request: Request) {
   // Chave da IA: o usuário decide se quer copy personalizada (com briefing opcional) ou o texto padrão por regras.
   const aiCopy = body?.aiCopy !== false;
   const brief = typeof body?.aiBrief === "string" ? body.aiBrief.slice(0, 500) : undefined;
-  let content = aiCopy ? await writeCopy(profile, gen.content, undefined, brief) : gen.content;
+  // Premium: modelo mais forte por +3 créditos (cobrado só se a IA premium responder).
+  const premium = body?.premium === true && aiCopy;
+  if (premium) {
+    const { data: left } = await supabase.rpc("credits_remaining");
+    if ((left ?? 0) < 6) return NextResponse.json({ error: "Créditos insuficientes: o site premium custa 6." }, { status: 402 });
+  }
+  let content = gen.content;
+  let premiumDone = false;
+  if (premium) { const r = await writeCopyPremium(profile, gen.content, undefined, brief); content = r.content; premiumDone = r.premium; if (!premiumDone) content = await writeCopy(profile, gen.content, undefined, brief); }
+  else if (aiCopy) content = await writeCopy(profile, gen.content, undefined, brief);
 
   // Itens confirmados no chat de criação (cores, logo, fotos do usuário, serviços e horários).
   const ok = (v: unknown, n: number) => typeof v === "string" && v.length <= n;
@@ -64,6 +73,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: no ? "Créditos insuficientes: cada site custa 3." : "Erro ao validar créditos." }, { status: no ? 402 : 500 });
   }
 
+  let left = remaining as number;
+  if (premiumDone) {
+    const { data: after } = await supabase.rpc("consume_site", { p_ref: `${lead.name} (premium)` });
+    if (typeof after === "number") left = after;
+  }
+
   const { data: site, error } = await supabase.from("sites").insert({
     lead_id: leadId, slug: makeSlug(lead.name), template, content,
     expires_at: new Date(Date.now() + PREVIEW_DAYS * 86400000).toISOString(),
@@ -71,5 +86,5 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: "Erro ao salvar o site." }, { status: 500 });
   // Site gerado: o lead segue para "Encaminhar proposta".
   await supabase.from("leads").update({ stage: "qualificado" }).eq("id", leadId).in("stage", ["novo", "contato_iniciado"]);
-  return NextResponse.json({ site, created: true, remaining });
+  return NextResponse.json({ site, created: true, remaining: left, premium: premiumDone });
 }

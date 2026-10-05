@@ -7,6 +7,7 @@ import Stars from "@/components/Stars";
 type Result = {
   id: number; place_id: string; name: string; address: string | null;
   phone: string | null; rating: number | null; rating_count: number | null;
+  photos?: string[] | null;
 };
 
 const score = (r: Result) => (r.rating ?? 0) * Math.log10((r.rating_count ?? 0) + 1);
@@ -106,6 +107,14 @@ export default function Buscar() {
         {busy && [0, 1, 2].map((i) => <div key={i} className="skel" />)}
         {[...results].sort((a, b) => score(b) - score(a)).map((r) => (
           <article key={r.id} className="rcard">
+            {!!r.photos?.length && (
+              <div className={`pstrip n${r.photos.length}`}>
+                {r.photos.map((_, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} loading="lazy" alt="" src={`/api/search-photo?id=${r.id}&i=${i}`} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                ))}
+              </div>
+            )}
             <span className="row" style={{ gap: 6 }}><span className="badge">Sem site</span><span className={`badge ${prio(r).cls}`} title="Prioridade estimada pela nota e pelo nº de avaliações">Prioridade {prio(r).label}</span></span>
             <h3>{r.name}</h3>
             <div className="rating">
