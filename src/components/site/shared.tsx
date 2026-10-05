@@ -152,11 +152,18 @@ export function CtaBand({ c }: G) {
   );
 }
 
-// Mapa incorporado (sem chave: consulta pelo endereço).
+// Cartão de mapa: o Google recusa incorporar o mapa sem chave ("www.google.com recusou a conexão"), então abrimos o Maps em outra aba.
 export function MapEmbed({ c }: { c: SiteContent }) {
   const q = c.business.address || c.business.name;
   if (!q) return null;
-  return <iframe className="st-map" loading="lazy" title="Mapa" src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed`} referrerPolicy="no-referrer-when-downgrade" />;
+  const href = c.business.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  return (
+    <a className="st-map" href={href} target="_blank" rel="noopener noreferrer" aria-label="Abrir no Google Maps">
+      <span className="st-pin" aria-hidden="true">📍</span>
+      <b>{q}</b>
+      <span className="st-maplink">Ver no Google Maps →</span>
+    </a>
+  );
 }
 
 export function Contato({ c, layout }: G) {
