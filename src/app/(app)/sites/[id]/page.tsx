@@ -79,6 +79,11 @@ export default function EditarSite({ params }: { params: Promise<{ id: string }>
     return !error;
   }
 
+  async function copyLink() {
+    const link = `${window.location.origin}/p/${site!.slug}`;
+    try { await navigator.clipboard.writeText(link); flash("Link copiado"); } catch { flash(link); }
+  }
+
   async function publish() {
     if (!(await save(true))) return flash("Erro ao publicar");
     const { error } = await supabase.from("sites").update({ status: "publicado", expires_at: null }).eq("id", id);
@@ -113,7 +118,7 @@ export default function EditarSite({ params }: { params: Promise<{ id: string }>
       <div className="pagehead">
         <Link href="/sites" className="mut">← Meus sites</Link>
         <h1>{c.business.name}</h1>
-        <span className="mut">{site.status === "publicado" ? "Publicado" : site.status === "bloqueado" ? "Bloqueado por denúncia" : "Prévia com marca d'água"}</span>
+        <span className="mut">{site.status === "publicado" ? "Publicado" : site.status === "bloqueado" ? "Bloqueado por denúncia" : `Prévia com marca d'água${site.expires_at ? ` · expira em ${Math.max(0, Math.ceil((new Date(site.expires_at).getTime() - Date.now()) / 86400000))} dia(s)` : ""} · envie o link ao cliente; ao confirmar a venda, publique`}</span>
       </div>
 
       <div className="stats">
@@ -199,8 +204,9 @@ export default function EditarSite({ params }: { params: Promise<{ id: string }>
 
         <div className="row">
           <button onClick={() => save()}>Salvar</button>
-          <a href={url} target="_blank" rel="noreferrer"><button type="button" className="ghost">Abrir prévia</button></a>
-          {site.status === "previa" && <button className="ghost" onClick={publish}>Publicar site</button>}
+          <a href={url} target="_blank" rel="noreferrer"><button type="button" className="ghost">{site.status === "previa" ? "Abrir prévia" : "Abrir site"}</button></a>
+          <button type="button" className="ghost" onClick={copyLink}>Copiar link {site.status === "previa" ? "da prévia" : "do site"}</button>
+          {site.status === "previa" && <button className="ghost" onClick={publish}>Publicar (venda confirmada)</button>}
         </div>
       </div>
 

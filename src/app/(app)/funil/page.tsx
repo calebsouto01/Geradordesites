@@ -92,8 +92,8 @@ export default function Funil() {
   function statusLine(l: Lead, site?: SiteInfo) {
     const views = site?.views ? `prévia aberta ${site.views}×` : "prévia ainda não aberta";
     if (l.stage === "novo") return "Ainda sem contato.";
-    if (l.stage === "contato_iniciado") return "Falou com o dono. Falta gerar o site.";
-    if (l.stage === "qualificado") return "Site pronto. Proposta ainda não enviada.";
+    if (l.stage === "contato_iniciado") return "Falou com o dono. Falta gerar a prévia.";
+    if (l.stage === "qualificado") return "Prévia pronta. Ainda não enviada ao cliente.";
     if (l.stage === "proposta_enviada") return `Aguardando resposta · ${views}.`;
     if (l.stage === "fechado") return "Venda fechada.";
     return l.lost_reason ? `Sem venda: ${l.lost_reason}` : "Sem venda.";
@@ -102,7 +102,7 @@ export default function Funil() {
   // Uma única ação por etapa; o resto fica no menu do card.
   function action(l: Lead) {
     if (l.stage === "novo") return <button className="sm" onClick={() => setCalling(l)}>Entrar em contato</button>;
-    if (l.stage === "contato_iniciado") return <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>;
+    if (l.stage === "contato_iniciado") return <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar prévia · 3 créditos</button></Link>;
     if (l.stage === "qualificado") return <button className="sm" onClick={() => patch(l.id, { stage: "proposta_enviada" })}>Proposta enviada ✓</button>;
     if (l.stage === "proposta_enviada") return <button className="sm" onClick={() => { setAnswer({ kind: "venda", value: l.estimated_value ? String(l.estimated_value) : "", reason: "", date: "" }); setAnswering(l); }}>Registrar resposta</button>;
     return null;
@@ -114,6 +114,13 @@ export default function Funil() {
     if (answer.kind === "venda") {
       if (!(Number(answer.value) > 0)) return flash("Informe o valor da venda.");
       await patch(l.id, { stage: "fechado", estimated_value: Number(answer.value) });
+      // Venda confirmada: a prévia vira site publicado (sem marca d'água e sem prazo).
+      const site = sites[l.id];
+      if (site && site.status === "previa") {
+        await supabase.from("sites").update({ status: "publicado", expires_at: null }).eq("id", site.id);
+        await loadSites();
+        flash("Venda registrada e site publicado");
+      }
     } else if (answer.kind === "sem") {
       await patch(l.id, { stage: "perdido", lost_reason: answer.reason.trim() || null });
     } else {

@@ -471,7 +471,7 @@ export default function NovoSite() {
                       </li>
                     ))}
                   </ul>
-                  <p className="mut">A prévia usa o texto atual; ao gerar, a IA aplica a copy (se ligada). As fotos do Google aparecem depois de gerar.</p>
+                  <p className="mut">A prévia usa o texto atual; ao gerar, a IA aplica a copy (se ligada). As fotos do Google aparecem depois de gerar. A prévia gerada tem marca d'água e prazo de 7 dias: é o link que você envia ao cliente. Ao confirmar a venda, o site é publicado.</p>
                 </div>
                 <div className="prev"><iframe ref={iframe} src="/preview" title="Prévia do site" /></div>
               </div>
@@ -484,7 +484,7 @@ export default function NovoSite() {
             <button className="ghost" disabled={idx === 0 || busy} onClick={() => { setErr(""); setStep(STEPS[idx - 1].key); }}>← Voltar</button>
             {step !== "revisao"
               ? <button disabled={busy} onClick={next}>{busy ? "Aguarde…" : "Continuar →"}</button>
-              : <button disabled={busy} onClick={generate}>{busy ? "Gerando…" : "Gerar site · 3 créditos"}</button>}
+              : <button disabled={busy} onClick={generate}>{busy ? "Gerando…" : "Gerar prévia · 3 créditos"}</button>}
           </div>
         </div>
 
