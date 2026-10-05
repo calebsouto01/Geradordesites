@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import CallPanel, { type CallLead, type CallResult } from "@/components/CallPanel";
 
@@ -57,6 +57,10 @@ export default function Funil() {
   const [dragId, setDragId] = useState<number | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [sites, setSites] = useState<Record<number, SiteInfo>>({});
+  const board = useRef<HTMLDivElement>(null);
+  const topbar = useRef<HTMLDivElement>(null);
+  const [boardW, setBoardW] = useState(0);
+  const [sbw, setSbw] = useState(0);
   const [calling, setCalling] = useState<Lead | null>(null);
   const [answering, setAnswering] = useState<Lead | null>(null);
   const [answer, setAnswer] = useState({ kind: "venda" as "venda" | "sem" | "pensando", value: "", reason: "", date: "" });
@@ -78,6 +82,17 @@ export default function Funil() {
     flash(json.created ? "Site gerado (3 créditos)" : "Este lead já tem site");
     await loadSites();
   }
+
+  // Barra de rolagem horizontal no topo do quadro, sincronizada com a do quadro.
+  useEffect(() => {
+    const el = board.current;
+    if (!el) return;
+    const measure = () => { setBoardW(el.scrollWidth); setSbw(el.offsetWidth - el.clientWidth); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [leads.length, loaded]);
 
   // Situação do lead em uma linha, a partir dos fatos do fluxo de venda.
   function statusLine(l: Lead, site?: SiteInfo) {
@@ -182,7 +197,10 @@ export default function Funil() {
         </div>
       )}
 
-      <div className="board">
+      <div className="boardtop" ref={topbar} aria-hidden="true" style={{ marginRight: sbw }} onScroll={() => { if (board.current && topbar.current && board.current.scrollLeft !== topbar.current.scrollLeft) board.current.scrollLeft = topbar.current.scrollLeft; }}>
+        <div style={{ width: boardW, height: 1 }} />
+      </div>
+      <div className="board" ref={board} onScroll={() => { if (board.current && topbar.current && topbar.current.scrollLeft !== board.current.scrollLeft) topbar.current.scrollLeft = board.current.scrollLeft; }}>
         {STAGES.map(([key, label, color]) => {
           const items = leads.filter((l) => l.stage === key);
           return (
