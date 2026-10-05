@@ -156,12 +156,14 @@ export default function Funil() {
       name: DEMO_PROFILE.name, phone: DEMO_PROFILE.phone, address: DEMO_PROFILE.address, profile: DEMO_PROFILE, origin: "Caso de teste",
     });
     if (error) return flash(error.message);
-    const { data } = await supabase.from("leads").select("*").order("created_at");
+    const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
     setLeads((data as Lead[]) ?? []);
+    board.current?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    flash("Caso de teste criado em A contatar (primeiro da coluna)");
   }
 
   useEffect(() => {
-    supabase.from("leads").select("*").order("created_at").then(({ data }) => {
+    supabase.from("leads").select("*").order("created_at", { ascending: false }).then(({ data }) => {
       setLeads((data as Lead[]) ?? []);
       setLoaded(true);
     });
