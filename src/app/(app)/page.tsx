@@ -5,8 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 // Etapas em ordem (rampa ordinal de uma só cor); fechado/perdido são estados finais, mostrados como status.
 const FLOW: [string, string][] = [
-  ["novo", "Novo"], ["contato_iniciado", "Contato iniciado"], ["qualificado", "Qualificado"],
-  ["proposta_enviada", "Proposta enviada"], ["negociacao", "Negociação"],
+  ["novo", "A contatar"], ["contato_iniciado", "Contato iniciado"], ["qualificado", "Encaminhar proposta"], ["proposta_enviada", "Proposta encaminhada"],
 ];
 
 type Lead = { id: number; name: string; phone: string | null; stage: string; next_contact: string | null; origin: string; estimated_value: number | null };
@@ -143,7 +142,7 @@ export default function Inicio() {
           <table className="vtable">
             <thead><tr><th>Etapa</th><th>Leads</th><th>Valor</th></tr></thead>
             <tbody>
-              {[...FLOW, ["fechado", "Fechado"], ["perdido", "Perdido"]].map(([k, label]) => (
+              {[...FLOW, ["fechado", "Venda fechada"], ["perdido", "Sem venda"]].map(([k, label]) => (
                 <tr key={k}><td>{label}</td><td>{d.by[k] ?? 0}</td><td>{brl(leads.filter((l) => l.stage === k).reduce((s, l) => s + (l.estimated_value ?? 0), 0))}</td></tr>
               ))}
             </tbody>
@@ -166,8 +165,8 @@ export default function Inicio() {
             </div>
             <div className="ftip mut" aria-live="polite">{tip ?? "Passe o mouse sobre uma etapa para ver a conversão."}</div>
             <div className="row" style={{ gap: 10, flexWrap: "wrap", marginTop: 6 }}>
-              <span className="chip good">✓ Fechados <b>{d.won}</b></span>
-              <span className="chip crit">✕ Perdidos <b>{d.lost}</b></span>
+              <span className="chip good">✓ Vendas <b>{d.won}</b></span>
+              <span className="chip crit">✕ Sem venda <b>{d.lost}</b></span>
             </div>
           </>
         )}

@@ -69,5 +69,7 @@ export async function POST(request: Request) {
     expires_at: new Date(Date.now() + PREVIEW_DAYS * 86400000).toISOString(),
   }).select("id, slug").single();
   if (error) return NextResponse.json({ error: "Erro ao salvar o site." }, { status: 500 });
+  // Site gerado: o lead segue para "Encaminhar proposta".
+  await supabase.from("leads").update({ stage: "qualificado" }).eq("id", leadId).in("stage", ["novo", "contato_iniciado"]);
   return NextResponse.json({ site, created: true, remaining });
 }

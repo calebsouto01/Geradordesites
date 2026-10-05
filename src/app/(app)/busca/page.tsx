@@ -66,12 +66,12 @@ export default function Buscar() {
 
   async function promote(r: Result) {
     const { error } = await supabase.from("leads").insert({
-      place_id: r.place_id, name: r.name, phone: r.phone, address: r.address,
+      place_id: r.place_id, name: r.name, phone: r.phone, address: r.address, stage: "contato_iniciado",
     });
     if (error && error.code !== "23505") return setErr(error.message);
     await supabase.from("search_results").update({ status: "promovido" }).eq("id", r.id);
     setResults((l) => l.filter((x) => x.id !== r.id));
-    flash("Enviado para o funil");
+    flash("Contato feito: lead em Contato iniciado");
   }
 
   async function discard(r: Result) {
@@ -115,7 +115,7 @@ export default function Buscar() {
             <div className="line">📍 {r.address ?? "Endereço não informado"}</div>
             <div className="line">📞 {r.phone ?? "Sem telefone"}</div>
             <div className="actions">
-              <button onClick={() => promote(r)}>Promover pro funil</button>
+              <button onClick={() => promote(r)}>Contato feito</button>
               <button className="ghost" onClick={() => discard(r)}>Descartar</button>
             </div>
           </article>

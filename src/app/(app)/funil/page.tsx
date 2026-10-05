@@ -4,11 +4,19 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const STAGES = [
-  ["novo", "Novo", "#6366f1"], ["contato_iniciado", "Contato iniciado", "#38bdf8"],
-  ["qualificado", "Qualificado", "#a78bfa"], ["proposta_enviada", "Proposta enviada", "#f59e0b"],
-  ["negociacao", "Negociação", "#fb923c"], ["fechado", "Fechado — Cliente", "#22c55e"],
-  ["perdido", "Perdido", "#ef4444"],
+  ["novo", "A contatar", "#6366f1"], ["contato_iniciado", "Contato iniciado", "#38bdf8"],
+  ["qualificado", "Encaminhar proposta", "#a78bfa"], ["proposta_enviada", "Proposta encaminhada", "#f59e0b"],
+  ["fechado", "Venda fechada", "#22c55e"], ["perdido", "Sem venda", "#ef4444"],
 ] as const;
+
+// O que fazer em cada etapa (o lead avança sozinho quando o site é gerado).
+const HINT: Record<string, string> = {
+  novo: "Ligue ou chame no WhatsApp.",
+  contato_iniciado: "Falou com o dono? Gere o site.",
+  qualificado: "Site pronto: envie a prévia.",
+  proposta_enviada: "Aguardando resposta: venda ou não?",
+  fechado: "Cliente fechado.", perdido: "Registre o motivo.",
+};
 
 type SiteInfo = { id: number; lead_id: number; slug: string; status: string; views: number; last_viewed_at: string | null };
 
@@ -71,6 +79,12 @@ export default function Funil() {
     try { await navigator.clipboard.writeText(text); flash("Mensagem copiada"); } catch { flash(text); }
   }
 
+  // Copia a mensagem com a prévia e marca a proposta como encaminhada.
+  async function sendProposal(l: Lead, s: SiteInfo) {
+    await copyMessage(l, s);
+    if (l.stage !== "proposta_enviada") await patch(l.id, { stage: "proposta_enviada" });
+  }
+
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const head = ["Nome", "Telefone", "Origem", "Etapa", "Valor estimado", "Responsável", "Próximo contato", "Motivo da perda"];
@@ -131,6 +145,7 @@ export default function Funil() {
               onDragLeave={() => setOver((o) => (o === key ? null : o))}
               onDrop={() => { if (dragId) patch(dragId, { stage: key }); setDragId(null); setOver(null); }}>
               <h3><span className="dot" style={{ background: color }} />{label}<span className="ct">{items.length}</span></h3>
+              <div className="mut" style={{ margin: "-6px 4px 10px", fontSize: 12 }}>{HINT[key]}</div>
               {items.map((l) => (
                 <div key={l.id} className={`lcard ${dragId === l.id ? "drag" : ""}`} draggable
                   onDragStart={() => setDragId(l.id)} onDragEnd={() => { setDragId(null); setOver(null); }}>
@@ -146,11 +161,6 @@ export default function Funil() {
                   </div>
                   {l.owner && <div className="mut" style={{ marginTop: 6 }}>👤 {l.owner}</div>}
                   {l.stage === "perdido" && l.lost_reason && <div className="mut" style={{ marginTop: 6 }}>Motivo: {l.lost_reason}</div>}
-                  {STAGES.findIndex(([k]) => k === l.stage) < STAGES.length - 2 && (
-                    <button className="ghost sm" style={{ marginTop: 8, width: "100%" }} onClick={() => patch(l.id, { stage: STAGES[STAGES.findIndex(([k]) => k === l.stage) + 1][0] })}>
-                      Avançar para {STAGES[STAGES.findIndex(([k]) => k === l.stage) + 1][1]} →
-                    </button>
-                  )}
                   {l.phone && (
                     <div style={{ marginTop: 8 }}>
                       <a className="wa" href={`https://wa.me/55${l.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
@@ -158,14 +168,27 @@ export default function Funil() {
                       </a>
                     </div>
                   )}
-                  <div className="row" style={{ marginTop: 8, gap: 6 }}>
-                    {!sites[l.id] ? (
-                      <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Criar site · 3 créditos</button></Link>
-                    ) : (
+                  <div className="row" style={{ marginTop: 8, gap: 6, flexWrap: "wrap" }}>
+                    {l.stage === "novo" && <button className="sm" onClick={() => patch(l.id, { stage: "contato_iniciado" })}>Contato feito →</button>}
+                    {["novo", "contato_iniciado"].includes(l.stage) && !sites[l.id] && (
+                      <Link href={`/sites/novo?lead=${l.id}`}><button className={l.stage === "novo" ? "ghost sm" : "sm"}>Gerar site · 3 créditos</button></Link>
+                    )}
+                    {["novo", "contato_iniciado"].includes(l.stage) && sites[l.id] && (
+                      <button className="sm" onClick={() => patch(l.id, { stage: "qualificado" })}>Site pronto → encaminhar proposta</button>
+                    )}
+                    {l.stage === "qualificado" && !sites[l.id] && <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>}
+                    {l.stage === "qualificado" && sites[l.id] && <button className="sm" onClick={() => sendProposal(l, sites[l.id])}>Copiar msg e marcar enviada</button>}
+                    {l.stage === "proposta_enviada" && (
                       <>
-                        <Link href={`/sites/${sites[l.id].id}`}><button className="sm">Editar site</button></Link>
+                        <button className="sm" onClick={() => patch(l.id, { stage: "fechado" })}>Venda fechada ✓</button>
+                        <button className="ghost sm" onClick={() => { patch(l.id, { stage: "perdido" }); setOpen(l.id); }}>Não vendeu</button>
+                      </>
+                    )}
+                    {sites[l.id] && (
+                      <>
+                        <Link href={`/sites/${sites[l.id].id}`}><button className="ghost sm">Editar site</button></Link>
                         <a href={`/p/${sites[l.id].slug}?nv=1`} target="_blank" rel="noreferrer"><button className="ghost sm">Prévia</button></a>
-                        <button className="ghost sm" onClick={() => copyMessage(l, sites[l.id])}>Copiar msg</button>
+                        {l.stage === "proposta_enviada" && <button className="ghost sm" onClick={() => copyMessage(l, sites[l.id])}>Copiar msg</button>}
                       </>
                     )}
                   </div>
