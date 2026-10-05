@@ -58,6 +58,8 @@ export default function Funil() {
   const [over, setOver] = useState<string | null>(null);
   const [sites, setSites] = useState<Record<number, SiteInfo>>({});
   const [calling, setCalling] = useState<Lead | null>(null);
+  const [answering, setAnswering] = useState<Lead | null>(null);
+  const [answer, setAnswer] = useState({ kind: "venda" as "venda" | "sem" | "pensando", value: "", reason: "", date: "" });
   const [busyLead, setBusyLead] = useState<number | null>(null);
   const [toast, setToast] = useState("");
   const flash = (t: string) => { setToast(t); setTimeout(() => setToast(""), 3000); };
@@ -77,15 +79,39 @@ export default function Funil() {
     await loadSites();
   }
 
-  async function copyMessage(l: Lead, s: SiteInfo) {
-    const text = `Oi! Preparei uma prévia do site da ${l.name}: ${window.location.origin}/p/${s.slug}`;
-    try { await navigator.clipboard.writeText(text); flash("Mensagem copiada"); } catch { flash(text); }
+  // Situação do lead em uma linha, a partir dos fatos do fluxo de venda.
+  function statusLine(l: Lead, site?: SiteInfo) {
+    const views = site?.views ? `prévia aberta ${site.views}×` : "prévia ainda não aberta";
+    if (l.stage === "novo") return "Ainda sem contato.";
+    if (l.stage === "contato_iniciado") return "Falou com o dono. Falta gerar o site.";
+    if (l.stage === "qualificado") return "Site pronto. Proposta ainda não enviada.";
+    if (l.stage === "proposta_enviada") return `Aguardando resposta · ${views}.`;
+    if (l.stage === "fechado") return "Venda fechada.";
+    return l.lost_reason ? `Sem venda: ${l.lost_reason}` : "Sem venda.";
   }
 
-  // Copia a mensagem com a prévia e marca a proposta como encaminhada.
-  async function sendProposal(l: Lead, s: SiteInfo) {
-    await copyMessage(l, s);
-    if (l.stage !== "proposta_enviada") await patch(l.id, { stage: "proposta_enviada" });
+  // Uma única ação por etapa; o resto fica no menu do card.
+  function action(l: Lead) {
+    if (l.stage === "novo") return <button className="sm" onClick={() => setCalling(l)}>Entrar em contato</button>;
+    if (l.stage === "contato_iniciado") return <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>;
+    if (l.stage === "qualificado") return <button className="sm" onClick={() => patch(l.id, { stage: "proposta_enviada" })}>Proposta enviada ✓</button>;
+    if (l.stage === "proposta_enviada") return <button className="sm" onClick={() => { setAnswer({ kind: "venda", value: l.estimated_value ? String(l.estimated_value) : "", reason: "", date: "" }); setAnswering(l); }}>Registrar resposta</button>;
+    return null;
+  }
+
+  async function saveAnswer() {
+    if (!answering) return;
+    const l = answering;
+    if (answer.kind === "venda") {
+      if (!(Number(answer.value) > 0)) return flash("Informe o valor da venda.");
+      await patch(l.id, { stage: "fechado", estimated_value: Number(answer.value) });
+    } else if (answer.kind === "sem") {
+      await patch(l.id, { stage: "perdido", lost_reason: answer.reason.trim() || null });
+    } else {
+      if (!answer.date) return flash("Escolha a data do retorno.");
+      await patch(l.id, { next_contact: answer.date });
+    }
+    setAnswering(null);
   }
 
   // Registra a ligação no histórico e move o lead conforme o resultado.
@@ -180,7 +206,6 @@ export default function Funil() {
                     {contactBadge(l.next_contact)}
                   </div>
                   {l.owner && <div className="mut" style={{ marginTop: 6 }}>👤 {l.owner}</div>}
-                  {l.stage === "perdido" && l.lost_reason && <div className="mut" style={{ marginTop: 6 }}>Motivo: {l.lost_reason}</div>}
                   {l.phone && (
                     <div style={{ marginTop: 8 }}>
                       <a className="wa" href={`https://wa.me/55${l.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
@@ -188,40 +213,15 @@ export default function Funil() {
                       </a>
                     </div>
                   )}
-                  <div className="row" style={{ marginTop: 8, gap: 6, flexWrap: "wrap" }}>
-                    {l.stage === "novo"
-                      ? <button className="sm" onClick={() => setCalling(l)}>Entrar em contato</button>
-                      : <button className="ghost sm" onClick={() => setCalling(l)}>Ver script</button>}
-                    {l.stage === "contato_iniciado" && !sites[l.id] && (
-                      <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>
-                    )}
-                    {l.stage === "contato_iniciado" && sites[l.id] && (
-                      <button className="sm" onClick={() => patch(l.id, { stage: "qualificado" })}>Site pronto → encaminhar proposta</button>
-                    )}
-                    {l.stage === "qualificado" && !sites[l.id] && <Link href={`/sites/novo?lead=${l.id}`}><button className="sm">Gerar site · 3 créditos</button></Link>}
-                    {l.stage === "qualificado" && sites[l.id] && <button className="sm" onClick={() => sendProposal(l, sites[l.id])}>Copiar msg e marcar enviada</button>}
-                    {l.stage === "proposta_enviada" && (
-                      <>
-                        <button className="sm" onClick={() => patch(l.id, { stage: "fechado" })}>Venda fechada ✓</button>
-                        <button className="ghost sm" onClick={() => { patch(l.id, { stage: "perdido" }); setOpen(l.id); }}>Não vendeu</button>
-                      </>
-                    )}
-                    {l.stage !== "novo" && sites[l.id] && (
-                      <>
-                        <Link href={`/sites/${sites[l.id].id}`}><button className="ghost sm">Editar site</button></Link>
-                        <a href={`/p/${sites[l.id].slug}?nv=1`} target="_blank" rel="noreferrer"><button className="ghost sm">Prévia</button></a>
-                        {l.stage === "proposta_enviada" && <button className="ghost sm" onClick={() => copyMessage(l, sites[l.id])}>Copiar msg</button>}
-                      </>
-                    )}
-                  </div>
-                  {l.stage !== "novo" && sites[l.id] && (
-                    <div className="mut" style={{ marginTop: 6 }}>
-                      {sites[l.id].status === "publicado" ? "Publicado" : "Prévia"} ·{" "}
-                      {sites[l.id].views ? `👁 ${sites[l.id].views}× (último: ${new Date(sites[l.id].last_viewed_at!).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })})` : "ainda não visualizado"}
-                    </div>
-                  )}
+                  <div className="mut" style={{ marginTop: 8 }}>{statusLine(l, sites[l.id])}</div>
+                  {action(l) && <div style={{ marginTop: 8 }}>{action(l)}</div>}
                   {open === l.id && (
                     <div className="details">
+                      <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                        <button className="ghost sm" onClick={() => setCalling(l)}>Ver script</button>
+                        {sites[l.id] && <Link href={`/sites/${sites[l.id].id}`}><button className="ghost sm">Editar site</button></Link>}
+                        {sites[l.id] && <a href={`/p/${sites[l.id].slug}?nv=1`} target="_blank" rel="noreferrer"><button className="ghost sm">Prévia</button></a>}
+                      </div>
                       <label className="f">Etapa
                         <select value={l.stage} onChange={(e) => patch(l.id, { stage: e.target.value })}>
                           {STAGES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -252,6 +252,24 @@ export default function Funil() {
           );
         })}
       </div>
+      {answering && (
+        <div className="modal" onClick={() => setAnswering(null)}>
+          <div className="chat" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Registrar resposta">
+            <div className="chathead"><b>Resposta de {answering.name}</b><button className="iconbtn" onClick={() => setAnswering(null)} aria-label="Fechar">✕</button></div>
+            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div className="seg">
+                {([["venda", "Venda"], ["sem", "Sem venda"], ["pensando", "Ainda pensando"]] as const).map(([k, v]) => (
+                  <button key={k} type="button" className={answer.kind === k ? "on" : ""} onClick={() => setAnswer({ ...answer, kind: k })}>{v}</button>
+                ))}
+              </div>
+              {answer.kind === "venda" && <label className="f">Valor da venda (R$)<input type="number" min="0" value={answer.value} onChange={(e) => setAnswer({ ...answer, value: e.target.value })} autoFocus /></label>}
+              {answer.kind === "sem" && <label className="f">Motivo<input value={answer.reason} onChange={(e) => setAnswer({ ...answer, reason: e.target.value })} placeholder="Ex.: achou caro, já tem site" autoFocus /></label>}
+              {answer.kind === "pensando" && <label className="f">Retornar em<input type="date" value={answer.date} onChange={(e) => setAnswer({ ...answer, date: e.target.value })} /></label>}
+              <button onClick={saveAnswer}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
       {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
       {toast && <div className="toast">{toast}</div>}
     </>
