@@ -21,16 +21,6 @@ const HINT: Record<string, string> = {
 
 type SiteInfo = { id: number; lead_id: number; slug: string; status: string; views: number; last_viewed_at: string | null };
 
-const DEMO_PROFILE = {
-  name: "Academia Vida Ativa (caso fictício)", category: "Academia", address: "Rua das Palmeiras, 120 — Centro, Fortaleza — CE",
-  phone: "(85) 90000-0000", rating: 4.8, ratingCount: 213,
-  hours: ["segunda-feira: 05:30–22:00", "terça-feira: 05:30–22:00", "quarta-feira: 05:30–22:00", "quinta-feira: 05:30–22:00", "sexta-feira: 05:30–21:00", "sábado: 08:00–13:00", "domingo: Fechado"],
-  reviews: [
-    { author: "Cliente A", rating: 5, text: "Professores atenciosos e equipamentos sempre em ótimo estado. Recomendo demais!" },
-    { author: "Cliente B", rating: 5, text: "Ambiente limpo e acolhedor, os horários de aula cabem na minha rotina." },
-    { author: "Cliente C", rating: 4, text: "Ótima estrutura e preço justo. Melhor academia do bairro." },
-  ],
-};
 
 type Lead = {
   id: number; name: string; phone: string | null; origin: string; stage: string;
@@ -62,6 +52,8 @@ export default function Funil() {
   const [boardW, setBoardW] = useState(0);
   const [sbw, setSbw] = useState(0);
   const [calling, setCalling] = useState<Lead | null>(null);
+  const [registering, setRegistering] = useState(false);
+  const [form, setForm] = useState({ name: "", category: "", phone: "", address: "" });
   const [answering, setAnswering] = useState<Lead | null>(null);
   const [answer, setAnswer] = useState({ kind: "venda" as "venda" | "sem" | "pensando", value: "", reason: "", date: "" });
   const [busyLead, setBusyLead] = useState<number | null>(null);
@@ -151,15 +143,19 @@ export default function Funil() {
     a.click(); URL.revokeObjectURL(a.href);
   }
 
-  async function createDemo() {
-    const { error } = await supabase.from("leads").insert({
-      name: DEMO_PROFILE.name, phone: DEMO_PROFILE.phone, address: DEMO_PROFILE.address, profile: DEMO_PROFILE, origin: "Caso de teste",
-    });
+  // Cadastro de cliente: só os dados que o sistema usa (nome, categoria, telefone e endereço).
+  async function saveClient(e: React.FormEvent) {
+    e.preventDefault();
+    const name = form.name.trim();
+    if (!name) return flash("Informe o nome do negócio.");
+    const profile = { name, category: form.category.trim() || undefined, address: form.address.trim() || undefined, phone: form.phone.trim() || undefined };
+    const { error } = await supabase.from("leads").insert({ name, phone: profile.phone ?? null, address: profile.address ?? null, origin: "Cadastro manual", profile });
     if (error) return flash(error.message);
     const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
     setLeads((data as Lead[]) ?? []);
+    setForm({ name: "", category: "", phone: "", address: "" }); setRegistering(false);
     board.current?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-    flash("Caso de teste criado em A contatar (primeiro da coluna)");
+    flash("Cliente cadastrado em A contatar");
   }
 
   useEffect(() => {
@@ -187,7 +183,7 @@ export default function Funil() {
       <div className="pagehead">
         <h1>Funil de vendas</h1>
         <span className="mut">Arraste os cards entre as etapas ou use o menu do card.</span>
-        <div className="row" style={{ marginTop: 10 }}><button className="ghost sm" onClick={createDemo}>+ Criar caso de teste (fictício)</button><button className="ghost sm" onClick={exportCsv} disabled={!leads.length}>Exportar CSV</button></div>
+        <div className="row" style={{ marginTop: 10 }}><button className="ghost sm" onClick={() => setRegistering(true)}>+ Cadastrar cliente</button><button className="ghost sm" onClick={exportCsv} disabled={!leads.length}>Exportar CSV</button></div>
       </div>
 
 
@@ -272,6 +268,20 @@ export default function Funil() {
           );
         })}
       </div>
+      {registering && (
+        <div className="modal" onClick={() => setRegistering(false)}>
+          <form className="chat" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()} onSubmit={saveClient} aria-label="Cadastrar cliente">
+            <div className="chathead"><b>Cadastrar cliente</b><button type="button" className="iconbtn" onClick={() => setRegistering(false)} aria-label="Fechar">✕</button></div>
+            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              <label className="f">Nome do negócio *<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus required /></label>
+              <label className="f">Categoria<input placeholder="Ex.: academia, salão, clínica" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
+              <label className="f">Telefone / WhatsApp<input inputMode="tel" placeholder="(85) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
+              <label className="f">Endereço<input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></label>
+              <button>Cadastrar cliente</button>
+            </div>
+          </form>
+        </div>
+      )}
       {answering && (
         <div className="modal" onClick={() => setAnswering(null)}>
           <div className="chat" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Registrar resposta">
