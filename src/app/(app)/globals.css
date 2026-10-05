@@ -466,3 +466,7 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .optrow input { margin-top:3px; } .optrow span { display:flex; flex-direction:column; gap:2px; } .optrow small { color:var(--mut); font-size:12.5px; line-height:1.4; }
 @keyframes pulse { 0%,100% { opacity:.45 } 50% { opacity:1 } }
 .optrow input[type=checkbox] { width:18px; height:18px; padding:0; flex:none; accent-color:var(--acc); }
+
+.chantabs { position:relative; align-items:center; }
+.chanright { margin-left:auto; display:flex; gap:8px; align-items:center; padding-bottom:4px; }
+.openpop { position:absolute; top:150px; right:16px; z-index:6; width:min(420px, calc(100% - 32px)); background:var(--card); border:1px solid var(--line2); border-radius:14px; padding:14px 16px; box-shadow:0 20px 50px rgba(0,0,0,.35); font-size:14px; }

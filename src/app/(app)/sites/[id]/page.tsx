@@ -205,6 +205,7 @@ export default function EditarSite({ params }: { params: Promise<{ id: string }>
         <div className="row">
           <button onClick={() => save()}>Salvar</button>
           <a href={url} target="_blank" rel="noreferrer"><button type="button" className="ghost">{site.status === "previa" ? "Abrir prévia" : "Abrir site"}</button></a>
+          <a href={`/p/${site.slug}?nv=1&pdf=1`} target="_blank" rel="noreferrer"><button type="button" className="ghost">Baixar PDF</button></a>
           <button type="button" className="ghost" onClick={copyLink}>Copiar link {site.status === "previa" ? "da prévia" : "do site"}</button>
           {site.status === "previa" && <button className="ghost" onClick={publish}>Publicar (venda confirmada)</button>}
         </div>

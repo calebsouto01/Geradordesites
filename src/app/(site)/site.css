@@ -116,3 +116,13 @@ img[data-full] { cursor:zoom-in; }
 .sx-form.ok { padding:22px; border-radius:16px; background:color-mix(in srgb,var(--accent) 10%,#fff); } .sx-err { color:#c0392b; margin:0; }
 .lay-moderno .sx-form input,.lay-moderno .sx-form textarea { background:#151923; border-color:#2a3042; color:#eef0f6; } .lay-moderno .sx-form.ok { background:#151923; }
 .lay-vitrine .sx-form input,.lay-vitrine .sx-form textarea { border:0; box-shadow:0 4px 14px rgba(0,0,0,.08); border-radius:18px; } .lay-vitrine .sx-form button { border-radius:99px; }
+
+/* PDF da prévia: página única contínua, sem efeitos, flutuantes nem marca de rolagem */
+@media print {
+  @page { margin:0; }
+  html.pdfmode *, html.pdfmode *::before, html.pdfmode *::after { animation:none !important; transition:none !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  html.pdfmode .st [data-rv] { opacity:1 !important; transform:none !important; filter:none !important; }
+  html.pdfmode .st-float, html.pdfmode .mo-progress, html.pdfmode .vi-sticky, html.pdfmode .vi-conf, html.pdfmode .st-lb { display:none !important; }
+  html.pdfmode .st-nav { position:static !important; }
+  html.pdfmode .st section, html.pdfmode .st-sec { break-inside:avoid; }
+}

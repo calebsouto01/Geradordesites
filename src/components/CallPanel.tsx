@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import CallTree from "@/components/CallTree";
 import { KEYS, SCRIPTS, type ScriptKey } from "@/lib/scripts/data";
 
-export type CallLead = { id: number; name: string; phone: string | null; stage: string; profile?: { category?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
+export type LeadMsgs = { gancho: string; primeiro_contato: string; followup: string; abertura_ligacao: string };
+export type CallLead = { id: number; name: string; phone: string | null; stage: string; messages?: LeadMsgs | null; profile?: { category?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
 export type CallOutcome = "falou_dono" | "atendente" | "nao_atendeu" | "retorno";
 export type CallChannel = "ligacao" | "whatsapp" | "email";
 export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string };
@@ -31,23 +32,40 @@ const CHANNELS: { id: CallChannel; label: string; icon: string }[] = [
 ];
 
 // Script de contato por cima do funil: dados do lead, canal (ligação, WhatsApp, e-mail) e encerramento do contato.
-export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onClose, onFinish }: { lead: CallLead; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onClose: () => void; onFinish: (r: CallResult) => void }) {
+export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, onClose, onFinish }: { lead: CallLead; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void }) {
   const [channel, setChannel] = useState<CallChannel>("ligacao");
   const [script, setScript] = useState<ScriptKey>(1);
   const state = useRef<{ key: ScriptKey; path: string[] }>({ key: 1, path: [] });
   const [ret, setRet] = useState(tomorrow());
   const [ending, setEnding] = useState(false);
-  const [tpl, setTpl] = useState<string>(TEMPLATES[0].id);
+  const [tpl, setTpl] = useState<string>("");
   const [msg, setMsg] = useState("");
   const [copied, setCopied] = useState(false);
+  const [genBusy, setGenBusy] = useState(false);
+  const [genErr, setGenErr] = useState("");
+  const [pop, setPop] = useState(false);
+  const msgs = lead.messages ?? null;
   const p = lead.profile;
+
+  async function genMessages() {
+    setGenErr(""); setGenBusy(true);
+    const res = await fetch("/api/leads/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id }) });
+    const json = await res.json().catch(() => ({}));
+    setGenBusy(false);
+    if (!res.ok) return setGenErr(json.error ?? "Não foi possível gerar agora.");
+    onMessages?.(json.messages as LeadMsgs);
+  }
+  const personal: Tpl[] = msgs ? [
+    { id: "p1", label: "✨ Primeiro contato (personalizado)", text: () => msgs.primeiro_contato },
+    { id: "p2", label: "✨ Follow-up (personalizado)", text: () => msgs.followup },
+  ] : [];
   const vars = (): Vars => ({ neg: lead.name, nota: p?.rating ? String(p.rating).replace(".", ",") : "", link: siteSlug ? `${window.location.origin}/p/${siteSlug}` : "[link da prévia]" });
   const finish = (outcome: CallOutcome) => onFinish({ outcome, channel, script: state.current.key, path: channel === "ligacao" ? state.current.path : [], returnDate: outcome === "retorno" ? ret : undefined });
 
   function pick(t: Tpl) { setTpl(t.id); setCopied(false); setMsg(t.text(vars())); }
   function openChannel(c: CallChannel) {
     setChannel(c);
-    if (c === "whatsapp" && !msg) pick(TEMPLATES[0]);
+    if (c === "whatsapp" && !msg) pick(personal[0] ?? TEMPLATES[0]);
   }
   async function copy() { try { await navigator.clipboard.writeText(msg); setCopied(true); } catch { /* sem permissão */ } }
   const digits = lead.phone?.replace(/\D/g, "");
@@ -90,7 +108,24 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onClos
           {CHANNELS.map((c) => (
             <button key={c.id} role="tab" aria-selected={c.id === channel} className={`chantab ${c.id === channel ? "on" : ""}`} onClick={() => openChannel(c.id)}>{c.icon} {c.label}</button>
           ))}
+          {channel === "ligacao" && (
+            <span className="chanright">
+              {msgs
+                ? <button className="ghost sm" onClick={() => setPop((v) => !v)}>✨ Abertura personalizada</button>
+                : <button className="ghost sm" disabled={genBusy} onClick={genMessages}>{genBusy ? "Gerando…" : "✨ Gerar abertura personalizada · 1 crédito"}</button>}
+              {genErr && <span className="err">{genErr}</span>}
+            </span>
+          )}
         </div>
+        {pop && msgs && (
+          <div className="openpop" role="dialog" aria-label="Abertura personalizada">
+            <div className="callmsgs-t">Gancho deste lead</div>
+            <p style={{ margin: "0 0 10px" }}>💡 {msgs.gancho}</p>
+            <div className="callmsgs-t">Abertura da ligação</div>
+            <p style={{ margin: 0 }}>“{msgs.abertura_ligacao}”</p>
+            <button className="iconbtn" style={{ position: "absolute", top: 6, right: 6 }} onClick={() => setPop(false)} aria-label="Fechar">✕</button>
+          </div>
+        )}
 
         {channel === "ligacao" && (
           <div className="callbody">
@@ -102,6 +137,14 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onClos
           <div className="callbody wapp">
             <div className="wlist">
               <span className="callmsgs-t">Modelos de mensagem</span>
+              {msgs ? personal.map((t) => <button key={t.id} className={`callchip ${tpl === t.id ? "on" : ""}`} onClick={() => pick(t)}>{t.label}</button>) : (
+                <div className="panel" style={{ padding: 10 }}>
+                  <b style={{ fontSize: 13 }}>✨ Personalizar com IA</b>
+                  <p className="mut" style={{ margin: "4px 0 8px", fontSize: 12.5 }}>Mensagens e abertura de ligação feitas com os dados deste lead.</p>
+                  <button className="sm" disabled={genBusy} onClick={genMessages}>{genBusy ? "Gerando…" : "Gerar · 1 crédito"}</button>
+                  {genErr && <p className="err" style={{ margin: "6px 0 0" }}>{genErr}</p>}
+                </div>
+              )}
               {TEMPLATES.map((t) => <button key={t.id} className={`callchip ${tpl === t.id ? "on" : ""}`} onClick={() => pick(t)}>{t.label}</button>)}
             </div>
             <div className="wedit">

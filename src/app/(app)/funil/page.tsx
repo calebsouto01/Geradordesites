@@ -28,6 +28,7 @@ type Lead = {
   id: number; name: string; phone: string | null; origin: string; stage: string;
   estimated_value: number | null; owner: string | null; next_contact: string | null; lost_reason: string | null;
   profile?: CallLead["profile"];
+  messages?: CallLead["messages"];
 };
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -347,7 +348,7 @@ export default function Funil() {
         </div>
       )}
       {creating && <CreateSiteDialog lead={creating} onClose={() => setCreating(null)} />}
-      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onCreateSite={() => { setCreating(calling); setCalling(null); }} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
+      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onCreateSite={() => { setCreating(calling); setCalling(null); }} onMessages={(m) => { setLeads((all) => all.map((x) => (x.id === calling.id ? { ...x, messages: m } : x))); setCalling((c) => (c ? { ...c, messages: m } : c)); }} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
       {toast && <div className="toast">{toast}</div>}
     </>
   );
