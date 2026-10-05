@@ -246,7 +246,7 @@ export default function Funil() {
           );
         })}
       </div>
-      {calling && <CallPanel lead={calling} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
+      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
       {toast && <div className="toast">{toast}</div>}
     </>
   );

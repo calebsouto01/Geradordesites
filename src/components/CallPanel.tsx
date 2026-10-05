@@ -9,45 +9,97 @@ export type CallResult = { outcome: CallOutcome; script: ScriptKey; path: string
 
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
-// Painel por cima do funil: árvore de negociação do lead + registro do resultado da ligação.
-export default function CallPanel({ lead, onClose, onFinish }: { lead: CallLead; onClose: () => void; onFinish: (r: CallResult) => void }) {
+type Tpl = { id: string; label: string; text: (v: Vars) => string };
+type Vars = { neg: string; nota: string; link: string };
+
+// Modelos de mensagem (WhatsApp) preenchidos com os dados do lead; o usuário pode editar antes de enviar.
+const TEMPLATES: Tpl[] = [
+  { id: "primeiro", label: "Primeiro contato", text: (v) => `Oi, tudo bem? Aqui é [seu nome]. Vi que a ${v.neg}${v.nota ? ` tem nota ${v.nota} no Google` : " tem ótimas avaliações no Google"}, mas ainda não tem um site. Preparei uma prévia de como ficaria. Posso te mandar?` },
+  { id: "semresposta", label: "Não atendeu", text: (v) => `Oi! Tentei te ligar agora há pouco sobre o site da ${v.neg}. Qual o melhor horário pra falarmos rapidinho?` },
+  { id: "previa", label: "Enviar prévia", text: (v) => `Oi! Como combinado, aqui está a prévia do site da ${v.neg}: ${v.link}\nÉ só abrir no celular. Me conta o que achou!` },
+  { id: "followup", label: "Retorno / follow-up", text: (v) => `Oi! Passando pra saber se você conseguiu ver a prévia do site da ${v.neg}. Se quiser algum ajuste, me avise que eu faço ainda hoje.` },
+  { id: "proposta", label: "Proposta", text: (v) => `Segue a proposta pro site da ${v.neg}:\n• Plano Base: R$ [valor]\n• Plano Completo: R$ [valor]\nPrazo de entrega: [prazo]. Qual faz mais sentido pra vocês?` },
+  { id: "fechado", label: "Fechamento", text: (v) => `Fechado! 🎉 Vou começar o site da ${v.neg} agora e te aviso assim que estiver no ar. Obrigado pela confiança!` },
+];
+
+// Painel por cima do funil: dados do lead, modelos de mensagem, árvore de negociação e encerramento da ligação.
+export default function CallPanel({ lead, siteSlug, onClose, onFinish }: { lead: CallLead; siteSlug?: string | null; onClose: () => void; onFinish: (r: CallResult) => void }) {
   const state = useRef<{ key: ScriptKey; path: string[] }>({ key: 1, path: [] });
   const [ret, setRet] = useState(tomorrow());
+  const [ending, setEnding] = useState(false);
+  const [tpl, setTpl] = useState<string | null>(null);
+  const [msg, setMsg] = useState("");
+  const [copied, setCopied] = useState(false);
   const p = lead.profile;
   const finish = (outcome: CallOutcome) => onFinish({ outcome, script: state.current.key, path: state.current.path, returnDate: outcome === "retorno" ? ret : undefined });
+
+  function pick(t: Tpl) {
+    const link = siteSlug ? `${window.location.origin}/p/${siteSlug}` : "[link da prévia]";
+    setTpl(t.id); setCopied(false);
+    setMsg(t.text({ neg: lead.name, nota: p?.rating ? String(p.rating).replace(".", ",") : "", link }));
+  }
+  async function copy() {
+    try { await navigator.clipboard.writeText(msg); setCopied(true); } catch { /* sem permissão */ }
+  }
+  const digits = lead.phone?.replace(/\D/g, "");
 
   return (
     <div className="modal" onClick={onClose}>
       <div className="chat wide" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Ligação para ${lead.name}`}>
-        <div className="chathead">
-          <div>
+        <div className="callhead">
+          <div className="callinfo">
             <b>{lead.name}</b>
-            <div className="mut">
-              {[p?.category, p?.rating ? `★ ${p.rating} (${p.ratingCount ?? 0})` : null].filter(Boolean).join(" · ")}
-              {lead.phone && <> · <a className="wa" href={`https://wa.me/55${lead.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">WhatsApp {lead.phone}</a></>}
-            </div>
+            <div className="mut">{[p?.category, p?.rating ? `★ ${p.rating} (${p.ratingCount ?? 0})` : null].filter(Boolean).join(" · ")}</div>
+            {lead.phone && <a className="wa" href={`https://wa.me/55${digits}`} target="_blank" rel="noreferrer">WhatsApp {lead.phone}</a>}
             {p?.prospeccao?.observacao && <div className="mut">💡 {p.prospeccao.observacao}</div>}
           </div>
-          <button className="iconbtn" onClick={onClose} aria-label="Fechar">✕</button>
-        </div>
-        <div className="callbody"><CallTree onChange={(s) => { state.current = s; }} /></div>
-        <div className="callfoot">
-          <h3>Como foi a ligação?</h3>
-          <div className="outcomes">
-            <button className="outcome main" onClick={() => finish("falou_dono")}>
-              ✅ Falei com o dono<small>{lead.stage === "novo" ? "Avança para Contato iniciado" : "Registra no histórico"}</small>
-            </button>
-            <button className="outcome" onClick={() => finish("atendente")}>🧑‍💼 Falei com atendente<small>Tentar chegar ao responsável</small></button>
-            <button className="outcome" onClick={() => finish("nao_atendeu")}>📵 Não atendeu<small>Registra a tentativa</small></button>
-            <div className="outcome-ret">
-              <b>🔁 Pediu retorno</b>
-              <div className="row">
-                <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
-                <button className="sm" onClick={() => finish("retorno")}>Agendar</button>
-              </div>
+          <div className="callmsgs">
+            <span className="callmsgs-t">Modelos de mensagem</span>
+            <div className="callchips">
+              {TEMPLATES.map((t) => <button key={t.id} className={`callchip ${tpl === t.id ? "on" : ""}`} onClick={() => pick(t)}>{t.label}</button>)}
             </div>
           </div>
+          <div className="callactions">
+            <button className="sm" onClick={() => setEnding(true)}>Encerrar contato</button>
+            <button className="iconbtn" onClick={onClose} aria-label="Fechar">✕</button>
+          </div>
         </div>
+
+        {tpl && (
+          <div className="msgbox">
+            <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} aria-label="Mensagem" />
+            <div className="msgbtns">
+              <button className="sm" onClick={copy}>{copied ? "Copiado ✓" : "Copiar"}</button>
+              {digits && <a href={`https://wa.me/55${digits}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noreferrer"><button className="ghost sm">Abrir no WhatsApp</button></a>}
+              <button className="iconbtn" onClick={() => setTpl(null)} aria-label="Fechar mensagem">✕</button>
+            </div>
+          </div>
+        )}
+
+        <div className="callbody"><CallTree onChange={(s) => { state.current = s; }} /></div>
+
+        {ending && (
+          <div className="endsheet" role="dialog" aria-label="Como foi a ligação?">
+            <div className="endcard">
+              <h3>Como foi a ligação?</h3>
+              <div className="outcomes">
+                <button className="outcome main" onClick={() => finish("falou_dono")}>
+                  ✅ Falei com o dono<small>{lead.stage === "novo" ? "Avança para Contato iniciado" : "Registra no histórico"}</small>
+                </button>
+                <button className="outcome" onClick={() => finish("atendente")}>🧑‍💼 Falei com atendente<small>Tentar chegar ao responsável</small></button>
+                <button className="outcome" onClick={() => finish("nao_atendeu")}>📵 Não atendeu<small>Registra a tentativa</small></button>
+                <div className="outcome-ret">
+                  <b>🔁 Pediu retorno</b>
+                  <div className="row">
+                    <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
+                    <button className="sm" onClick={() => finish("retorno")}>Agendar</button>
+                  </div>
+                </div>
+              </div>
+              <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar para a ligação</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

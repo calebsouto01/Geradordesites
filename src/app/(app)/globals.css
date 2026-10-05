@@ -404,3 +404,27 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .outcome-ret { display:flex; flex-direction:column; gap:6px; padding:12px 14px; background:var(--card); border:1px solid var(--line2); border-radius:12px; }
 .outcome-ret .row { gap:6px; flex-wrap:wrap; } .outcome-ret input[type=date] { padding:6px 8px; flex:1; min-width:130px; }
 @media (max-width:900px){ .outcomes { grid-template-columns:1fr 1fr; } }
+
+/* painel de ligação: cabeçalho com modelos de mensagem, encerrar contato e colunas sem rolagem de texto */
+.chat.wide { position:relative; max-width:1240px; height:calc(100dvh - 32px); max-height:none; }
+.callhead { display:grid; grid-template-columns:minmax(200px,auto) minmax(0,1fr) auto; gap:16px; align-items:start; padding:12px 16px; border-bottom:1px solid var(--line); }
+.callinfo { display:flex; flex-direction:column; gap:2px; font-size:13px; min-width:0; } .callinfo b { font-size:15px; }
+.callmsgs-t { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--mut); margin-bottom:6px; }
+.callchips { display:flex; flex-wrap:wrap; gap:6px; }
+.callchip { padding:5px 11px; font-size:12.5px; font-weight:500; background:var(--card); color:var(--fg); border:1px solid var(--line2); border-radius:99px; }
+.callchip:hover { border-color:var(--acc); filter:none; } .callchip.on { border-color:var(--acc); background:rgba(99,102,241,.14); }
+.callactions { display:flex; gap:6px; align-items:center; }
+.msgbox { display:flex; gap:10px; align-items:flex-start; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--bg2); }
+.msgbox textarea { flex:1; resize:vertical; font:inherit; font-size:13.5px; padding:8px 10px; background:var(--card); color:var(--fg); border:1px solid var(--line2); border-radius:10px; min-height:64px; }
+.msgbtns { display:flex; flex-direction:column; gap:6px; align-items:stretch; } .msgbtns a { display:block; } .msgbtns a button { width:100%; }
+.chat.wide .callbody { display:flex; flex-direction:column; padding:12px 16px; overflow-y:auto; }
+.chat.wide .callmap-tabs { margin-bottom:10px; } .chat.wide .callmap-tab { padding:6px 14px; min-width:0; flex-direction:row; align-items:baseline; gap:8px; }
+.chat.wide .callmap-layout { grid-template-columns:minmax(0,270px) minmax(0,1fr) minmax(0,260px); flex:1; min-height:0; }
+.chat.wide .callmap-tree { max-height:none; min-height:0; height:100%; }
+.chat.wide .callmap-detail, .chat.wide .callmap-answers { position:static; align-self:start; max-height:none; overflow:visible; padding:14px 16px; }
+.chat.wide .callmap-detail .script { font-size:14px; padding:12px 14px; }
+.endsheet { position:absolute; inset:0; z-index:5; background:rgba(0,0,0,.55); display:grid; place-items:center; padding:16px; }
+.endcard { width:100%; max-width:860px; background:var(--card); border:1px solid var(--line2); border-radius:16px; padding:18px 18px 16px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+.endcard h3 { margin:0 0 12px; font-size:16px; text-transform:none; letter-spacing:0; color:var(--fg); }
+@media (max-width:1000px){ .callhead { grid-template-columns:1fr auto; } .callmsgs { grid-column:1 / -1; grid-row:2; } .chat.wide .callmap-layout { grid-template-columns:1fr; } .chat.wide .callmap-tree { height:auto; max-height:260px; } }
+@media (max-width:640px){ .chat.wide { height:100dvh; } }
