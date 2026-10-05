@@ -32,14 +32,21 @@ export default function CallPanel({ lead, onClose, onFinish }: { lead: CallLead;
         </div>
         <div className="callbody"><CallTree onChange={(s) => { state.current = s; }} /></div>
         <div className="callfoot">
-          <span className="mut">Resultado da ligação:</span>
-          <button className="sm" onClick={() => finish("falou_dono")}>{lead.stage === "novo" ? "Falei com o dono → Contato iniciado" : "Falei com o dono"}</button>
-          <button className="ghost sm" onClick={() => finish("atendente")}>Falei com atendente</button>
-          <button className="ghost sm" onClick={() => finish("nao_atendeu")}>Não atendeu</button>
-          <span className="row" style={{ gap: 6 }}>
-            <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
-            <button className="ghost sm" onClick={() => finish("retorno")}>Pediu retorno</button>
-          </span>
+          <h3>Como foi a ligação?</h3>
+          <div className="outcomes">
+            <button className="outcome main" onClick={() => finish("falou_dono")}>
+              ✅ Falei com o dono<small>{lead.stage === "novo" ? "Avança para Contato iniciado" : "Registra no histórico"}</small>
+            </button>
+            <button className="outcome" onClick={() => finish("atendente")}>🧑‍💼 Falei com atendente<small>Tentar chegar ao responsável</small></button>
+            <button className="outcome" onClick={() => finish("nao_atendeu")}>📵 Não atendeu<small>Registra a tentativa</small></button>
+            <div className="outcome-ret">
+              <b>🔁 Pediu retorno</b>
+              <div className="row">
+                <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
+                <button className="sm" onClick={() => finish("retorno")}>Agendar</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
