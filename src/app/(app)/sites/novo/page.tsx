@@ -97,7 +97,12 @@ export default function NovoSite() {
   useEffect(() => {
     supabase.from("leads").select("id, name, phone, address").order("created_at", { ascending: false }).then(({ data: l }) => setLeads((l as Lead[]) ?? []));
     const id = Number(new URLSearchParams(window.location.search).get("lead"));
-    if (Number.isInteger(id) && id > 0) { setLeadId(id); setMode("lista"); }
+    // Vindo do script de contato (?lead=): o cliente já está definido, então pula direto para o modelo.
+    if (Number.isInteger(id) && id > 0) {
+      setLeadId(id); setMode("lista"); setBusy(true);
+      loadProfile(id).then((ok) => { setBusy(false); if (ok) setStep("modelo"); });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   // Ao trocar de modelo, as seções voltam ao padrão daquele modelo.
