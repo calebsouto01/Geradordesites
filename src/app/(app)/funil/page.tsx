@@ -29,7 +29,16 @@ type Lead = {
   estimated_value: number | null; owner: string | null; next_contact: string | null; lost_reason: string | null;
   profile?: CallLead["profile"];
   messages?: CallLead["messages"];
+  place_id?: string | null; address?: string | null;
 };
+
+// Link do Google Maps do contato: o guardado no cadastro ou uma busca pelo nome e endereço (com o ID do lugar quando há).
+function mapsLink(l: Lead & { place_id?: string | null; address?: string | null }) {
+  if (l.profile?.mapsUrl) return l.profile.mapsUrl;
+  const q = encodeURIComponent([l.name, l.address].filter(Boolean).join(" "));
+  const pid = l.place_id && /^ChIJ/.test(l.place_id) ? `&query_place_id=${l.place_id}` : "";
+  return `https://www.google.com/maps/search/?api=1&query=${q}${pid}`;
+}
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
@@ -248,6 +257,10 @@ export default function Funil() {
               {items.map((l) => (
                 <div key={l.id} className={`lcard ${dragId === l.id ? "drag" : ""}`} draggable
                   onDragStart={() => setDragId(l.id)} onDragEnd={() => { setDragId(null); setOver(null); }}>
+                  <div className="lphoto" aria-hidden="true">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img loading="lazy" alt="" src={`/api/lead-photo?id=${l.id}`} onLoad={(e) => e.currentTarget.parentElement?.classList.add("has")} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                  </div>
                   <div className="top">
                     <strong>{l.name}</strong>
                     <span className="row" style={{ gap: 0, flex: "none" }}>
@@ -262,6 +275,7 @@ export default function Funil() {
                     {contactBadge(l.next_contact)}
                   </div>
                   {l.owner && <div className="mut" style={{ marginTop: 6 }}>👤 {l.owner}</div>}
+                  <div style={{ marginTop: 6 }}><a className="mapl" href={mapsLink(l)} target="_blank" rel="noreferrer">📍 Ver no Google Maps</a></div>
                   {l.phone && (
                     <div style={{ marginTop: 8 }}>
                       <a className="wa" href={`https://wa.me/55${l.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
@@ -348,7 +362,7 @@ export default function Funil() {
         </div>
       )}
       {creating && <CreateSiteDialog lead={creating} onClose={() => setCreating(null)} />}
-      {calling && <CallPanel lead={calling} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onCreateSite={() => { setCreating(calling); setCalling(null); }} onMessages={(m) => { setLeads((all) => all.map((x) => (x.id === calling.id ? { ...x, messages: m } : x))); setCalling((c) => (c ? { ...c, messages: m } : c)); }} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
+      {calling && <CallPanel lead={calling} mapsUrl={mapsLink(calling)} siteSlug={sites[calling.id]?.slug} siteId={sites[calling.id]?.id} onCreateSite={() => { setCreating(calling); setCalling(null); }} onMessages={(m) => { setLeads((all) => all.map((x) => (x.id === calling.id ? { ...x, messages: m } : x))); setCalling((c) => (c ? { ...c, messages: m } : c)); }} onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)} />}
       {toast && <div className="toast">{toast}</div>}
     </>
   );

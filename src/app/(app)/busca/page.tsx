@@ -67,7 +67,7 @@ export default function Buscar() {
 
   async function promote(r: Result) {
     const { error } = await supabase.from("leads").insert({
-      place_id: r.place_id, name: r.name, phone: r.phone, address: r.address, stage: "contato_iniciado",
+      place_id: r.place_id, name: r.name, phone: r.phone, address: r.address, stage: "contato_iniciado", photos: r.photos ?? null,
     });
     if (error && error.code !== "23505") return setErr(error.message);
     await supabase.from("search_results").update({ status: "promovido" }).eq("id", r.id);

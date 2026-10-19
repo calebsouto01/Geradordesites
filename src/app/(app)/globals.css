@@ -474,3 +474,8 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .pwrow { position:relative; display:block; } .pwrow input { width:100%; padding-right:84px; }
 .pwtoggle { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:transparent; color:var(--mut); border:0; font-size:13px; font-weight:600; padding:6px 10px; border-radius:8px; }
 .pwtoggle:hover { color:var(--fg); filter:none; }
+
+/* foto e link do Maps no card do funil */
+.lphoto { display:none; margin:-12px -12px 10px; height:96px; border-radius:12px 12px 0 0; overflow:hidden; background:var(--bg2); }
+.lphoto.has { display:block; } .lphoto img { width:100%; height:100%; object-fit:cover; display:block; }
+.mapl { font-size:13px; font-weight:600; color:var(--acc); text-decoration:none; } .mapl:hover { text-decoration:underline; }

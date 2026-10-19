@@ -5,7 +5,7 @@ import CallTree from "@/components/CallTree";
 import { KEYS, SCRIPTS, type ScriptKey } from "@/lib/scripts/data";
 
 export type LeadMsgs = { gancho: string; primeiro_contato: string; followup: string; abertura_ligacao: string };
-export type CallLead = { id: number; name: string; phone: string | null; stage: string; messages?: LeadMsgs | null; profile?: { category?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
+export type CallLead = { id: number; name: string; phone: string | null; stage: string; messages?: LeadMsgs | null; profile?: { category?: string; mapsUrl?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
 export type CallOutcome = "falou_dono" | "atendente" | "nao_atendeu" | "retorno";
 export type CallChannel = "ligacao" | "whatsapp" | "email";
 export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string };
@@ -32,7 +32,7 @@ const CHANNELS: { id: CallChannel; label: string; icon: string }[] = [
 ];
 
 // Script de contato por cima do funil: dados do lead, canal (ligação, WhatsApp, e-mail) e encerramento do contato.
-export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, onClose, onFinish }: { lead: CallLead; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void }) {
+export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, mapsUrl, onClose, onFinish }: { lead: CallLead; mapsUrl?: string; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void }) {
   const [channel, setChannel] = useState<CallChannel>("ligacao");
   const [script, setScript] = useState<ScriptKey>(1);
   const state = useRef<{ key: ScriptKey; path: string[] }>({ key: 1, path: [] });
@@ -79,6 +79,7 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
             <b>{lead.name}</b>
             <div className="mut">{[p?.category, p?.rating ? `★ ${p.rating} (${p.ratingCount ?? 0})` : null].filter(Boolean).join(" · ")}</div>
             {lead.phone && <a className="wa" href={`https://wa.me/55${digits}`} target="_blank" rel="noreferrer">WhatsApp {lead.phone}</a>}
+            {(mapsUrl ?? p?.mapsUrl) && <a className="mapl" href={mapsUrl ?? p?.mapsUrl} target="_blank" rel="noreferrer">📍 Ver no Google Maps</a>}
             {p?.prospeccao?.observacao && <div className="mut">💡 {p.prospeccao.observacao}</div>}
           </div>
           <div className="callmsgs">
