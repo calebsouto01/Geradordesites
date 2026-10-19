@@ -26,6 +26,7 @@ export default function CallTree({ onChange, scriptKey, initialPath, hideTabs }:
     box.scrollTo({ top: box.scrollTop + (e.top - b.top) - (b.height - e.height) / 2, behavior: "smooth" });
   }, [current, key]);
 
+  const back = () => setPath((p) => (p.length > 1 ? p.slice(0, -1) : p));
   function choose(k: ScriptKey) { setKey(k); setPath([SCRIPTS[k].start]); }
   function goTo(id: string) {
     const i = path.indexOf(id);
@@ -36,6 +37,7 @@ export default function CallTree({ onChange, scriptKey, initialPath, hideTabs }:
     const node = S.nodes[id];
     return (
       <button data-node={id} className={`panel callmap-node ${stateFor(id, kind)}`} onClick={() => goTo(id)}>
+        {path.includes(id) && <span className="callmap-step" aria-label={`Passo ${path.indexOf(id) + 1}`}>{path.indexOf(id) + 1}</span>}
         <span className="callmap-badge">{node.badge}</span>
         <span className="callmap-title">{node.title}</span>
       </button>
@@ -68,11 +70,11 @@ export default function CallTree({ onChange, scriptKey, initialPath, hideTabs }:
                   </div>
                 );
               }
+              const chosen = item.items.some((x) => path.includes(x.id));
               return (
-                <div key={i} className="callmap-branch">
+                <div key={i} className={`callmap-branch ${chosen ? "hot" : ""}`}>
                   {item.items.map(({ id, kind }) => (
-                    <div className="callmap-col" key={id}>
-                      <div className={`callmap-stem ${path.includes(id) ? "on" : ""}`} />
+                    <div className={`callmap-col ${path.includes(id) ? "hot" : chosen ? "muted" : ""}`} key={id}>
                       {card(id, kind)}
                     </div>
                   ))}
@@ -100,9 +102,10 @@ export default function CallTree({ onChange, scriptKey, initialPath, hideTabs }:
                 </button>
               ))}
             </div>
-          ) : <p className="mut" style={{ margin: "8px 0 0" }}>Fim deste caminho. Registre o resultado da ligação ou reinicie para tentar outro caminho.</p>}
-          <div style={{ marginTop: 16 }}>
-            <button className="ghost sm" onClick={() => setPath([S.start])}>↺ reiniciar</button>
+          ) : <p className="mut" style={{ margin: "8px 0 0" }}>Fim deste caminho. Registre o resultado da ligação, volte um passo ou reinicie para tentar outro caminho.</p>}
+          <div className="row" style={{ marginTop: 16, gap: 8 }}>
+            <button className="ghost sm" disabled={path.length <= 1} onClick={back}>← Voltar</button>
+            <button className="ghost sm" disabled={path.length <= 1} onClick={() => setPath([S.start])}>↺ Reiniciar</button>
           </div>
         </div>
       </div>

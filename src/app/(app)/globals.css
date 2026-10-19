@@ -479,3 +479,20 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .lphoto { display:none; margin:-12px -12px 10px; height:96px; border-radius:12px 12px 0 0; overflow:hidden; background:var(--bg2); }
 .lphoto.has { display:block; } .lphoto img { width:100%; height:100%; object-fit:cover; display:block; }
 .mapl { font-size:13px; font-weight:600; color:var(--acc); text-decoration:none; } .mapl:hover { text-decoration:underline; }
+
+/* árvore: trilha vertical à esquerda, ramos em lista, caminho percorrido em destaque */
+.callmap-tree .callmap-flow { align-items:stretch; }
+.callmap-tree .callmap-row { justify-content:flex-start; }
+.callmap-tree .callmap-stem { margin:0 0 0 22px; height:14px; width:2px; }
+.callmap-tree .callmap-hint { text-align:left; margin:2px 0 4px 34px; font-size:10.5px; }
+.callmap-tree .callmap-branch { display:flex; flex-direction:column; flex-wrap:nowrap; gap:6px; max-width:none; margin:0 0 0 22px; padding:2px 0 2px 16px; border-left:2px solid var(--line2); }
+.callmap-tree .callmap-branch.hot { border-left-color:var(--acc); }
+.callmap-tree .callmap-col { flex:none; max-width:none; width:100%; flex-direction:row; position:relative; }
+.callmap-tree .callmap-col::before { content:""; position:absolute; left:-16px; top:50%; width:14px; height:2px; background:var(--line2); }
+.callmap-tree .callmap-col.hot::before { background:var(--acc); }
+.callmap-tree .callmap-col.muted { opacity:.5; } .callmap-tree .callmap-col.muted:hover { opacity:1; }
+.callmap-tree .callmap-col .callmap-node { max-width:none; }
+.callmap-tree .callmap-node { position:relative; padding-right:38px; }
+.callmap-step { position:absolute; top:8px; right:10px; width:20px; height:20px; border-radius:50%; background:var(--acc); color:#fff; font-size:11px; font-weight:700; display:grid; place-items:center; }
+.callmap-node.on .callmap-step { background:var(--ok); }
+.callmap-answers button:disabled { opacity:.45; cursor:not-allowed; }
