@@ -373,11 +373,168 @@ const FLOW_3: FlowItem[] = [
   { t: "branch", items: [{ id: "ganhou", kind: "good" }, { id: "perdido", kind: "bad" }] },
 ];
 
+/* ---------- Script 4: pergunta de descoberta (abertura verdadeira, baseada na pesquisa) ---------- */
+const SEGUIR_ENVIO = [{ label: "Seguir → envio da prévia", to: "envio4" }];
+export const NODES_4: Record<string, Node> = {
+  ...SHARED,
+  // Nas objeções comuns, o próximo passo é enviar a prévia (e não escolher plano antes de ver).
+  obj_pensar: { ...SHARED.obj_pensar, next: SEGUIR_ENVIO },
+  duvida_dominio: { ...SHARED.duvida_dominio, next: SEGUIR_ENVIO },
+  obj_preco: { ...SHARED.obj_preco, next: SEGUIR_ENVIO },
+  abertura4: {
+    badge: "Abertura por pesquisa · passo 1",
+    title: "Pesquisa + pergunta de descoberta",
+    script: (
+      <>
+        <p>“Oi, [nome do contato]? Aqui é [seu nome]. Encontrei o contato da [negócio] no Google. Eu trabalho com negócios locais e, na minha pesquisa por [categoria] em [cidade], a empresa de vocês apareceu com nota [nota] e [nº] avaliações. Só que não achei um site com [horários / valores / serviços].”</p>
+        <p>“Vocês têm um site que eu não encontrei, ou ainda não têm?”</p>
+      </>
+    ),
+    tip: "Só diga o que é verdade: o contato, a nota e a pesquisa vêm do Google. Termine na pergunta e espere a resposta, sem preencher o silêncio.",
+    next: [
+      { label: "“Ainda não temos”", to: "historia4" },
+      { label: "“Temos, sim”", to: "tem_site4" },
+      { label: "“Quem é você?”", to: "quem_e4" },
+      { label: "“Só tenho Instagram / WhatsApp”", to: "insta4" },
+      { label: "“Não é um bom momento”", to: "no_time" },
+    ],
+  },
+  historia4: {
+    badge: "Escuta · passo 2",
+    title: "Já pensaram em ter um?",
+    script: <p>“Entendi. E vocês já chegaram a pensar em ter um site, ou até a cotar com alguém?”</p>,
+    tip: "Ouça a história sem interromper. Ela revela a objeção real: preço, confiança ou falta de tempo.",
+    next: [
+      { label: "Cotou antes (caro ou o profissional sumiu)", to: "experiencia4" },
+      { label: "Nunca pensou / não é prioridade", to: "revelacao4" },
+    ],
+  },
+  tem_site4: {
+    badge: "Dúvida comum",
+    title: "“Temos, sim”",
+    script: <p>“Que bom! Provavelmente eu procurei errado. Qual é o endereço, pra eu conferir? Só estranhei porque não apareceu na pesquisa.”</p>,
+    tip: "Se o site existe e está bom, agradeça e encerre. Se for só uma rede social ou estiver desatualizado, volte para a conversa.",
+    next: [
+      { label: "É só rede social / está desatualizado", to: "historia4" },
+      { label: "Tem um site bom", to: "encerrar4" },
+    ],
+  },
+  encerrar4: {
+    badge: "Encerrar",
+    title: "Site bom: agradecer e encerrar",
+    script: <p>“Perfeito, está ótimo então. Obrigado pelo seu tempo e desculpa o incômodo!”</p>,
+    tip: "Encerrar bem preserva a imagem. Registre o resultado e siga para o próximo contato.",
+    next: [],
+  },
+  quem_e4: {
+    badge: "Dúvida comum",
+    title: "“Quem é você?”",
+    script: <p>“Eu crio sites para negócios locais. Estou ligando para empresas bem avaliadas na região que ainda não têm um. A [negócio] apareceu na pesquisa, e por isso eu liguei.”</p>,
+    tip: "Uma frase, verdadeira, e volte para a pergunta de descoberta.",
+    next: [{ label: "Seguir → já pensaram em ter um?", to: "historia4" }],
+  },
+  insta4: {
+    badge: "Contorno de objeção",
+    title: "“Só tenho Instagram / WhatsApp”",
+    script: <p>“O Instagram é ótimo para quem já conhece vocês. Mas quem pesquisa [categoria] em [cidade] no Google procura horário, valores e localização, e nem sempre abre rede social para isso. Vocês já pensaram em ter um lugar só para essas informações?”</p>,
+    tip: "Não desvalorize o Instagram: o site é complemento, para quem busca no Google.",
+    next: [{ label: "Seguir → já pensaram em ter um?", to: "historia4" }],
+  },
+  experiencia4: {
+    badge: "Contorno de objeção",
+    title: "Experiência ruim ou orçamento caro",
+    script: <p>“Imagino, isso acontece bastante. Por isso eu faço diferente: primeiro eu monto a página com o que já está público no Google, e você só decide depois de ver pronta. Assim não tem risco de eu sumir, porque o trabalho já está feito.”</p>,
+    tip: "Reconheça a história dele antes de apresentar o seu jeito. A prévia pronta é a prova.",
+    next: [{ label: "Seguir → revelação da prévia", to: "revelacao4" }],
+  },
+  revelacao4: {
+    badge: "Revelação · passo 3",
+    title: "“Eu já montei uma página para vocês”",
+    script: (
+      <>
+        <p>“Aproveitando, eu já montei uma página para vocês, só com informações públicas do Google: fotos, serviços, horário e avaliações. A ideia é poupar o tempo de vocês com as perguntas que chegam todo dia no WhatsApp.”</p>
+        <p>“Posso te mandar agora, para você dar uma olhada?”</p>
+      </>
+    ),
+    tip: "Seja claro de que é uma prévia feita a partir de informações públicas. Envie com a marca d'água de prévia.",
+    next: [
+      { label: "“Pode mandar”", to: "envio4" },
+      { label: "“Quanto custa?”", to: "preco4" },
+      { label: "“E se eu precisar alterar?”", to: "alterar4" },
+      { label: "“Vou pensar / falar com sócio”", to: "obj_pensar" },
+      { label: "“Como funciona o domínio?”", to: "duvida_dominio" },
+    ],
+  },
+  preco4: {
+    badge: "Dúvida comum",
+    title: "“Quanto custa?”",
+    script: <p>“O modelo é valor único, sem mensalidade: você paga uma vez e a página é sua. O valor eu prefiro te passar junto com a página, para você ver exatamente o que está pagando. Posso te mandar agora?”</p>,
+    tip: "Responda o modelo (sem mensalidade) logo, mas só diga o número com a prévia aberta. Se ele insistir, dê o valor sem rodeio.",
+    next: [
+      { label: "Aceita ver a prévia", to: "envio4" },
+      { label: "Insiste no valor", to: "planos4" },
+    ],
+  },
+  planos4: {
+    badge: "Oferta",
+    title: "Dar o valor",
+    script: (
+      <>
+        <p>“O Plano Base é [valor único], com a página no ar e o domínio do primeiro ano. A renovação do domínio é [valor]/ano. Parcelo em até [2]x.”</p>
+        <p>“A página é sua, por tempo indeterminado: pode ficar hospedada comigo ou você leva os arquivos e hospeda onde preferir.”</p>
+      </>
+    ),
+    tip: "Só prometa o que o sistema entrega hoje. Domínio e hospedagem têm custo recorrente, e a analogia do aluguel da placa explica isso.",
+    next: [
+      { label: "Segue interessado", to: "envio4" },
+      { label: "“Está caro”", to: "obj_preco" },
+    ],
+  },
+  alterar4: {
+    badge: "Dúvida comum",
+    title: "“E se eu precisar alterar?”",
+    script: <p>“Consigo, sim. Se ficar hospedada comigo, eu ajusto no mesmo dia [valor simbólico / incluso]. Se você hospedar por conta própria, eu faço a alteração avulsa por [valor].”</p>,
+    tip: "Tenha o valor de alteração definido antes da ligação. Isso mostra segurança.",
+    next: [{ label: "Seguir → envio da prévia", to: "envio4" }],
+  },
+  envio4: {
+    badge: "Envio · passo 4",
+    title: "Enviar e combinar o retorno",
+    script: <p>“Qual o melhor WhatsApp para eu enviar? Vou te mandar agora. Posso te ligar daqui a uns 15 minutos para ver o que achou?”</p>,
+    tip: "Feche um compromisso pequeno e concreto, com horário. É mais fácil dizer sim a isso do que escolher um plano agora.",
+    next: [{ label: "Combinou o retorno", to: "retorno4" }],
+  },
+  retorno4: {
+    badge: "Resultado",
+    title: "Retorno combinado",
+    script: <p>Envie a prévia pelo WhatsApp (aba “Por WhatsApp”, modelo “Enviar prévia”), registre “Pediu retorno” com a data e, na hora combinada, use o <b>Script 3 (retorno de ligação)</b>.</p>,
+    tip: "Ligue no horário combinado. Quem cumpre o combinado se diferencia.",
+    next: [],
+  },
+};
+
+const FLOW_4: FlowItem[] = [
+  { t: "node", id: "abertura4", first: true },
+  { t: "hint", text: "↓ conforme a resposta" },
+  { t: "branch", items: [{ id: "historia4" }, { id: "tem_site4" }, { id: "quem_e4" }, { id: "insta4" }, { id: "no_time", kind: "end" }] },
+  { t: "hint", text: "↓ se já cotou ou teve experiência ruim" },
+  { t: "branch", items: [{ id: "experiencia4" }, { id: "encerrar4", kind: "end" }] },
+  { t: "hint", text: "↓ revelação da prévia" },
+  { t: "node", id: "revelacao4" },
+  { t: "hint", text: "↓ dúvidas comuns antes de enviar" },
+  { t: "branch", items: [{ id: "preco4" }, { id: "alterar4" }, { id: "obj_pensar" }, { id: "duvida_dominio" }] },
+  { t: "node", id: "planos4" },
+  { t: "hint", text: "↓ combinar o envio e o retorno" },
+  { t: "node", id: "envio4" },
+  { t: "node", id: "retorno4" },
+];
+
 export const SCRIPTS = {
   1: { label: "Script 1", sub: "Pedido de permissão", nodes: NODES_1, flow: FLOW_1, start: "abertura" },
   2: { label: "Script 2", sub: "Motivo + prévia grátis", nodes: NODES_2, flow: FLOW_2, start: "abertura2" },
   3: { label: "Script 3", sub: "Retorno de ligação", nodes: NODES_3, flow: FLOW_3, start: "abertura3" },
+  4: { label: "Script 4", sub: "Pergunta de descoberta", nodes: NODES_4, flow: FLOW_4, start: "abertura4" },
 } as const;
 export type ScriptKey = keyof typeof SCRIPTS;
-export const KEYS: ScriptKey[] = [1, 2, 3];
+export const KEYS: ScriptKey[] = [1, 2, 3, 4];
 
