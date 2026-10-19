@@ -12,6 +12,7 @@ export default function Login() {
   const [accept, setAccept] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [show, setShow] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,7 +22,7 @@ export default function Login() {
     const supabase = createClient();
     const { data, error } = mode === "in" ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password });
     setBusy(false);
-    if (error) return setMsg(error.message.includes("Invalid login") ? "E-mail ou senha incorretos." : error.message);
+    if (error) return setMsg(error.message.includes("Invalid login") ? "E-mail ou senha incorretos." : /fetch|network/i.test(error.message) ? "Não foi possível conectar ao servidor. Tente novamente em instantes." : error.message);
     if (!data.session) return setMsg("Conta criada. Confirme seu e-mail para entrar.");
     router.replace("/");
     router.refresh();
@@ -51,7 +52,12 @@ export default function Login() {
             <span className="mut">{mode === "in" ? "Acesse sua conta para continuar." : "Você começa com 6 créditos grátis para testar."}</span>
           </div>
           <label className="f">E-mail<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" /></label>
-          <label className="f">Senha<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete={mode === "in" ? "current-password" : "new-password"} /></label>
+          <label className="f">Senha
+            <span className="pwrow">
+              <input type={show ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete={mode === "in" ? "current-password" : "new-password"} />
+              <button type="button" className="pwtoggle" onClick={() => setShow((v) => !v)} aria-label={show ? "Ocultar senha" : "Mostrar senha"} aria-pressed={show}>{show ? "Ocultar" : "Mostrar"}</button>
+            </span>
+          </label>
           {mode === "up" && (
             <label className="mut" style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13 }}>
               <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} style={{ width: 18, minHeight: 18, marginTop: 2 }} />
