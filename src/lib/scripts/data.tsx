@@ -374,11 +374,16 @@ const FLOW_3: FlowItem[] = [
 ];
 
 /* ---------- Script 4: pergunta de descoberta (abertura verdadeira, baseada na pesquisa) ---------- */
-const SEGUIR_ENVIO = [{ label: "Seguir → envio da prévia", to: "envio4" }];
+const SEGUIR_ENVIO = [{ label: "Seguir → marcar a reunião", to: "envio4" }];
 export const NODES_4: Record<string, Node> = {
   ...SHARED,
   // Nas objeções comuns, o próximo passo é enviar a prévia (e não escolher plano antes de ver).
-  obj_pensar: { ...SHARED.obj_pensar, next: SEGUIR_ENVIO },
+  obj_pensar: {
+    ...SHARED.obj_pensar,
+    script: <p>“Sem problema, é uma decisão importante. Na reunião você já pode trazer o sócio ou quem decide junto com você, e eu apresento para os dois de uma vez. Qual o melhor dia e horário para vocês?”</p>,
+    tip: "Quem decide junto entra na reunião. Assim a decisão sai de uma vez e o dono não precisa explicar sozinho.",
+    next: SEGUIR_ENVIO,
+  },
   duvida_dominio: { ...SHARED.duvida_dominio, next: SEGUIR_ENVIO },
   obj_preco: { ...SHARED.obj_preco, next: SEGUIR_ENVIO },
   abertura4: {
@@ -461,7 +466,7 @@ export const NODES_4: Record<string, Node> = {
   experiencia4: {
     badge: "Contorno de objeção",
     title: "Experiência ruim ou orçamento caro",
-    script: <p>“Imagino, isso acontece bastante. Por isso eu faço diferente: primeiro eu monto a página com o que já está público no Google, e você só decide depois de ver pronta. Assim não tem risco de eu sumir, porque o trabalho já está feito. Posso te mostrar o que montei?”</p>,
+    script: <p>“Imagino, isso acontece bastante. Por isso eu faço diferente: primeiro eu monto a página com o que já está público no Google, e você só decide depois de ver pronta. Assim não tem risco de eu sumir, porque o trabalho já está feito. É gratuito. Podemos marcar uma reunião para eu te apresentar o que montei?”</p>,
     tip: "Reconheça a história dele antes de apresentar o seu jeito. A prévia pronta é a prova. Termine sempre com a pergunta.",
     next: [{ label: "Seguir → revelação da prévia", to: "revelacao4" }],
   },
@@ -471,12 +476,12 @@ export const NODES_4: Record<string, Node> = {
     script: (
       <>
         <p>“Eu já montei uma página para vocês, só com informações públicas do Google: fotos, serviços, horário e avaliações. A ideia é poupar o tempo de vocês com as perguntas que chegam todo dia no WhatsApp.”</p>
-        <p>“Posso te mandar agora, para você dar uma olhada?”</p>
+        <p>“É gratuito e rápido. Podemos marcar uma reunião para eu te apresentar?”</p>
       </>
     ),
-    tip: "Seja claro de que é uma prévia feita a partir de informações públicas. Envie com a marca d'água de prévia.",
+    tip: "Seja claro de que a página foi feita a partir de informações públicas. Não envie antes: a página é apresentada na reunião, com você explicando.",
     next: [
-      { label: "“Pode mandar”", to: "envio4" },
+      { label: "Aceita a reunião", to: "envio4" },
       { label: "“Quanto custa?”", to: "preco4" },
       { label: "“E se eu precisar alterar?”", to: "alterar4" },
       { label: "“Vou pensar / falar com sócio”", to: "obj_pensar" },
@@ -486,10 +491,10 @@ export const NODES_4: Record<string, Node> = {
   preco4: {
     badge: "Dúvida comum",
     title: "“Quanto custa?”",
-    script: <p>“O modelo é valor único, sem mensalidade: você paga uma vez e a página é sua. O valor eu prefiro te passar junto com a página, para você ver exatamente o que está pagando. Posso te mandar agora?”</p>,
-    tip: "Responda o modelo (sem mensalidade) logo, mas só diga o número com a prévia aberta. Se ele insistir, dê o valor sem rodeio.",
+    script: <p>“O modelo é valor único, sem mensalidade, e dá para parcelar em até 2x. Na reunião eu te apresento a página e o valor exato, e se você gostar, a gente já fecha. Podemos marcar?”</p>,
+    tip: "“Valor único, sem mensalidade” é a fala que leva o cliente aberto para fechar. Fale o modelo logo e deixe o número para a reunião; se ele insistir, dê o valor sem rodeio.",
     next: [
-      { label: "Aceita ver a prévia", to: "envio4" },
+      { label: "Aceita a reunião", to: "envio4" },
       { label: "Insiste no valor", to: "planos4" },
     ],
   },
@@ -499,34 +504,34 @@ export const NODES_4: Record<string, Node> = {
     script: (
       <>
         <p>“O Plano Base é [valor único], com a página no ar e o domínio do primeiro ano. A renovação do domínio é [valor]/ano. Parcelo em até [2]x.”</p>
-        <p>“A página é sua, por tempo indeterminado: pode ficar hospedada comigo ou você leva os arquivos e hospeda onde preferir. Posso te mandar a página agora, para você ver como ficou?”</p>
+        <p>“A página é sua, por tempo indeterminado: pode ficar hospedada comigo ou você leva os arquivos e hospeda onde preferir. Podemos marcar a reunião para eu te apresentar a página?”</p>
       </>
     ),
     tip: "Só prometa o que o sistema entrega hoje. Domínio e hospedagem têm custo recorrente, e a analogia do aluguel da placa explica isso.",
     next: [
-      { label: "Segue interessado", to: "envio4" },
+      { label: "Aceita a reunião", to: "envio4" },
       { label: "“Está caro”", to: "obj_preco" },
     ],
   },
   alterar4: {
     badge: "Dúvida comum",
     title: "“E se eu precisar alterar?”",
-    script: <p>“Consigo, sim. Se ficar hospedada comigo, eu ajusto no mesmo dia [valor simbólico / incluso]. Se você hospedar por conta própria, eu faço a alteração avulsa por [valor]. Posso te mandar a página agora, para você ver como ela ficaria?”</p>,
+    script: <p>“Consigo, sim. Se ficar hospedada comigo, eu ajusto no mesmo dia [valor simbólico / incluso]. Se você hospedar por conta própria, eu faço a alteração avulsa por [valor]. Podemos marcar a reunião para eu te apresentar a página?”</p>,
     tip: "Tenha o valor de alteração definido antes da ligação. Isso mostra segurança.",
-    next: [{ label: "Seguir → envio da prévia", to: "envio4" }],
+    next: [{ label: "Seguir → marcar a reunião", to: "envio4" }],
   },
   envio4: {
-    badge: "Envio · passo 4",
-    title: "Enviar e combinar o retorno",
-    script: <p>“Qual o melhor WhatsApp para eu enviar? Vou te mandar agora. Posso te ligar daqui a uns 15 minutos para ver o que achou?”</p>,
-    tip: "Feche um compromisso pequeno e concreto, com horário. É mais fácil dizer sim a isso do que escolher um plano agora.",
-    next: [{ label: "Combinou o retorno", to: "retorno4" }],
+    badge: "Reunião · passo 4",
+    title: "Marcar a reunião de apresentação",
+    script: <p>“Perfeito! Qual o melhor dia e horário para você? Pode ser por videochamada ou, se preferir, pessoalmente. E qual o melhor WhatsApp para eu confirmar?”</p>,
+    tip: "Feche dia e hora concretos (duas opções ajudam: “terça ou quarta?”) e confirme por WhatsApp na hora.",
+    next: [{ label: "Reunião marcada", to: "retorno4" }],
   },
   retorno4: {
     badge: "Resultado",
-    title: "Retorno combinado",
-    script: <p>Envie a prévia pelo WhatsApp (aba “Por WhatsApp”, modelo “Enviar prévia”), registre “Pediu retorno” com a data e, na hora combinada, use o <b>Script 3 (retorno de ligação)</b>.</p>,
-    tip: "Ligue no horário combinado. Quem cumpre o combinado se diferencia.",
+    title: "Reunião marcada",
+    script: <p>Confirme agora pelo WhatsApp (aba “Por WhatsApp”), registre <b>“Pediu retorno”</b> com a data da reunião em <b>Encerrar contato</b> e prepare a apresentação: a prévia da página (criada com <b>Criar site</b>) e, quando disponível, o PDF de apresentação.</p>,
+    tip: "Mande um lembrete na véspera. Quem chega à reunião já sabe que é valor único e sem mensalidade, e vem aberto a fechar.",
     next: [],
   },
 };
@@ -542,7 +547,7 @@ const FLOW_4: FlowItem[] = [
   { t: "hint", text: "↓ dúvidas comuns antes de enviar" },
   { t: "branch", items: [{ id: "preco4" }, { id: "alterar4" }, { id: "obj_pensar" }, { id: "duvida_dominio" }] },
   { t: "node", id: "planos4" },
-  { t: "hint", text: "↓ combinar o envio e o retorno" },
+  { t: "hint", text: "↓ marcar a reunião de apresentação" },
   { t: "node", id: "envio4" },
   { t: "node", id: "retorno4" },
 ];
