@@ -412,18 +412,19 @@ export const NODES_4: Record<string, Node> = {
   tem_site4: {
     badge: "Dúvida comum",
     title: "“Temos, sim”",
-    script: <p>“Que bom! Provavelmente eu procurei errado. Só estranhei porque não apareceu na pesquisa. Qual é o endereço, pra eu conferir?”</p>,
-    tip: "Se o site existe e está bom, agradeça e encerre. Se for só uma rede social ou estiver desatualizado, volte para a conversa.",
+    script: <p>“Que bom que vocês têm! Então vale eu te contar um detalhe: no perfil de vocês no Google, o campo de site está vazio, e foi por isso que eu não encontrei. Quem pesquisa [categoria] em [cidade] e não acha vocês rápido nem chega a conhecer vocês. Nem é que escolheu outro lugar: ela nem teve a chance de saber que vocês existem, e vocês nunca ficam sabendo quem foi. Como as pessoas chegam no site de vocês hoje?”</p>,
+    tip: "Só diga o que é verdade: o campo de site vazio no Google é verificável. Não invente número. Se o site é bom, só avise do perfil do Google e encerre bem.",
     next: [
-      { label: "É só rede social / está desatualizado", to: "historia4" },
-      { label: "Tem um site bom", to: "encerrar4" },
+      { label: "É bom, só não estava no Google", to: "encerrar4" },
+      { label: "É antigo / não abre no celular / está desatualizado", to: "revelacao4" },
+      { label: "Na verdade é só rede social", to: "insta4" },
     ],
   },
   encerrar4: {
     badge: "Encerrar",
-    title: "Site bom: agradecer e encerrar",
-    script: <p>“Perfeito, está ótimo então. Obrigado pelo seu tempo e desculpa o incômodo!”</p>,
-    tip: "Encerrar bem preserva a imagem. Registre o resultado e siga para o próximo contato.",
+    title: "Já tem página boa: ajudar e encerrar",
+    script: <p>“Perfeito, então o ajuste é simples: coloque o endereço do site no campo ‘site’ do perfil de vocês no Google, e quem pesquisar chega até ele. Obrigado pelo seu tempo e desculpa o incômodo!”</p>,
+    tip: "Encerrar ajudando gera boa imagem e indicação. Registre o resultado e siga para o próximo contato.",
     next: [],
   },
   quem_e4: {
@@ -439,11 +440,22 @@ export const NODES_4: Record<string, Node> = {
   insta4: {
     badge: "Contorno de objeção",
     title: "“Só tenho Instagram / WhatsApp”",
-    script: <p>“O Instagram é ótimo para quem já conhece vocês. Mas quem pesquisa [categoria] em [cidade] no Google procura horário, valores e localização, e nem sempre abre rede social para isso. Vocês já pensaram em ter um lugar só para essas informações?”</p>,
-    tip: "Não desvalorize o Instagram: o site é complemento, para quem busca no Google.",
+    script: <p>“O Instagram é ótimo para quem já conhece vocês. Mas quem pesquisa [categoria] em [cidade] no Google quer achar horário, valores e onde fica sem precisar chamar. Hoje essa pessoa encontra isso onde?”</p>,
+    tip: "Não desvalorize o Instagram. Deixe o dono perceber sozinho que quem pesquisa no Google precisa chamar para saber o básico.",
     next: [
-      { label: "Já cotou antes (caro ou o profissional sumiu)", to: "experiencia4" },
-      { label: "Nunca pensou / não é prioridade", to: "revelacao4" },
+      { label: "“Chama no WhatsApp” / não encontra", to: "revelacao4" },
+      { label: "Cotou antes (caro ou o profissional sumiu)", to: "experiencia4" },
+      { label: "“O Instagram já basta”", to: "insta_basta4" },
+    ],
+  },
+  insta_basta4: {
+    badge: "Contorno de objeção",
+    title: "“O Instagram já basta”",
+    script: <p>“Para quem já segue vocês, basta mesmo. Mas quem pesquisa [categoria] em [cidade] no Google e não acha vocês nem chega a conhecer vocês, e vocês nunca ficam sabendo quem foi. Vocês já pararam para pensar em quantas pessoas pesquisam e nunca chegam até vocês?”</p>,
+    tip: "Fale da chance que a pessoa nem teve, não de concorrente. Não invente número: a pergunta faz o dono pensar no tamanho do que não vê.",
+    next: [
+      { label: "Nunca tinha pensado / quer entender", to: "revelacao4" },
+      { label: "Cotou antes (caro ou o profissional sumiu)", to: "experiencia4" },
     ],
   },
   experiencia4: {
@@ -524,7 +536,7 @@ const FLOW_4: FlowItem[] = [
   { t: "hint", text: "↓ conforme a resposta" },
   { t: "branch", items: [{ id: "historia4" }, { id: "tem_site4" }, { id: "quem_e4" }, { id: "insta4" }, { id: "no_time", kind: "end" }] },
   { t: "hint", text: "↓ se já cotou ou teve experiência ruim" },
-  { t: "branch", items: [{ id: "experiencia4" }, { id: "encerrar4", kind: "end" }] },
+  { t: "branch", items: [{ id: "experiencia4" }, { id: "insta_basta4" }, { id: "encerrar4", kind: "end" }] },
   { t: "hint", text: "↓ revelação da prévia" },
   { t: "node", id: "revelacao4" },
   { t: "hint", text: "↓ dúvidas comuns antes de enviar" },
