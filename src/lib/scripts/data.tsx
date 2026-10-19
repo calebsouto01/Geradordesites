@@ -412,7 +412,7 @@ export const NODES_4: Record<string, Node> = {
   tem_site4: {
     badge: "Dúvida comum",
     title: "“Temos, sim”",
-    script: <p>“Que bom! Provavelmente eu procurei errado. Qual é o endereço, pra eu conferir? Só estranhei porque não apareceu na pesquisa.”</p>,
+    script: <p>“Que bom! Provavelmente eu procurei errado. Só estranhei porque não apareceu na pesquisa. Qual é o endereço, pra eu conferir?”</p>,
     tip: "Se o site existe e está bom, agradeça e encerre. Se for só uma rede social ou estiver desatualizado, volte para a conversa.",
     next: [
       { label: "É só rede social / está desatualizado", to: "historia4" },
@@ -429,22 +429,28 @@ export const NODES_4: Record<string, Node> = {
   quem_e4: {
     badge: "Dúvida comum",
     title: "“Quem é você?”",
-    script: <p>“Eu crio sites para negócios locais. Estou ligando para empresas bem avaliadas na região que ainda não têm um. A [negócio] apareceu na pesquisa, e por isso eu liguei.”</p>,
-    tip: "Uma frase, verdadeira, e volte para a pergunta de descoberta.",
-    next: [{ label: "Seguir → já pensaram em ter um?", to: "historia4" }],
+    script: <p>“Eu crio sites para negócios locais e estou falando com empresas bem avaliadas da região que ainda não têm um. A [negócio] chamou atenção na minha pesquisa. Me tira uma curiosidade: vocês já chegaram a pensar em ter um site?”</p>,
+    tip: "Responda em poucas palavras, com a verdade, e termine na pergunta. Nunca deixe a resposta terminar em afirmação: o silêncio trava a ligação.",
+    next: [
+      { label: "Já cotou antes (caro ou o profissional sumiu)", to: "experiencia4" },
+      { label: "Nunca pensou / não é prioridade", to: "revelacao4" },
+    ],
   },
   insta4: {
     badge: "Contorno de objeção",
     title: "“Só tenho Instagram / WhatsApp”",
     script: <p>“O Instagram é ótimo para quem já conhece vocês. Mas quem pesquisa [categoria] em [cidade] no Google procura horário, valores e localização, e nem sempre abre rede social para isso. Vocês já pensaram em ter um lugar só para essas informações?”</p>,
     tip: "Não desvalorize o Instagram: o site é complemento, para quem busca no Google.",
-    next: [{ label: "Seguir → já pensaram em ter um?", to: "historia4" }],
+    next: [
+      { label: "Já cotou antes (caro ou o profissional sumiu)", to: "experiencia4" },
+      { label: "Nunca pensou / não é prioridade", to: "revelacao4" },
+    ],
   },
   experiencia4: {
     badge: "Contorno de objeção",
     title: "Experiência ruim ou orçamento caro",
-    script: <p>“Imagino, isso acontece bastante. Por isso eu faço diferente: primeiro eu monto a página com o que já está público no Google, e você só decide depois de ver pronta. Assim não tem risco de eu sumir, porque o trabalho já está feito.”</p>,
-    tip: "Reconheça a história dele antes de apresentar o seu jeito. A prévia pronta é a prova.",
+    script: <p>“Imagino, isso acontece bastante. Por isso eu faço diferente: primeiro eu monto a página com o que já está público no Google, e você só decide depois de ver pronta. Assim não tem risco de eu sumir, porque o trabalho já está feito. Posso te mostrar o que montei?”</p>,
+    tip: "Reconheça a história dele antes de apresentar o seu jeito. A prévia pronta é a prova. Termine sempre com a pergunta.",
     next: [{ label: "Seguir → revelação da prévia", to: "revelacao4" }],
   },
   revelacao4: {
@@ -452,7 +458,7 @@ export const NODES_4: Record<string, Node> = {
     title: "“Eu já montei uma página para vocês”",
     script: (
       <>
-        <p>“Aproveitando, eu já montei uma página para vocês, só com informações públicas do Google: fotos, serviços, horário e avaliações. A ideia é poupar o tempo de vocês com as perguntas que chegam todo dia no WhatsApp.”</p>
+        <p>“Eu já montei uma página para vocês, só com informações públicas do Google: fotos, serviços, horário e avaliações. A ideia é poupar o tempo de vocês com as perguntas que chegam todo dia no WhatsApp.”</p>
         <p>“Posso te mandar agora, para você dar uma olhada?”</p>
       </>
     ),
@@ -481,7 +487,7 @@ export const NODES_4: Record<string, Node> = {
     script: (
       <>
         <p>“O Plano Base é [valor único], com a página no ar e o domínio do primeiro ano. A renovação do domínio é [valor]/ano. Parcelo em até [2]x.”</p>
-        <p>“A página é sua, por tempo indeterminado: pode ficar hospedada comigo ou você leva os arquivos e hospeda onde preferir.”</p>
+        <p>“A página é sua, por tempo indeterminado: pode ficar hospedada comigo ou você leva os arquivos e hospeda onde preferir. Posso te mandar a página agora, para você ver como ficou?”</p>
       </>
     ),
     tip: "Só prometa o que o sistema entrega hoje. Domínio e hospedagem têm custo recorrente, e a analogia do aluguel da placa explica isso.",
@@ -493,7 +499,7 @@ export const NODES_4: Record<string, Node> = {
   alterar4: {
     badge: "Dúvida comum",
     title: "“E se eu precisar alterar?”",
-    script: <p>“Consigo, sim. Se ficar hospedada comigo, eu ajusto no mesmo dia [valor simbólico / incluso]. Se você hospedar por conta própria, eu faço a alteração avulsa por [valor].”</p>,
+    script: <p>“Consigo, sim. Se ficar hospedada comigo, eu ajusto no mesmo dia [valor simbólico / incluso]. Se você hospedar por conta própria, eu faço a alteração avulsa por [valor]. Posso te mandar a página agora, para você ver como ela ficaria?”</p>,
     tip: "Tenha o valor de alteração definido antes da ligação. Isso mostra segurança.",
     next: [{ label: "Seguir → envio da prévia", to: "envio4" }],
   },
