@@ -387,11 +387,31 @@ export const NODES_4: Record<string, Node> = {
   duvida_dominio: { ...SHARED.duvida_dominio, next: SEGUIR_ENVIO },
   obj_preco: { ...SHARED.obj_preco, next: SEGUIR_ENVIO },
   abertura4: {
-    badge: "Abertura por pesquisa · passo 1",
+    badge: "Abertura · passo 1",
+    title: "Confirmar o proprietário",
+    script: <p>“Oi, [nome do contato]? Aqui é [seu nome]. Encontrei o contato da [negócio] no Google. Eu falo com o proprietário?”</p>,
+    tip: "Pergunta de porta de entrada: confirma quem decide antes de qualquer explicação. Termine na pergunta e espere a resposta.",
+    next: [
+      { label: "“Sim, sou eu / sou o proprietário”", to: "pesquisa4" },
+      { label: "“Não”", to: "atendente4" },
+    ],
+  },
+  atendente4: {
+    badge: "Atendente · chegar ao proprietário",
+    title: "Não é o proprietário",
+    script: <p>“Tudo bem! Com quem eu falo? O proprietário está? Se não estiver, qual o melhor horário para eu encontrá-lo? É sobre como a [negócio] aparece no Google.”</p>,
+    tip: "Seja breve, anote o nome de quem atendeu e o horário. Não explique o produto para quem não decide.",
+    next: [
+      { label: "Passou para o proprietário", to: "pesquisa4" },
+      { label: "Proprietário não está", to: "no_time" },
+    ],
+  },
+  pesquisa4: {
+    badge: "Pesquisa · passo 2",
     title: "Pesquisa + pergunta de descoberta",
     script: (
       <>
-        <p>“Oi, [nome do contato]? Aqui é [seu nome]. Encontrei o contato da [negócio] no Google. Eu trabalho com negócios locais e, na minha pesquisa por [categoria] em [cidade], a empresa de vocês apareceu com nota [nota] e [nº] avaliações. Só que não achei um site com [horários / valores / serviços].”</p>
+        <p>“Eu trabalho com negócios locais e, na minha pesquisa por [categoria] em [cidade], a empresa de vocês apareceu com nota [nota] e [nº] avaliações. Só que não achei um site com [horários / valores / serviços].”</p>
         <p>“Vocês têm um site que eu não encontrei, ou ainda não têm?”</p>
       </>
     ),
@@ -405,7 +425,7 @@ export const NODES_4: Record<string, Node> = {
     ],
   },
   historia4: {
-    badge: "Escuta · passo 2",
+    badge: "Escuta · passo 3",
     title: "Já pensaram em ter um?",
     script: <p>“Entendi. E vocês já chegaram a pensar em ter um site, ou até a cotar com alguém?”</p>,
     tip: "Ouça a história sem interromper. Ela revela a objeção real: preço, confiança ou falta de tempo.",
@@ -471,7 +491,7 @@ export const NODES_4: Record<string, Node> = {
     next: [{ label: "Seguir → revelação da prévia", to: "revelacao4" }],
   },
   revelacao4: {
-    badge: "Revelação · passo 3",
+    badge: "Revelação · passo 4",
     title: "“Eu já montei uma página para vocês”",
     script: (
       <>
@@ -521,7 +541,7 @@ export const NODES_4: Record<string, Node> = {
     next: [{ label: "Seguir → marcar a reunião", to: "envio4" }],
   },
   envio4: {
-    badge: "Reunião · passo 4",
+    badge: "Reunião · passo 5",
     title: "Marcar a reunião de apresentação",
     script: <p>“Perfeito! Qual o melhor dia e horário para você? Pode ser por videochamada ou, se preferir, pessoalmente. E qual o melhor WhatsApp para eu confirmar?”</p>,
     tip: "Feche dia e hora concretos (duas opções ajudam: “terça ou quarta?”) e confirme por WhatsApp na hora.",
@@ -538,6 +558,8 @@ export const NODES_4: Record<string, Node> = {
 
 const FLOW_4: FlowItem[] = [
   { t: "node", id: "abertura4", first: true },
+  { t: "hint", text: "↓ é o proprietário?" },
+  { t: "branch", items: [{ id: "pesquisa4" }, { id: "atendente4" }] },
   { t: "hint", text: "↓ conforme a resposta" },
   { t: "branch", items: [{ id: "historia4" }, { id: "tem_site4" }, { id: "quem_e4" }, { id: "insta4" }, { id: "no_time", kind: "end" }] },
   { t: "hint", text: "↓ se já cotou ou teve experiência ruim" },
