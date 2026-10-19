@@ -475,7 +475,7 @@ export const NODES_4: Record<string, Node> = {
     title: "“Eu já montei uma página para vocês”",
     script: (
       <>
-        <p>“Eu já montei uma página para vocês, só com informações públicas do Google: fotos, serviços, horário e avaliações. A ideia é poupar o tempo de vocês com as perguntas que chegam todo dia no WhatsApp.”</p>
+        <p>“Eu já montei uma página para vocês, com as informações que recolhi na internet. A ideia é poupar o tempo de vocês com as perguntas de horário, serviços e localização que imagino que chegam todo dia no WhatsApp. Quem chamar já chega sabendo o básico.”</p>
         <p>“É gratuito e rápido. Podemos marcar uma reunião para eu te apresentar?”</p>
       </>
     ),
