@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { BRAND } from "@/lib/marketing/brand";
-import { Cards, Cta, Faq, Footer, Header, Section, Steps } from "@/components/marketing/Mk";
+import Reveal from "@/components/marketing/Reveal";
+import Image from "next/image";
+import { Cards, Cta, Faq, Footer, Header, Section } from "@/components/marketing/Mk";
 
 export const metadata: Metadata = {
   title: `${BRAND.product} · Ache clientes sem site, converse com o roteiro certo e feche a venda`,
   description: "Plataforma para quem vende sites a negócios locais: busca de comércios bem avaliados sem site, funil de vendas, árvore de negociação e página pronta em um clique.",
 };
 
-export default function Plataforma() {
+export default async function Plataforma({ searchParams }: { searchParams: Promise<{ acento?: string }> }) {
+  const accent = (await searchParams).acento === "laranja" ? "laranja" : "violeta";
   const p = BRAND.plan;
   const jsonLd = {
     "@context": "https://schema.org", "@type": "SoftwareApplication", name: BRAND.product, applicationCategory: "BusinessApplication", operatingSystem: "Web",
@@ -15,29 +18,43 @@ export default function Plataforma() {
   };
 
   return (
-    <>
+    <div className="mk-dark" data-accent={accent}>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" />
+      <Reveal />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Header site="plataforma" />
       <main>
-        <section className="mk-hero">
+        <section className="mkx-hero">
+          <div className="mkx-grain" aria-hidden />
           <div className="mk-wrap">
-            <h1>Ache o cliente. Converse com o roteiro certo. Feche a venda.</h1>
-            <p>{BRAND.product} reúne a busca de negócios bem avaliados que ainda não têm site, o funil de vendas, a árvore de negociação e a página pronta em um clique. Você não precisa saber criar site: precisa saber vender.</p>
-            <div className="mk-btns">
-              <a className="mk-btn" href="/login?cadastro=1">Criar conta e testar grátis</a>
-              <a className="mk-btn ghost" href="#fluxo">Ver como funciona</a>
+            <div className="mkx-copy">
+              <span className="mkx-label">Para quem vende sites</span>
+              <h1>Ache o cliente. Converse com o roteiro certo. <em>Feche a venda.</em></h1>
+              <p className="lead">{BRAND.product} reúne a busca de negócios bem avaliados que ainda não têm site, o funil de vendas, a árvore de negociação e a página pronta em um clique. Você não precisa saber criar site: precisa saber vender.</p>
+              <div className="mk-btns">
+                <a className="mk-btn" href="/login?cadastro=1">Criar conta e testar grátis</a>
+                <a className="mk-btn ghost" href="#fluxo">Ver como funciona</a>
+              </div>
+              <p className="mk-note">{p.trial} créditos de teste ao criar a conta. Sem cartão para começar.</p>
             </div>
-            <p className="mk-note">{p.trial} créditos de teste ao criar a conta. Sem cartão para começar.</p>
+            <div className="mkx-stage" data-rv>
+              <Image className="mkx-shot mkx-main" src="/marketing/panel.png" alt="Árvore de negociação do Script 4 dentro do painel de contato" width={1220} height={553} priority />
+              <div className="mkx-ex"><i>exemplo</i><b>34 ligações</b>nos últimos 7 dias</div>
+              <Image className="mkx-shot mkx-float b" src="/marketing/painel.png" alt="Painel do operador com ligações por dia" width={1060} height={383} />
+              <Image className="mkx-shot mkx-float a" src="/marketing/funil.png" alt="Funil de vendas com uma ação por etapa" width={1300} height={343} />
+            </div>
           </div>
         </section>
 
         <Section id="fluxo" title="Do primeiro contato ao fechamento, em um lugar só">
-          <Steps items={[
+          <ol className="mkx-steps">{[
             { title: "Achar", text: "Busque por cidade e categoria. O sistema mostra negócios bem avaliados no Google que ainda não têm site, com foto, nota e telefone." },
             { title: "Conversar", text: "O funil e a árvore de negociação guiam a ligação, o WhatsApp e o retorno, com falas prontas e respostas às objeções." },
             { title: "Mostrar", text: "Gere em um clique a página do negócio, com as informações dele, e apresente ao dono. Envie o link ou o PDF." },
             { title: "Fechar", text: "Com a venda confirmada, publique a página e registre o resultado. O painel do operador mostra o que está funcionando." },
-          ]} />
+          ].map((x, i) => (
+            <li key={x.title} data-rv className={i === 2 ? "on" : ""}><span className="num">{String(i + 1).padStart(2, "0")}</span><h3>{x.title}</h3><p>{x.text}</p></li>
+          ))}</ol>
         </Section>
 
         <Section alt title="A árvore de negociação" intro="O que diferencia o sistema: você não improvisa a conversa. A árvore mostra o que falar em cada resposta do cliente.">
@@ -98,6 +115,6 @@ export default function Plataforma() {
         <Cta title="Comece pela primeira busca" text={`Crie a conta, use os ${p.trial} créditos de teste e veja a primeira página pronta.`} href="/login?cadastro=1" label="Criar conta e testar grátis" />
       </main>
       <Footer site="plataforma" />
-    </>
+    </div>
   );
 }
