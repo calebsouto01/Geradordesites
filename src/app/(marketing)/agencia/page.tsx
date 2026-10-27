@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BRAND, contactHref, isPlaceholder } from "@/lib/marketing/brand";
+import Reveal from "@/components/marketing/Reveal";
 import { B, Cards, Cta, Faq, Footer, Header, Section, Steps } from "@/components/marketing/Mk";
 
 export const metadata: Metadata = {
@@ -17,12 +18,15 @@ export default function Agencia() {
   } : null;
 
   return (
-    <>
+    <div className="mk-warm">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" />
+      <Reveal />
       {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
       <Header site="agencia" />
       <main>
         <section className="mk-hero">
           <div className="mk-wrap">
+            <span className="mkw-label">Página para o seu negócio</span>
             <h1>Quem pesquisa o seu negócio no Google precisa achar tudo em um só lugar.</h1>
             <p>Eu monto a página do seu negócio com as informações que já estão na internet e apresento pronta, antes de você decidir qualquer coisa. Valor único, sem mensalidade.</p>
             <div className="mk-btns">
@@ -99,6 +103,6 @@ export default function Agencia() {
         <Cta title="Vamos conversar?" text="Marque a apresentação gratuita. Eu mostro a página do seu negócio pronta, em poucos minutos." href={talk} label="Agendar apresentação gratuita" />
       </main>
       <Footer site="agencia" />
-    </>
+    </div>
   );
 }

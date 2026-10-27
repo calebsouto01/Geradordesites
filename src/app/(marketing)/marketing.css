@@ -101,3 +101,18 @@
   .mkx-ex { position:static; margin:14px auto 0; width:max-content; } .mkx-steps { grid-template-columns:1fr; } .mkx-show .mk-cards { grid-template-columns:1fr; }
 }
 @media (prefers-reduced-motion:reduce){ .mkx-float { animation:none; } .mk-rv [data-rv] { transition:none; } }
+
+/* ===== Tema acolhedor / tipográfico (empresa de serviço) ===== */
+.mk-warm { --mk-bg:#fbf7f1; --mk-alt:#f3ece1; --mk-fg:#1f1a14; --mk-mut:#6a5f52; --mk-line:#e4dac8; --mk-accent:#c2410c; --mk-accent-fg:#fff; --mk-radius:6px;
+  background:var(--mk-bg); color:var(--mk-fg); font-family:"Inter",system-ui,sans-serif; }
+.mk-warm h1,.mk-warm h2,.mk-warm h3,.mk-warm .mk-logo { font-family:"Fraunces",Georgia,serif; font-weight:700; letter-spacing:-.015em; }
+.mk-warm .mk-head { background:rgba(251,247,241,.9); }
+.mk-warm .mk-hero { background:var(--mk-bg); padding:96px 0 72px; border-bottom:1px solid var(--mk-line); }
+.mk-warm .mk-hero h1 { font-size:clamp(36px,6vw,66px); max-width:14em; line-height:1.05; }
+.mk-warm .mk-btn { border-radius:6px; } .mk-warm .mk-nav .mk-ghost { border-radius:6px; }
+.mk-warm .mk-sec h2::before { content:""; display:block; width:12px; height:12px; background:var(--mk-accent); margin-bottom:16px; }
+.mk-warm .mk-card,.mk-warm .mk-steps li,.mk-warm .mk-faq details { background:#fffdf9; }
+.mk-warm .mk-steps .n { border-radius:4px; font-family:"Fraunces",serif; }
+.mk-warm .mk-cta { background:#2a1f14; }
+.mkw-label { display:inline-block; font-size:12px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--mk-accent); margin-bottom:18px; }
+.mkw-label::before { content:""; display:inline-block; width:10px; height:10px; background:var(--mk-accent); margin-right:10px; }
