@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,6 +10,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"in" | "up">("in");
   const [accept, setAccept] = useState(false);
+  // Vindo da página da plataforma (?cadastro=1): já abre em "Criar conta".
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("cadastro") === "1") setMode("up"); }, []);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [show, setShow] = useState(false);

@@ -1,0 +1,47 @@
+/* Páginas de apresentação. A identidade (cores, fonte) é definida pelas variáveis abaixo. */
+.mk { --mk-bg:#ffffff; --mk-alt:#f5f6fa; --mk-fg:#14161f; --mk-mut:#5b6275; --mk-line:#e3e6ef; --mk-accent:#4f46e5; --mk-accent-fg:#ffffff; --mk-radius:16px;
+  background:var(--mk-bg); color:var(--mk-fg); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.55; min-height:100vh; }
+.mk *, .mk *::before, .mk *::after { box-sizing:border-box; }
+.mk a { color:inherit; } .mk h1,.mk h2,.mk h3 { line-height:1.15; letter-spacing:-.02em; margin:0; } .mk p { margin:0; }
+.mk-wrap { width:100%; max-width:1080px; margin:0 auto; padding:0 20px; }
+.ph { background:#fff3a3; color:#5a4a00; padding:0 4px; border-radius:4px; }
+
+.mk-head { position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--mk-line); }
+.mk-headin { display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; }
+.mk-logo { font-weight:800; font-size:18px; text-decoration:none; letter-spacing:-.02em; }
+.mk-nav { display:flex; align-items:center; gap:18px; font-size:14px; } .mk-nav a { text-decoration:none; color:var(--mk-mut); font-weight:500; } .mk-nav a:hover { color:var(--mk-fg); }
+.mk-nav .mk-ghost { border:1px solid var(--mk-line); padding:7px 14px; border-radius:99px; color:var(--mk-fg); }
+
+.mk-hero { padding:72px 0 64px; background:linear-gradient(180deg,var(--mk-alt),var(--mk-bg)); }
+.mk-hero h1 { font-size:clamp(32px,5.2vw,54px); max-width:16em; }
+.mk-hero p { margin-top:18px; font-size:clamp(17px,2vw,20px); color:var(--mk-mut); max-width:38em; }
+.mk-btns { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+.mk-btn { display:inline-flex; align-items:center; justify-content:center; padding:14px 24px; border-radius:99px; background:var(--mk-accent); color:var(--mk-accent-fg) !important; font-weight:700; text-decoration:none; }
+.mk-btn.ghost { background:transparent; color:var(--mk-fg) !important; border:1px solid var(--mk-line); }
+.mk-note { margin-top:14px; font-size:13.5px; color:var(--mk-mut); }
+
+.mk-sec { padding:64px 0; } .mk-sec.alt { background:var(--mk-alt); }
+.mk-sec h2 { font-size:clamp(26px,3.4vw,36px); max-width:20em; } .mk-intro { margin-top:12px; color:var(--mk-mut); max-width:44em; font-size:17px; }
+.mk-sec h2 + *, .mk-intro + * { margin-top:28px; }
+.mk-sec h2 + .mk-intro { margin-top:12px; }
+
+.mk-steps { list-style:none; margin:28px 0 0; padding:0; display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+.mk-steps li { display:flex; gap:14px; padding:20px; border:1px solid var(--mk-line); border-radius:var(--mk-radius); background:var(--mk-bg); }
+.mk-steps .n { flex:none; width:34px; height:34px; border-radius:50%; background:var(--mk-accent); color:var(--mk-accent-fg); font-weight:800; display:grid; place-items:center; }
+.mk-steps h3 { font-size:18px; } .mk-steps p { margin-top:6px; color:var(--mk-mut); font-size:15px; }
+.mk-cards { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+.mk-card { padding:22px; border:1px solid var(--mk-line); border-radius:var(--mk-radius); background:var(--mk-bg); } .mk-card h3 { font-size:18px; } .mk-card p { margin-top:8px; color:var(--mk-mut); font-size:15px; }
+.mk-two { display:grid; gap:28px; grid-template-columns:1fr 1fr; align-items:start; } @media (max-width:760px){ .mk-two { grid-template-columns:1fr; } }
+.mk-list { margin:0; padding:0; list-style:none; display:grid; gap:10px; } .mk-list li { padding-left:26px; position:relative; } .mk-list li::before { content:"✓"; position:absolute; left:0; color:var(--mk-accent); font-weight:800; }
+.mk-price { padding:28px; border:2px solid var(--mk-accent); border-radius:var(--mk-radius); background:var(--mk-bg); max-width:460px; }
+.mk-price .v { font-size:44px; font-weight:800; letter-spacing:-.03em; } .mk-price .v small { font-size:16px; font-weight:500; color:var(--mk-mut); }
+.mk-person { display:flex; gap:20px; align-items:flex-start; } .mk-photo { flex:none; width:96px; height:96px; border-radius:50%; background:var(--mk-line); display:grid; place-items:center; color:var(--mk-mut); font-size:12px; text-align:center; }
+.mk-soon { display:inline-block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--mk-accent); background:color-mix(in srgb,var(--mk-accent) 10%,transparent); padding:4px 10px; border-radius:99px; margin-bottom:10px; }
+
+.mk-faq { display:grid; gap:10px; max-width:760px; } .mk-faq details { border:1px solid var(--mk-line); border-radius:12px; padding:14px 18px; background:var(--mk-bg); }
+.mk-faq summary { cursor:pointer; font-weight:700; } .mk-faq details div { margin-top:10px; color:var(--mk-mut); }
+.mk-cta { padding:64px 0; background:var(--mk-fg); color:#fff; text-align:center; } .mk-cta h2 { font-size:clamp(26px,3.4vw,38px); } .mk-cta p { margin:12px auto 0; max-width:36em; opacity:.8; }
+.mk-cta .mk-btns { justify-content:center; } .mk-cta .mk-btn.ghost { color:#fff !important; border-color:rgba(255,255,255,.3); }
+.mk-foot { padding:36px 0; border-top:1px solid var(--mk-line); font-size:14px; color:var(--mk-mut); } .mk-footin { display:flex; flex-wrap:wrap; gap:24px; justify-content:space-between; }
+.mk-foot p { margin-top:6px; } .mk-footlinks { display:flex; flex-direction:column; gap:6px; } .mk-foot a { text-decoration:none; } .mk-foot a:hover { text-decoration:underline; }
+@media (max-width:640px){ .mk-nav a:not(.mk-ghost) { display:none; } .mk-hero { padding:48px 0 44px; } .mk-sec { padding:44px 0; } }

@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Rotas abertas: sites públicos, páginas legais, login e endpoints públicos com limite próprio.
-const PUBLIC = [/^\/login/, /^\/p\//, /^\/preview/, /^\/termos/, /^\/privacidade/, /^\/denuncia/, /^\/api\/photo/, /^\/api\/site\//, /^\/api\/billing\/webhook/, /^\/sitemap/, /^\/robots/];
+const PUBLIC = [/^\/login/, /^\/agencia/, /^\/plataforma/, /^\/p\//, /^\/preview/, /^\/termos/, /^\/privacidade/, /^\/denuncia/, /^\/api\/photo/, /^\/api\/site\//, /^\/api\/billing\/webhook/, /^\/sitemap/, /^\/robots/];
 
 // Domínio próprio → slug do site (consulta ao banco com cache curto).
 const domainCache = new Map<string, { slug: string | null; at: number }>();
@@ -33,9 +33,17 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Sites de apresentação: domínio da empresa de serviço e domínio da plataforma (opcionais).
+  const strip = (h: string) => h.replace(/^www\./, "");
+  const agencyHost = process.env.AGENCY_DOMAIN?.toLowerCase();
+  const platformHost = process.env.PLATFORM_DOMAIN?.toLowerCase();
+  const homeRewrite = (to: string) => { const url = request.nextUrl.clone(); url.pathname = to; return NextResponse.rewrite(url); };
+  if (agencyHost && strip(host) === agencyHost && request.nextUrl.pathname === "/") return homeRewrite("/agencia");
+  if (platformHost && strip(host) === platformHost && request.nextUrl.pathname === "/") return homeRewrite("/plataforma");
+
   // Domínio próprio do cliente (qualquer host que não seja o do sistema)
   const appHost = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://geradordesites-plum.vercel.app").hostname;
-  const known = !host || host === appHost || host === "localhost" || host.startsWith("127.") || host.endsWith(".vercel.app") || Boolean(root && (host === root || host.endsWith(`.${root}`)));
+  const known = !host || host === appHost || host === "localhost" || host.startsWith("127.") || host.endsWith(".vercel.app") || Boolean(root && (host === root || host.endsWith(`.${root}`))) || [agencyHost, platformHost].some((d) => d && strip(host) === d);
   if (!known) {
     const slug = await slugForDomain(host);
     if (slug) {
