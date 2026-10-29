@@ -49,10 +49,11 @@ export function Acc({ c }: { c: SiteContent }) {
 
 export function Footer({ c, slug }: { c: SiteContent; slug?: string }) {
   const authors = [...new Set((c.photos ?? []).map((p) => p.author))].slice(0, 4);
+  const fromGoogle = (c.photos ?? []).some((p) => !p.url);
   return (
     <footer className="st-foot">
       <div>© {new Date().getFullYear()} {c.business.name}</div>
-      {authors.length > 0 && <div className="st-attr">Fotos: {authors.join(", ")} · via Google Maps</div>}
+      {authors.length > 0 && <div className="st-attr">Imagens: {authors.join(", ")}{fromGoogle ? " · via Google Maps" : ""}</div>}
       {slug && slug !== "rascunho" && <div className="st-attr"><a href={`/denuncia?slug=${encodeURIComponent(slug)}`} style={{ color: "inherit" }}>Denunciar este site</a></div>}
     </footer>
   );
