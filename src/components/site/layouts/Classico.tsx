@@ -13,7 +13,7 @@ export default function Classico({ c, photo, slug }: Ctx) {
   return (
     <div className="lay-classico">
       <Nav c={c} />
-      <header className="st-hero" style={heroImg ? { backgroundImage: `linear-gradient(135deg,color-mix(in srgb,var(--accent) 88%,#000) 0%,color-mix(in srgb,var(--accent2) 70%,transparent) 100%),url(${heroImg})` } : undefined}>
+      <header className={`st-hero ${heroImg ? "" : "noimg"}`} style={heroImg ? { backgroundImage: `linear-gradient(90deg,rgba(10,12,18,.78) 0%,rgba(10,12,18,.5) 48%,rgba(10,12,18,.1) 100%),linear-gradient(0deg,color-mix(in srgb,var(--accent) 26%,transparent),transparent 45%),url(${heroImg})` } : undefined}>
         <div className="st-wrap cl-hero">
           <span className="st-tag" data-rv>{b.category || "Negócio local"}</span>
           <h1 data-rv>{c.hero.headline}</h1>
@@ -41,7 +41,7 @@ export default function Classico({ c, photo, slug }: Ctx) {
         ),
         galeria: () => !gal.length ? null : (
           <section className="st-sec"><div className="st-wrap">
-            <Heading layout={L} eyebrow="Galeria">Conheça o espaço</Heading>
+            <Heading layout={L} eyebrow="Galeria">Imagens</Heading>
             <div className="st-gal">{gal.map((_, i) => <img key={i} data-rv src={photo(i + galIdx)} data-full={photo(i + galIdx)} alt={`Foto ${i + 1}`} loading="lazy" />)}</div>
           </div></section>
         ),

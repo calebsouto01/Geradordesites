@@ -10,7 +10,7 @@ export default function CreateSiteDialog({ lead, onClose }: { lead: { id: number
   const [premium, setPremium] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [done, setDone] = useState<{ id: number; premiumSkipped: boolean } | null>(null);
+  const [done, setDone] = useState<{ id: number; warnings: string[]; quality: number | null } | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
 
   useEffect(() => {
@@ -25,7 +25,8 @@ export default function CreateSiteDialog({ lead, onClose }: { lead: { id: number
     const res = await fetch("/api/sites/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id, premium }) });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) { setBusy(false); return setErr(json.error ?? "Não foi possível criar o site."); }
-    if (premium && !json.premium) { setBusy(false); return setDone({ id: json.site.id, premiumSkipped: true }); }
+    const warnings: string[] = Array.isArray(json.warnings) ? json.warnings : [];
+    if (warnings.length) { setBusy(false); return setDone({ id: json.site.id, warnings, quality: typeof json.quality === "number" ? json.quality : null }); }
     router.push(`/sites/${json.site.id}`);
   }
 
@@ -42,7 +43,8 @@ export default function CreateSiteDialog({ lead, onClose }: { lead: { id: number
             </div>
           ) : done ? (
             <>
-              <p style={{ margin: 0 }}>O site foi criado com o texto padrão. O texto premium não ficou disponível agora, então <b>não cobramos os 3 créditos extras</b>.</p>
+              <p style={{ margin: 0 }}>O site foi criado{done.quality !== null ? <> com nota de qualidade <b>{done.quality}/100</b></> : ""}. Antes de enviar ao cliente, veja o que ficou de fora:</p>
+              <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 6 }}>{done.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
               <button onClick={() => router.push(`/sites/${done.id}`)}>Abrir o site</button>
             </>
           ) : (

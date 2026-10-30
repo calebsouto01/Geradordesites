@@ -56,6 +56,66 @@ const PRESETS: Preset[] = [
       { title: "Reservas", text: "Garanta a sua mesa." },
     ],
   },
+  {
+    key: "oficina", match: /oficina|mec[aâ]nic|auto ?(center|pe[cç]as|el[eé]tric)|funilaria|borracharia|lava[- ]?jato|autom[oó]vel|automotiv|carro|moto/i, accent: "#d99a00",
+    headline: (n) => `${n}: seu carro em boas mãos`,
+    sub: () => "Conte o modelo do carro e o que ele está apresentando, e receba orientação clara antes de decidir.",
+    cta: "Falar no WhatsApp",
+    about: (n) => `A ${n} cuida da manutenção do seu veículo com atenção ao detalhe e conversa direta. Explique o problema e a oficina orienta o melhor caminho.`,
+    services: [
+      { title: "Revisão e manutenção", text: "Converse sobre o que vale revisar no seu carro." },
+      { title: "Freios e suspensão", text: "Barulho, vibração ou desgaste: peça uma avaliação." },
+      { title: "Motor e elétrica", text: "Luz de alerta ou ruído diferente? Conte o que acontece." },
+    ],
+  },
+  {
+    key: "pet", match: /pet|veterin|animal|banho e tosa|ra[cç][aã]o/i, accent: "#14b8a6",
+    headline: (n) => `${n}: cuidado de verdade pelo seu pet`,
+    sub: () => "Atenção, carinho e profissionais que tratam o seu bichinho como parte da família.",
+    cta: "Agendar pelo WhatsApp",
+    about: (n) => `A ${n} cuida do seu pet com carinho e responsabilidade. Fale com a equipe e conte do que ele precisa.`,
+    services: [
+      { title: "Atendimento", text: "Cuidado atento para cada animal." },
+      { title: "Banho e tosa", text: "Pergunte sobre horários e porte." },
+      { title: "Produtos", text: "Peça orientação para o que o seu pet precisa." },
+    ],
+  },
+  {
+    key: "juridico", match: /advog|jur[ií]dic|contab|escrit[oó]rio|despachante|imobili[aá]ri|corretor/i, accent: "#1e3a8a",
+    headline: (n) => `${n}: orientação clara para decidir com segurança`,
+    sub: () => "Atendimento direto, linguagem simples e acompanhamento do início ao fim.",
+    cta: "Falar com a equipe",
+    about: (n) => `A ${n} atende com ética e clareza. Conte a sua situação e receba orientação sobre os próximos passos.`,
+    services: [
+      { title: "Primeira conversa", text: "Entendemos o seu caso antes de qualquer decisão." },
+      { title: "Acompanhamento", text: "Você sabe em que etapa está." },
+      { title: "Atendimento pelo WhatsApp", text: "Tire dúvidas sem burocracia." },
+    ],
+  },
+  {
+    key: "educacao", match: /escola|curso|idioma|ingl[eê]s|refor[cç]o|educa|faculdade|treinamento|aula/i, accent: "#7c3aed",
+    headline: (n) => `${n}: aprender com acompanhamento de perto`,
+    sub: () => "Turmas e atendimento pensados para você evoluir no seu ritmo.",
+    cta: "Quero saber mais",
+    about: (n) => `A ${n} acompanha cada aluno de perto. Fale com a equipe para conhecer turmas, horários e formas de começar.`,
+    services: [
+      { title: "Turmas e horários", text: "Pergunte qual encaixa na sua rotina." },
+      { title: "Acompanhamento", text: "Atenção ao seu progresso." },
+      { title: "Matrícula", text: "Tire dúvidas e comece pelo WhatsApp." },
+    ],
+  },
+  {
+    key: "loja", match: /loja|com[eé]rcio|boutique|vestu[aá]rio|moda|cal[cç]ado|[oó]tica|papelaria|m[oó]veis|material de constru|farm[aá]cia|variedades/i, accent: "#e11d48",
+    headline: (n) => `${n}: tudo o que você procura, perto de você`,
+    sub: () => "Produtos selecionados e atendimento que ajuda você a escolher bem.",
+    cta: "Falar no WhatsApp",
+    about: (n) => `A ${n} atende com atenção e conhece o que vende. Pergunte pelo WhatsApp sobre produtos e disponibilidade.`,
+    services: [
+      { title: "Produtos", text: "Pergunte pelo que você procura." },
+      { title: "Atendimento", text: "Ajuda para escolher com calma." },
+      { title: "Compra pelo WhatsApp", text: "Rápido e sem complicação." },
+    ],
+  },
 ];
 
 const GENERIC: Preset = {

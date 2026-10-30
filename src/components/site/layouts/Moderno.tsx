@@ -12,7 +12,7 @@ export default function Moderno({ c, photo, slug }: Ctx) {
     <div className="lay-moderno">
       <div className="mo-progress" data-progress aria-hidden />
       <Nav c={c} />
-      <header className="mo-hero" data-spot style={heroImg ? { backgroundImage: `linear-gradient(180deg,rgba(8,10,16,.6),rgba(8,10,16,.94)),url(${heroImg})` } : undefined}>
+      <header className="mo-hero" data-spot style={heroImg ? { backgroundImage: `linear-gradient(180deg,rgba(8,10,16,.3),rgba(8,10,16,.84)),url(${heroImg})` } : undefined}>
         <div className="mo-glow" aria-hidden />
         <div className="st-wrap">
           <span className="st-tag">{b.category || "Negócio local"}</span>

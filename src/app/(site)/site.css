@@ -20,7 +20,7 @@ body { margin:0; background:#fff; color:#1a1d29; font:16px/1.65 Inter,system-ui,
 .st-btn { display:inline-block; background:var(--accent); color:var(--on); font-weight:700; padding:13px 26px; border-radius:12px; text-decoration:none; transition:transform .2s, filter .2s, box-shadow .2s; will-change:transform; }
 .st-btn:hover { filter:brightness(1.07); }
 .st-btn.sm { padding:8px 16px; font-size:14px; border-radius:10px; }
-.st-btn.inv { background:#fff; color:var(--accent); }
+.st-btn.inv { background:#fff; color:color-mix(in srgb,var(--accent) 55%,#000); }
 .st-btn.ghost { background:transparent; color:inherit; border:2px solid currentColor; }
 .st-tag { display:inline-block; background:rgba(255,255,255,.18); padding:4px 14px; border-radius:99px; font-size:13px; margin-bottom:18px; }
 .st-actions { display:flex; gap:12px; flex-wrap:wrap; margin:26px 0 22px; }

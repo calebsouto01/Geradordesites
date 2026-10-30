@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { allowUser, tooMany } from "@/lib/rate";
-import { generateContent, makeSlug } from "@/lib/site/generate";
+import { generateContent, makeSlug, pickPreset } from "@/lib/site/generate";
 import { writeCopy, writeCopyPremium } from "@/lib/site/copy";
 import { applyExtras } from "@/lib/site/sections";
 import { themeFromAccent } from "@/lib/site/palette";
-import { fetchPlaceProfile } from "@/lib/site/places";
+import { fetchPlaceProfile, paletteFromPlacePhoto } from "@/lib/site/places";
+import { quality } from "@/lib/site/checklist";
 import type { LayoutKey, Profile, Theme } from "@/lib/site/types";
 
 const PREVIEW_DAYS = 7;
@@ -26,7 +27,11 @@ export async function POST(request: Request) {
   if (existing) return NextResponse.json({ site: existing, created: false });
 
   const base: Profile = lead.profile ?? { name: lead.name, address: lead.address ?? undefined, phone: lead.phone ?? undefined };
-  const fetched = !lead.profile && lead.place_id ? await fetchPlaceProfile(lead.place_id, base) : base;
+  // Detalhes completos (fotos, avaliações, horários) sempre que faltarem, mesmo se o lead veio da busca.
+  const thin = !lead.profile || !(base.reviews?.length) || !(base.hours?.length) || (base.photos?.length ?? 0) < 4;
+  const fetched = lead.place_id && thin ? await fetchPlaceProfile(lead.place_id, base) : base;
+  const warnings: string[] = [];
+  if (!process.env.GOOGLE_PLACES_API_KEY) warnings.push("Fotos, avaliações e horários do Google indisponíveis: a chave do Google não está configurada. O site saiu só com os dados básicos.");
   // Dados revisados pelo usuário na tela de edição têm prioridade sobre os do Google.
   const str = (v: unknown, n: number) => (typeof v === "string" && v.trim() && v.length <= n ? v.trim() : undefined);
   const edit = body?.profile ?? {};
@@ -45,8 +50,14 @@ export async function POST(request: Request) {
   }
   let content = gen.content;
   let premiumDone = false;
-  if (premium) { const r = await writeCopyPremium(profile, gen.content, undefined, brief); content = r.content; premiumDone = r.premium; if (!premiumDone) content = await writeCopy(profile, gen.content, undefined, brief); }
+  if (premium) { const r = await writeCopyPremium(profile, gen.content, undefined, brief); content = r.content; premiumDone = r.premium; if (!premiumDone) { content = await writeCopy(profile, gen.content, undefined, brief); warnings.push("Texto premium indisponível agora: usamos o texto padrão e não cobramos o extra."); } }
   else if (aiCopy) content = await writeCopy(profile, gen.content, undefined, brief);
+  if ((premium || aiCopy) && content === gen.content) warnings.push(process.env.ANTHROPIC_API_KEY ? "A IA não respondeu: o site saiu com o texto padrão por regras." : "A chave da IA não está configurada: o site saiu com o texto padrão por regras.");
+  // Sem preset do ramo, as cores vêm da melhor foto (só os códigos de cor; a foto não é guardada).
+  if (pickPreset(profile.category).key === "generico" && profile.photos?.[0]) {
+    const pal = await paletteFromPlacePhoto(profile.photos[0].name);
+    if (pal) { content.theme = pal; }
+  }
 
   // Itens confirmados no chat de criação (cores, logo, fotos do usuário, serviços e horários).
   const ok = (v: unknown, n: number) => typeof v === "string" && v.length <= n;
@@ -65,6 +76,8 @@ export async function POST(request: Request) {
   if (ok(body?.about, 600) && body.about.trim()) { content.about = { ...content.about, text: body.about.trim() }; sources.sobre = "informado pelo usuário"; }
   content = applyExtras(content, body?.extras);
   content.sources = sources;
+  const q = quality(content);
+  warnings.push(...q.issues);
 
   // Créditos cobrados no servidor, só depois de gerar com sucesso.
   const { data: remaining, error: creditError } = await supabase.rpc("consume_site", { p_ref: lead.name });
@@ -86,5 +99,5 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: "Erro ao salvar o site." }, { status: 500 });
   // Site gerado: o lead segue para "Encaminhar proposta".
   await supabase.from("leads").update({ stage: "qualificado" }).eq("id", leadId).in("stage", ["novo", "contato_iniciado"]);
-  return NextResponse.json({ site, created: true, remaining: left, premium: premiumDone });
+  return NextResponse.json({ site, created: true, remaining: left, premium: premiumDone, quality: q.score, warnings });
 }
