@@ -10,13 +10,36 @@ export const stars = (n: number) => "★".repeat(Math.round(n)) + "☆".repeat(5
 export const waLink = (c: SiteContent) =>
   c.business.whatsapp ? `https://wa.me/${c.business.whatsapp}?text=${encodeURIComponent(`Olá! Vi o site da ${c.business.name} e gostaria de mais informações.`)}` : "";
 
-export function Nav({ c }: { c: SiteContent }) {
+const NAV_LABELS: Partial<Record<SectionKey, string>> = {
+  sobre: "Sobre", servicos: "Serviços", diferenciais: "Diferenciais", comofunciona: "Como funciona", planos: "Planos", catalogo: "Catálogo",
+  equipe: "Equipe", galeria: "Galeria", depoimentos: "Depoimentos", faq: "Dúvidas", contato: "Contato",
+};
+
+// Links do menu: só as seções que aparecem no site, na ordem em que aparecem (no máximo 6; "Contato" sempre por último).
+export function navItems(c: SiteContent, layout: LayoutKey) {
+  const on = resolveSections(c, layout).filter((s) => s.on && hasData(s.key, c) && NAV_LABELS[s.key]);
+  const items = on.filter((s) => s.key !== "contato").slice(0, 5).map((s) => ({ href: `#s-${s.key}`, label: NAV_LABELS[s.key]! }));
+  if (on.some((s) => s.key === "contato")) items.push({ href: "#s-contato", label: "Contato" });
+  return items;
+}
+
+export function Nav({ c, layout }: { c: SiteContent; layout: LayoutKey }) {
   const wa = waLink(c);
+  const items = navItems(c, layout);
   return (
-    <nav className="st-nav">
+    <nav className="st-nav" aria-label="Principal">
       <div className="st-wrap st-navin">
-        {c.logoUrl ? <img className="st-logo" src={c.logoUrl} alt={c.business.name} /> : <b className="st-brand">{c.business.name}</b>}
-        {wa && <a className="st-btn sm" href={wa} data-mag>WhatsApp</a>}
+        <a className="st-home" href="#topo">{c.logoUrl ? <img className="st-logo" src={c.logoUrl} alt={c.business.name} /> : <b className="st-brand">{c.business.name}</b>}</a>
+        {items.length > 0 && <div className="st-links">{items.map((i) => <a key={i.href} href={i.href}>{i.label}</a>)}</div>}
+        <div className="st-navend">
+          {wa && <a className="st-btn sm" href={wa} data-mag>WhatsApp</a>}
+          {items.length > 0 && (
+            <details className="st-menu">
+              <summary aria-label="Abrir menu"><span /><span /><span /></summary>
+              <div className="st-drop">{items.map((i) => <a key={i.href} href={i.href}>{i.label}</a>)}</div>
+            </details>
+          )}
+        </div>
       </div>
     </nav>
   );
@@ -194,5 +217,5 @@ export function renderSections(c: SiteContent, layout: LayoutKey, custom: Partia
   };
   return resolveSections(c, layout)
     .filter((s) => s.on && hasData(s.key, c))
-    .map((s) => { const r = custom[s.key] ?? generic[s.key]; return r ? <div key={s.key} className={`sec-${s.key}`} style={{ display: "contents" }}>{r()}</div> : null; });
+    .map((s) => { const r = custom[s.key] ?? generic[s.key]; return r ? <div key={s.key} id={`s-${s.key}`} className={`sec-${s.key} st-anchor`}>{r()}</div> : null; });
 }

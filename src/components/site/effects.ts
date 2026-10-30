@@ -34,7 +34,11 @@ export function navShadow(): Off {
   const nav = document.querySelector(".st-nav");
   const on = () => nav?.classList.toggle("scrolled", window.scrollY > 8);
   on(); window.addEventListener("scroll", on, { passive: true });
-  return () => window.removeEventListener("scroll", on);
+  // menu do celular: fecha ao escolher um item ou ao tocar fora
+  const menu = document.querySelector<HTMLDetailsElement>(".st-menu");
+  const close = (e: Event) => { if (menu?.open && (!menu.contains(e.target as Node) || (e.target as HTMLElement).closest(".st-drop a"))) menu.open = false; };
+  document.addEventListener("click", close);
+  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); };
 }
 
 export function accordion(): Off {
@@ -67,7 +71,11 @@ export function progressBar(): Off {
   if (!bar) return () => {};
   const on = () => { const h = document.documentElement.scrollHeight - innerHeight; bar.style.transform = `scaleX(${h > 0 ? scrollY / h : 0})`; };
   on(); window.addEventListener("scroll", on, { passive: true });
-  return () => window.removeEventListener("scroll", on);
+  // menu do celular: fecha ao escolher um item ou ao tocar fora
+  const menu = document.querySelector<HTMLDetailsElement>(".st-menu");
+  const close = (e: Event) => { if (menu?.open && (!menu.contains(e.target as Node) || (e.target as HTMLElement).closest(".st-drop a"))) menu.open = false; };
+  document.addEventListener("click", close);
+  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); };
 }
 
 export function tilt(): Off {
@@ -142,7 +150,11 @@ export function stickyCta(): Off {
   if (!bar) return () => {};
   const on = () => bar.classList.toggle("show", scrollY > 500);
   on(); window.addEventListener("scroll", on, { passive: true });
-  return () => window.removeEventListener("scroll", on);
+  // menu do celular: fecha ao escolher um item ou ao tocar fora
+  const menu = document.querySelector<HTMLDetailsElement>(".st-menu");
+  const close = (e: Event) => { if (menu?.open && (!menu.contains(e.target as Node) || (e.target as HTMLElement).closest(".st-drop a"))) menu.open = false; };
+  document.addEventListener("click", close);
+  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); };
 }
 
 // Métricas do cliente final: 1 visualização por sessão e cliques em WhatsApp e mapa.

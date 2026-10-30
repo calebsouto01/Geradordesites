@@ -51,3 +51,5 @@
 .lay-moderno .sx-steps li::before { background:linear-gradient(var(--accent),transparent); } .lay-moderno .sx-steps span { box-shadow:0 0 22px color-mix(in srgb,var(--accent) 60%,transparent); }
 .lay-moderno .sx-cat li { border-color:rgba(255,255,255,.14); } .lay-moderno .sx-promo { border:1px solid var(--accent); box-shadow:0 0 60px color-mix(in srgb,var(--accent) 35%,transparent); }
 .lay-moderno .st-map { background:rgba(255,255,255,.06); color:inherit; }
+
+.lay-moderno .st-links a { color:#cfd3e0; } .lay-moderno .st-menu summary span { background:#fff; }

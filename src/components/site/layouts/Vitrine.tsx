@@ -12,8 +12,8 @@ export default function Vitrine({ c, photo, slug }: Ctx) {
   const L = "vitrine" as const;
   return (
     <div className="lay-vitrine">
-      <Nav c={c} />
-      <header className="vi-hero">
+      <Nav c={c} layout="vitrine" />
+      <header id="topo" className="vi-hero">
         <span className="vi-blob b1" aria-hidden /><span className="vi-blob b2" aria-hidden />
         <div className="st-wrap st-split">
           <div>
