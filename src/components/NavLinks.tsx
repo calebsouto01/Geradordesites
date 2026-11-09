@@ -7,6 +7,7 @@ const items = [
   ["/busca", "Busca", "⌕", "Busca"],
   ["/sites", "Criar site", "✦", "Sites"],
   ["/funil", "Funil", "▦", "Funil"],
+  ["/agenda", "Agenda", "▣", "Agenda"],
   ["/scripts", "Scripts de ligação", "☏", "Scripts"],
   ["/operador", "Operador", "◔", "Operador"],
 ] as const;

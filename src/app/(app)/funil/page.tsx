@@ -1,4 +1,5 @@
 "use client";
+import { startsAt } from "@/lib/agenda";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -138,6 +139,7 @@ export default function Funil() {
     } else {
       if (!answer.date) return flash("Escolha a data do retorno.");
       await patch(l.id, { next_contact: answer.date });
+      await supabase.from("agenda_items").insert({ lead_id: l.id, kind: "retorno", title: `Retorno: ${l.name}`, starts_at: startsAt(answer.date) });
     }
     setAnswering(null);
   }
@@ -148,7 +150,10 @@ export default function Funil() {
     const { error } = await supabase.from("calls").insert({ lead_id: l.id, channel: r.channel, script: r.script, path: r.path, objections, outcome: r.outcome });
     if (error) return flash("Não foi possível salvar a ligação.");
     if (r.outcome === "falou_dono" && l.stage === "novo") await patch(l.id, { stage: "contato_iniciado" });
-    if (r.outcome === "retorno" && r.returnDate) await patch(l.id, { next_contact: r.returnDate });
+    if (r.outcome === "retorno" && r.returnDate) {
+      await patch(l.id, { next_contact: r.returnDate });
+      await supabase.from("agenda_items").insert({ lead_id: l.id, kind: "retorno", title: `Retorno: ${l.name}`, starts_at: startsAt(r.returnDate) });
+    }
     setCalling(null);
     flash(r.outcome === "falou_dono" && l.stage === "novo" ? "Ligação registrada: lead em Contato iniciado" : "Ligação registrada");
   }

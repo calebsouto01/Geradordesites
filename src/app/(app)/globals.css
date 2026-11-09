@@ -496,3 +496,16 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .callmap-step { position:absolute; top:8px; right:10px; width:20px; height:20px; border-radius:50%; background:var(--acc); color:#fff; font-size:11px; font-weight:700; display:grid; place-items:center; }
 .callmap-node.on .callmap-step { background:var(--ok); }
 .callmap-answers button:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Agenda de vendas */
+.ag-tabs { display:flex; gap:6px; margin-bottom:16px; } .ag-tabs button { background:transparent; border:1px solid var(--line2); color:var(--mut); } .ag-tabs button.on { background:var(--acc); border-color:var(--acc); color:#fff; }
+.ag-group { margin:0 0 22px; display:grid; gap:10px; } .ag-group h3 { margin:0; font-size:15px; text-transform:capitalize; } .ag-group h3.late { color:var(--bad); }
+.ag-card { display:flex; gap:14px; padding:14px; border:1px solid var(--line); border-radius:14px; background:var(--card); } .ag-card.late { border-color:color-mix(in srgb,var(--bad) 55%,var(--line)); } .ag-card.done { opacity:.6; }
+.ag-time { min-width:64px; display:flex; flex-direction:column; gap:2px; } .ag-time b { font-size:18px; }
+.ag-body { flex:1; min-width:0; } .ag-title { font-weight:700; } .ag-notes { margin:6px 0 0; font-size:14px; color:var(--mut); }
+.ag-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; align-items:center; } .ag-a { display:inline-flex; align-items:center; text-decoration:none; border:1px solid var(--line2); border-radius:10px; color:var(--fg); }
+.ag-mhead { display:flex; align-items:center; gap:10px; margin-bottom:10px; } .ag-mhead b { text-transform:capitalize; min-width:150px; text-align:center; }
+.ag-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:20px; } .ag-wd { text-align:center; font-size:12px; color:var(--mut); padding:4px 0; text-transform:uppercase; }
+.ag-day { position:relative; aspect-ratio:1.25; min-height:46px; background:var(--card); border:1px solid var(--line); border-radius:10px; color:var(--fg); padding:6px; text-align:left; font-weight:500; } .ag-day.out { opacity:.4; } .ag-day.today { border-color:var(--acc); } .ag-day.sel { background:color-mix(in srgb,var(--acc) 22%,var(--card)); }
+.ag-dot { position:absolute; right:6px; bottom:6px; font-style:normal; font-size:11px; background:var(--acc); color:#fff; border-radius:99px; padding:1px 7px; }
+@media (max-width:640px){ .ag-card { flex-direction:column; gap:6px; } .ag-time { flex-direction:row; align-items:baseline; gap:8px; } }
