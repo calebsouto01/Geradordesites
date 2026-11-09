@@ -16,8 +16,9 @@ export default function Agenda() {
   const [leads, setLeads] = useState<LeadLite[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState("");
-  const [view, setView] = useState<"lista" | "mes">("lista");
+  const [view, setView] = useState<"lista" | "semana" | "mes">("semana");
   const [month, setMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
+  const [weekStart, setWeekStart] = useState(() => { const n = new Date(); n.setHours(0, 0, 0, 0); n.setDate(n.getDate() - n.getDay()); return n; });
   const [selected, setSelected] = useState(() => dayKey(new Date()));
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -106,6 +107,70 @@ export default function Agenda() {
     );
   };
 
+  // Grade semanal: dias em colunas, horas em linhas. Clicar em um horário vazio cria o compromisso ali.
+  const HOUR = 64;
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, n) => { const d = new Date(weekStart); d.setDate(weekStart.getDate() + n); return d; }), [weekStart]);
+  const weekItems = useMemo(() => items.filter((i) => { const t = new Date(i.starts_at).getTime(); return t >= weekDays[0].getTime() && t < weekDays[0].getTime() + 7 * 86400000; }), [items, weekDays]);
+  const [h0, h1] = useMemo(() => {
+    let a = 7, b = 20;
+    weekItems.forEach((i) => { const d = new Date(i.starts_at); const m = d.getHours() * 60 + d.getMinutes(); a = Math.min(a, Math.floor(m / 60)); b = Math.max(b, Math.ceil((m + i.duration_min) / 60)); });
+    return [a, Math.min(24, b)];
+  }, [weekItems]);
+  function Week() {
+    const hours = Array.from({ length: h1 - h0 }, (_, n) => h0 + n);
+    const now = new Date(), nowTop = ((now.getHours() * 60 + now.getMinutes()) / 60 - h0) * HOUR;
+    const range = `${weekDays[0].toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} – ${weekDays[6].toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`;
+    return (
+      <>
+        <div className="ag-mhead">
+          <button className="ghost sm" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }} aria-label="Semana anterior">‹</button>
+          <b>{range}</b>
+          <button className="ghost sm" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d); }} aria-label="Próxima semana">›</button>
+          <button className="ghost sm" onClick={() => { const n = new Date(); n.setHours(0, 0, 0, 0); n.setDate(n.getDate() - n.getDay()); setWeekStart(n); }}>Hoje</button>
+        </div>
+        <div className="ag-wk-wrap">
+          <div className="ag-wk" style={{ ["--hh" as string]: `${HOUR}px` }}>
+            <div className="ag-wk-head"><span />{weekDays.map((d) => <div key={d.toISOString()} className={`ag-wk-h ${dayKey(d) === today ? "today" : ""}`}><span>{WEEK[d.getDay()]}</span><b>{d.getDate()}</b></div>)}</div>
+            <div className="ag-wk-body">
+              <div className="ag-wk-hours">{hours.map((h) => <span key={h} style={{ height: HOUR }}>{String(h).padStart(2, "0")}:00</span>)}</div>
+              {weekDays.map((d) => {
+                const k = dayKey(d);
+                const evs = weekItems.filter((i) => dayKey(new Date(i.starts_at)) === k).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+                // compromissos que se sobrepõem ficam lado a lado, dividindo só a largura do seu grupo
+                const place: { i: AgendaItem; lane: number; nl: number }[] = [];
+                let group: { i: AgendaItem; lane: number }[] = [], lanes: number[] = [], groupEnd = 0;
+                const flush = () => { group.forEach((g) => place.push({ ...g, nl: Math.max(1, lanes.length) })); group = []; lanes = []; };
+                evs.forEach((i) => {
+                  const st = new Date(i.starts_at).getTime(), en = st + Math.max(i.duration_min, 30) * 60000;
+                  if (group.length && st >= groupEnd) flush();
+                  let lane = lanes.findIndex((end) => end <= st); if (lane < 0) { lane = lanes.length; lanes.push(en); } else lanes[lane] = en;
+                  group.push({ i, lane }); groupEnd = Math.max(groupEnd, en);
+                });
+                flush();
+                return (
+                  <div key={k} className={`ag-wk-col ${k === today ? "today" : ""}`}>
+                    {hours.map((h) => <button key={h} className="ag-wk-slot" style={{ height: HOUR }} aria-label={`Novo compromisso em ${k} às ${h}:00`} onClick={() => setDraft({ ...blank(k), time: `${String(h).padStart(2, "0")}:00` })} />)}
+                    {k === today && nowTop >= 0 && nowTop <= (h1 - h0) * HOUR && <i className="ag-now" style={{ top: nowTop }} />}
+                    {place.map(({ i, lane, nl }) => {
+                      const d2 = new Date(i.starts_at), top = ((d2.getHours() * 60 + d2.getMinutes()) / 60 - h0) * HOUR, l = leadOf(i.lead_id);
+                      return (
+                        <button key={i.id} className={`ag-ev ${i.kind} ${i.done_at ? "done" : ""}`} onClick={() => edit(i)} title={`${timeOf(i.starts_at)} · ${i.title}${l ? ` · ${l.name}` : ""}`}
+                          style={{ top, height: Math.max(22, (i.duration_min / 60) * HOUR - 2), left: `calc(${(lane / nl) * 100}% + 2px)`, width: `calc(${100 / nl}% - 4px)` }}>
+                          <b>{timeOf(i.starts_at)}</b> {KINDS[i.kind].icon} {i.title}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        {weekItems.length === 0 && <p className="mut">Nenhum compromisso nesta semana. Clique em um horário da grade para marcar.</p>}
+      </>
+    );
+  }
+
   const cells = useMemo(() => {
     const first = new Date(month.getFullYear(), month.getMonth(), 1);
     const start = new Date(first); start.setDate(1 - first.getDay());
@@ -125,11 +190,12 @@ export default function Agenda() {
       </div>
       {err && <p className="err">{err}</p>}
       <div className="ag-tabs" role="tablist">
+        <button role="tab" aria-selected={view === "semana"} className={view === "semana" ? "on" : ""} onClick={() => setView("semana")}>Semana</button>
         <button role="tab" aria-selected={view === "lista"} className={view === "lista" ? "on" : ""} onClick={() => setView("lista")}>Lista</button>
         <button role="tab" aria-selected={view === "mes"} className={view === "mes" ? "on" : ""} onClick={() => setView("mes")}>Mês</button>
       </div>
 
-      {!loaded ? <p className="mut">Carregando…</p> : view === "lista" ? (
+      {!loaded ? <p className="mut">Carregando…</p> : view === "semana" ? <Week /> : view === "lista" ? (
         <>
           {groups.length === 0 && <div className="panel"><b>Nada na agenda.</b><p className="mut" style={{ margin: "6px 0 0" }}>Marque a reunião de apresentação quando o dono topar ver a prévia, ou registre um retorno ao ligar: ele entra aqui sozinho.</p></div>}
           {groups.map((g) => (
