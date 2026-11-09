@@ -4,12 +4,12 @@ import { KEYS, SCRIPTS, type Kind, type ScriptKey } from "@/lib/scripts/data";
 
 // Árvore de negociação: o usuário clica nas respostas do cliente e o mapa marca o caminho.
 export default function CallTree({ onChange, scriptKey, initialPath, hideTabs }: { onChange?: (s: { key: ScriptKey; path: string[] }) => void; scriptKey?: ScriptKey; initialPath?: string[]; hideTabs?: boolean }) {
-  const [key, setKey] = useState<ScriptKey>(scriptKey ?? 1);
+  const [key, setKey] = useState<ScriptKey>(scriptKey ?? KEYS[0]);
   const S = SCRIPTS[key];
   const [path, setPath] = useState<string[]>(initialPath?.length ? initialPath : [S.start]);
 
   // Quando o painel troca o script, a árvore recomeça no novo roteiro.
-  useEffect(() => { if (scriptKey !== undefined && scriptKey !== key) { setKey(scriptKey); setPath([SCRIPTS[scriptKey].start]); } }, [scriptKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (scriptKey !== undefined && Number(scriptKey) !== Number(key)) { setKey(scriptKey); setPath([SCRIPTS[scriptKey].start]); } }, [scriptKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const current = path[path.length - 1];
   const n = S.nodes[current];
 
@@ -46,7 +46,7 @@ export default function CallTree({ onChange, scriptKey, initialPath, hideTabs }:
 
   return (
     <>
-      {!hideTabs && <div className="callmap-tabs" role="tablist" aria-label="Script">
+      {!hideTabs && KEYS.length > 1 && <div className="callmap-tabs" role="tablist" aria-label="Script">
         <span className="mut" style={{ alignSelf: "center" }}>Script:</span>
         {KEYS.map((k) => (
           <button key={k} role="tab" aria-selected={k === key} className={`callmap-tab ${k === key ? "on" : ""}`} onClick={() => choose(k)}>

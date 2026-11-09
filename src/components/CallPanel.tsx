@@ -34,8 +34,8 @@ const CHANNELS: { id: CallChannel; label: string; icon: string }[] = [
 // Script de contato por cima do funil: dados do lead, canal (ligação, WhatsApp, e-mail) e encerramento do contato.
 export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, mapsUrl, onClose, onFinish }: { lead: CallLead; mapsUrl?: string; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void }) {
   const [channel, setChannel] = useState<CallChannel>("ligacao");
-  const [script, setScript] = useState<ScriptKey>(1);
-  const state = useRef<{ key: ScriptKey; path: string[] }>({ key: 1, path: [] });
+  const [script, setScript] = useState<ScriptKey>(KEYS[0]);
+  const state = useRef<{ key: ScriptKey; path: string[] }>({ key: KEYS[0], path: [] });
   const [ret, setRet] = useState(tomorrow());
   const [ending, setEnding] = useState(false);
   const [tpl, setTpl] = useState<string>("");
@@ -83,7 +83,7 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
             {p?.prospeccao?.observacao && <div className="mut">💡 {p.prospeccao.observacao}</div>}
           </div>
           <div className="callmsgs">
-            {channel === "ligacao" && (
+            {channel === "ligacao" && KEYS.length > 1 && (
               <>
                 <span className="callmsgs-t">Script</span>
                 <div className="callchips" role="tablist" aria-label="Script">
