@@ -8,15 +8,14 @@ import CreateSiteDialog from "@/components/CreateSiteDialog";
 import CallPanel, { type CallLead, type CallResult } from "@/components/CallPanel";
 
 const STAGES = [
-  ["novo", "A contatar", "#6366f1"], ["contato_iniciado", "Contato iniciado", "#38bdf8"],
+  ["novo", "Criar site (versão 1)", "#6366f1"],
   ["qualificado", "Encaminhar proposta", "#a78bfa"], ["proposta_enviada", "Proposta encaminhada", "#f59e0b"],
   ["fechado", "Venda fechada", "#22c55e"], ["perdido", "Sem venda", "#ef4444"],
 ] as const;
 
 // O que fazer em cada etapa (o lead avança sozinho quando o site é gerado).
 const HINT: Record<string, string> = {
-  novo: "Ligue ou chame no WhatsApp.",
-  contato_iniciado: "Falou com o dono? Gere o site.",
+  novo: "O dono topou ver a prévia: crie a versão 1.",
   qualificado: "Site pronto: envie a prévia.",
   proposta_enviada: "Aguardando resposta: venda ou não?",
   fechado: "Cliente fechado.", perdido: "Registre o motivo.",
@@ -104,8 +103,7 @@ export default function Funil() {
   // Situação do lead em uma linha, a partir dos fatos do fluxo de venda.
   function statusLine(l: Lead, site?: SiteInfo) {
     const views = site?.views ? `prévia aberta ${site.views}×` : "prévia ainda não aberta";
-    if (l.stage === "novo") return "Ainda sem contato.";
-    if (l.stage === "contato_iniciado") return "Falou com o dono. Falta gerar a prévia.";
+    if (l.stage === "novo") return "Topou ver a prévia. Falta criar a versão 1.";
     if (l.stage === "qualificado") return "Prévia pronta. Ainda não enviada ao cliente.";
     if (l.stage === "proposta_enviada") return `Aguardando resposta · ${views}.`;
     if (l.stage === "fechado") return "Venda fechada.";
@@ -114,8 +112,7 @@ export default function Funil() {
 
   // Uma única ação por etapa; o resto fica no menu do card.
   function action(l: Lead) {
-    if (l.stage === "novo") return <button className="sm" onClick={() => setCalling(l)}>Entrar em contato</button>;
-    if (l.stage === "contato_iniciado") return <button className="sm" onClick={() => setCreating(l)}>Gerar prévia · 3 créditos</button>;
+    if (l.stage === "novo") return <button className="sm" onClick={() => setCreating(l)}>Criar versão 1 · 3 créditos</button>;
     if (l.stage === "qualificado") return <button className="sm" onClick={() => patch(l.id, { stage: "proposta_enviada" })}>Proposta enviada ✓</button>;
     if (l.stage === "proposta_enviada") return <button className="sm" onClick={() => { setAnswer({ kind: "venda", value: l.estimated_value ? String(l.estimated_value) : "", reason: "", date: "" }); setAnswering(l); }}>Registrar resposta</button>;
     return null;
@@ -149,13 +146,12 @@ export default function Funil() {
     const objections = r.path.filter((id) => id.startsWith("obj_") || id === "duvida_dominio");
     const { error } = await supabase.from("calls").insert({ lead_id: l.id, channel: r.channel, script: r.script, path: r.path, objections, outcome: r.outcome });
     if (error) return flash("Não foi possível salvar a ligação.");
-    if (r.outcome === "falou_dono" && l.stage === "novo") await patch(l.id, { stage: "contato_iniciado" });
     if (r.outcome === "retorno" && r.returnDate) {
       await patch(l.id, { next_contact: r.returnDate });
       await supabase.from("agenda_items").insert({ lead_id: l.id, kind: "retorno", title: `Retorno: ${l.name}`, starts_at: startsAt(r.returnDate) });
     }
     setCalling(null);
-    flash(r.outcome === "falou_dono" && l.stage === "novo" ? "Ligação registrada: lead em Contato iniciado" : "Ligação registrada");
+    flash("Contato registrado");
   }
 
   function exportCsv() {
@@ -200,9 +196,9 @@ export default function Funil() {
     const maps = cleanMapsUrl(form.maps);
     if (form.maps.trim() && !maps) return flash("O link precisa ser do Google Maps.");
     const profile = { name, category: form.category.trim() || undefined, address: form.address.trim() || undefined, phone: form.phone.trim() || undefined, mapsUrl: maps ?? undefined };
-    const { error } = await supabase.from("leads").insert({ name, phone: profile.phone ?? null, address: profile.address ?? null, origin: "Cadastro manual", profile });
+    const { error } = await supabase.from("leads").insert({ name, phone: profile.phone ?? null, address: profile.address ?? null, origin: "Cadastro manual", profile, local: "sites" });
     if (error) return flash(error.message);
-    const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("leads").select("*").eq("local", "sites").order("created_at", { ascending: false });
     setLeads((data as Lead[]) ?? []);
     setForm({ name: "", category: "", phone: "", address: "", maps: "" }); setRegistering(false);
     board.current?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -210,7 +206,7 @@ export default function Funil() {
   }
 
   useEffect(() => {
-    supabase.from("leads").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+    supabase.from("leads").select("*").eq("local", "sites").order("created_at", { ascending: false }).then(({ data }) => {
       setLeads((data as Lead[]) ?? []);
       setLoaded(true);
     });

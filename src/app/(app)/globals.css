@@ -521,3 +521,9 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .ag-ev { position:absolute; overflow:hidden; text-align:left; padding:3px 6px; font-size:12px; font-weight:500; line-height:1.25; border-radius:8px; color:#fff; background:var(--acc); border:1px solid rgba(0,0,0,.25); z-index:2; }
 .ag-ev b { font-weight:700; } .ag-ev.retorno { background:#0ea5e9; } .ag-ev.followup { background:#f59e0b; color:#1a1305; } .ag-ev.outro { background:#64748b; } .ag-ev.done { opacity:.45; text-decoration:line-through; }
 .ag-now { position:absolute; left:0; right:0; height:2px; background:var(--bad); z-index:4; pointer-events:none; } .ag-now::before { content:""; position:absolute; left:-4px; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--bad); }
+
+/* Prospecção */
+.pq-n { display:inline-block; margin-left:4px; font-size:11px; background:rgba(255,255,255,.18); border-radius:99px; padding:1px 7px; }
+.ag-tabs button:not(.on) .pq-n { background:var(--card2); color:var(--mut); }
+.pq-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; } .pq-obs { color:var(--mut); font-size:13px; }
+.pq-actions .sm { white-space:nowrap; } .searchbar + .ag-tabs { margin-top:16px; }

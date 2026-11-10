@@ -65,6 +65,7 @@ export async function POST(request: Request) {
   }
   const { places = [], nextPageToken } = (await res.json()) as { places?: Place[]; nextPageToken?: string };
 
+  // Cada resultado já nasce como contato em "Prospecção" (lista de ligação); quem já existe não duplica.
   const rows = places
     .filter((p) => !p.websiteUri && (p.rating ?? 0) >= minRating)
     .map((p) => ({
@@ -75,11 +76,15 @@ export async function POST(request: Request) {
       rating: p.rating ?? null,
       rating_count: p.userRatingCount ?? null,
       photos: (p.photos ?? []).slice(0, 3).map((x) => x.name),
+      profile: { name: p.displayName?.text ?? "Sem nome", address: p.formattedAddress ?? undefined, phone: p.nationalPhoneNumber ?? undefined, rating: p.rating ?? undefined, ratingCount: p.userRatingCount ?? undefined },
+      local: "prospeccao",
+      stage: "novo",
     }));
 
-  // Já vistos (promovidos/descartados/em lista) não duplicam.
+  let found = 0;
   if (rows.length) {
-    await supabase.from("search_results").upsert(rows, { onConflict: "user_id,place_id", ignoreDuplicates: true });
+    const { data: added } = await supabase.from("leads").upsert(rows, { onConflict: "user_id,place_id", ignoreDuplicates: true }).select("id");
+    found = added?.length ?? 0;
   }
-  return NextResponse.json({ remaining, found: rows.length, nextPageToken: nextPageToken ?? null });
+  return NextResponse.json({ remaining, found, nextPageToken: nextPageToken ?? null });
 }

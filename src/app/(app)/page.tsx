@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 // Etapas em ordem (rampa ordinal de uma só cor); fechado/perdido são estados finais, mostrados como status.
 const FLOW: [string, string][] = [
-  ["novo", "A contatar"], ["contato_iniciado", "Contato iniciado"], ["qualificado", "Encaminhar proposta"], ["proposta_enviada", "Proposta encaminhada"],
+  ["novo", "Criar site (versão 1)"], ["qualificado", "Encaminhar proposta"], ["proposta_enviada", "Proposta encaminhada"],
 ];
 
 type Lead = { id: number; name: string; phone: string | null; stage: string; next_contact: string | null; origin: string; estimated_value: number | null };
@@ -33,10 +33,10 @@ export default function Inicio() {
     try { setHideTour(localStorage.getItem("hideTour") === "1"); } catch { /* sem memória local */ }
     (async () => {
       const [{ data: l }, { data: s }, { data: m }, { count: p }, { count: q }, { data: sub }, { data: cr }] = await Promise.all([
-        supabase.from("leads").select("id, name, phone, stage, next_contact, origin, estimated_value"),
+        supabase.from("leads").select("id, name, phone, stage, next_contact, origin, estimated_value").eq("local", "sites"),
         supabase.from("sites").select("id, lead_id, status, views, last_viewed_at"),
         supabase.from("site_leads").select("id, site_id, name, message, created_at").order("created_at", { ascending: false }).limit(5),
-        supabase.from("search_results").select("*", { count: "exact", head: true }).eq("status", "novo"),
+        supabase.from("leads").select("*", { count: "exact", head: true }).in("local", ["prospeccao", "retorno"]),
         supabase.from("searches").select("*", { count: "exact", head: true }),
         supabase.from("subscriptions").select("status").maybeSingle(),
         supabase.rpc("credits_remaining"),
@@ -121,7 +121,7 @@ export default function Inicio() {
         </div>
         <div className="stat"><div className="mut">Leads ativos</div><div className="n">{d.active}</div></div>
         <div className="stat"><div className="mut">Valor em aberto</div><div className="n">{brl(d.pipeline)}</div></div>
-        <div className="stat"><div className="mut">Prospects para revisar</div><div className="n">{pending}</div>{pending > 0 && <Link href="/busca" className="mut">Revisar →</Link>}</div>
+        <div className="stat"><div className="mut">Contatos para ligar</div><div className="n">{pending}</div>{pending > 0 && <Link href="/busca" className="mut">Abrir prospecção →</Link>}</div>
         <div className="stat">
           <div className="mut">Créditos {subscribed ? "do mês" : "de teste"}</div>
           <div className="n">{credits ?? "—"}</div>

@@ -4,9 +4,9 @@ import { usePathname } from "next/navigation";
 
 const items = [
   ["/", "Início", "◎", "Início"],
-  ["/busca", "Busca", "⌕", "Busca"],
+  ["/busca", "Prospecção", "⌕", "Prospecção"],
   ["/sites", "Criar site", "✦", "Sites"],
-  ["/funil", "Funil", "▦", "Funil"],
+  ["/funil", "Sites e vendas", "▦", "Sites"],
   ["/agenda", "Agenda", "▣", "Agenda"],
   ["/scripts", "Scripts de ligação", "☏", "Scripts"],
   ["/operador", "Operador", "◔", "Operador"],
