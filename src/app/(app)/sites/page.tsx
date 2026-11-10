@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { deleteSite } from "@/lib/client/deleteSite";
 
 type Lead = { id: number; name: string };
 type Site = { id: number; lead_id: number; slug: string; status: string; template: string; views: number; last_viewed_at: string | null; expires_at: string | null };
@@ -66,6 +67,7 @@ export default function Sites() {
               <Link href={`/sites/${s.id}`}><button className="sm">Editar</button></Link>
               <a href={`/p/${s.slug}?nv=1`} target="_blank" rel="noreferrer"><button className="ghost sm">Prévia</button></a>
               <button className="ghost sm" onClick={() => copyMessage(s)}>Copiar msg</button>
+              <button className="ghost sm" onClick={async () => { if (await deleteSite(supabase, s, nameOf(s.lead_id))) { flash("Site excluído"); load(); } }}>🗑 Excluir</button>
             </div>
           </article>
         ))}

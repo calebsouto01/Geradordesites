@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { deleteSite } from "@/lib/client/deleteSite";
 import { use, useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import ImageSlot from "@/components/ImageSlot";
@@ -17,6 +19,7 @@ type Stats = { view: number; whatsapp: number; mapa: number; form: number };
 export default function EditarSite({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const supabase = createClient();
+  const router = useRouter();
   const [site, setSite] = useState<SiteRow | null>(null);
   const [c, setC] = useState<SiteContent | null>(null);
   const [servicesText, setServicesText] = useState("");
@@ -208,6 +211,7 @@ export default function EditarSite({ params }: { params: Promise<{ id: string }>
           <a href={`/p/${site.slug}?nv=1&pdf=1`} target="_blank" rel="noreferrer"><button type="button" className="ghost">Baixar PDF</button></a>
           <button type="button" className="ghost" onClick={copyLink}>Copiar link {site.status === "previa" ? "da prévia" : "do site"}</button>
           {site.status === "previa" && <button className="ghost" onClick={publish}>Publicar (venda confirmada)</button>}
+          <button type="button" className="ghost" onClick={async () => { if (await deleteSite(supabase, site, c.business.name)) router.push("/sites"); }}>🗑 Excluir site</button>
         </div>
       </div>
 
