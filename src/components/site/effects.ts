@@ -38,7 +38,9 @@ export function navShadow(): Off {
   const menu = document.querySelector<HTMLDetailsElement>(".st-menu");
   const close = (e: Event) => { if (menu?.open && (!menu.contains(e.target as Node) || (e.target as HTMLElement).closest(".st-drop a"))) menu.open = false; };
   document.addEventListener("click", close);
-  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); };
+  const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && menu?.open) menu.open = false; };
+  document.addEventListener("keydown", esc);
+  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); document.removeEventListener("keydown", esc); };
 }
 
 export function accordion(): Off {
@@ -62,8 +64,11 @@ export function lightbox(): Off {
     box.onclick = () => box.remove();
     document.body.appendChild(box);
   };
+  // Esc fecha a foto ampliada
+  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") document.querySelector(".st-lb")?.remove(); };
   document.addEventListener("click", onClick);
-  return () => document.removeEventListener("click", onClick);
+  document.addEventListener("keydown", onKey);
+  return () => { document.removeEventListener("click", onClick); document.removeEventListener("keydown", onKey); };
 }
 
 export function progressBar(): Off {
@@ -75,7 +80,9 @@ export function progressBar(): Off {
   const menu = document.querySelector<HTMLDetailsElement>(".st-menu");
   const close = (e: Event) => { if (menu?.open && (!menu.contains(e.target as Node) || (e.target as HTMLElement).closest(".st-drop a"))) menu.open = false; };
   document.addEventListener("click", close);
-  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); };
+  const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && menu?.open) menu.open = false; };
+  document.addEventListener("keydown", esc);
+  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); document.removeEventListener("keydown", esc); };
 }
 
 export function tilt(): Off {
@@ -154,7 +161,9 @@ export function stickyCta(): Off {
   const menu = document.querySelector<HTMLDetailsElement>(".st-menu");
   const close = (e: Event) => { if (menu?.open && (!menu.contains(e.target as Node) || (e.target as HTMLElement).closest(".st-drop a"))) menu.open = false; };
   document.addEventListener("click", close);
-  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); };
+  const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && menu?.open) menu.open = false; };
+  document.addEventListener("keydown", esc);
+  return () => { window.removeEventListener("scroll", on); document.removeEventListener("click", close); document.removeEventListener("keydown", esc); };
 }
 
 // Métricas do cliente final: 1 visualização por sessão e cliques em WhatsApp e mapa.
