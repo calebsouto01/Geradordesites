@@ -529,3 +529,13 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .pq-actions .sm { white-space:nowrap; } .searchbar + .ag-tabs { margin-top:16px; }
 .ag-ev.tiny { white-space:nowrap; text-overflow:ellipsis; font-size:11px; padding:1px 6px; line-height:1.5; } .ag-wk-head { padding-block:0; } .ag-wk-h { padding:4px 0; } .ag-wk-h b { font-size:16px; }
 .pq-actions .call { width:100%; padding:12px 16px; }
+
+/* finalizar ligação (Prospecção) */
+.endgrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.endopt { display:flex; flex-direction:column; gap:8px; padding:14px; border:1px solid var(--line); border-radius:14px; background:var(--card); min-width:0; }
+.endopt.main { border-color:#22c55e; background:color-mix(in srgb,#22c55e 12%,var(--card)); }
+.endopt > b { font-size:15px; } .endopt > small { color:var(--mut); font-size:12.5px; line-height:1.4; flex:1; }
+.endfields { display:grid; gap:8px; } .endfields.two { grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); }
+.endfields input { width:100%; min-width:0; }
+.endopt > button { width:100%; margin-top:auto; }
+@media (max-width:640px){ .endgrid { grid-template-columns:1fr; } .endfields.two { grid-template-columns:1fr 1fr; } }

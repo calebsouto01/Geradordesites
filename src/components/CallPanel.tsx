@@ -8,7 +8,7 @@ export type LeadMsgs = { gancho: string; primeiro_contato: string; followup: str
 export type CallLead = { id: number; name: string; phone: string | null; stage: string; messages?: LeadMsgs | null; profile?: { category?: string; mapsUrl?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
 export type CallOutcome = "falou_dono" | "atendente" | "nao_atendeu" | "retorno";
 export type CallChannel = "ligacao" | "whatsapp" | "email";
-export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string; returnTime?: string; destino?: "site" | "sem_interesse"; note?: string };
+export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string; returnTime?: string; destino?: "site" | "sem_interesse" | "lista"; note?: string };
 
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
@@ -169,29 +169,36 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
           <div className="endsheet" role="dialog" aria-label="Como terminou a ligação?">
             <div className="endcard">
               <h3>Como terminou a ligação?</h3>
-              <div className="outcomes">
-                <div className="outcome-ret">
-                  <b>🔁 Ligar de novo mais tarde</b>
-                  <small className="mut">Escolha o dia e a hora. O retorno entra na Agenda.</small>
-                  <div className="row">
+              <div className="endgrid">
+                <div className="endopt">
+                  <b>🔁 Agendar retorno</b>
+                  <small>Escolha o dia e a hora. O retorno entra na Agenda.</small>
+                  <div className="endfields two">
                     <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
                     <input type="time" value={retTime} onChange={(e) => setRetTime(e.target.value)} aria-label="Hora do retorno" />
-                    <button className="sm" onClick={() => finish("retorno")}>Agendar retorno</button>
                   </div>
+                  <button className="sm" onClick={() => finish("retorno")}>Agendar retorno</button>
                 </div>
-                <div className="outcome-ret">
+                <div className="endopt">
+                  <b>📋 Tentar depois</b>
+                  <small>Sem dia marcado. Registra a tentativa e o contato volta para a lista Para ligar.</small>
+                  <button className="sm" onClick={() => onFinish({ outcome: "nao_atendeu", channel, script: state.current.key, path: state.current.path, destino: "lista" })}>Voltar para a lista</button>
+                </div>
+                <div className="endopt">
                   <b>🚫 Sem interesse por enquanto</b>
-                  <small className="mut">Guarda o contato com o motivo, para quando fizer sentido voltar.</small>
-                  <div className="row">
+                  <small>Guarda o contato com o motivo, para quando fizer sentido voltar.</small>
+                  <div className="endfields">
                     <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="Motivo ou observação" aria-label="Motivo ou observação" />
-                    <button className="sm" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "sem_interesse", note })}>Guardar contato</button>
                   </div>
+                  <button className="sm" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "sem_interesse", note })}>Guardar contato</button>
                 </div>
-                <button className="outcome main" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "site" })}>
-                  ✅ Quer ver a prévia<small>Envia para Sites e vendas, na etapa Criar prévia do site</small>
-                </button>
+                <div className="endopt main">
+                  <b>✅ Quer ver a prévia</b>
+                  <small>Envia para Sites e vendas, na etapa Criar prévia do site.</small>
+                  <button className="sm" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "site" })}>Enviar para criar a prévia</button>
+                </div>
               </div>
-              <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar à ligação</button>
+              <button className="ghost sm" style={{ marginTop: 14 }} onClick={() => setEnding(false)}>← Voltar à ligação</button>
             </div>
           </div>
         )}

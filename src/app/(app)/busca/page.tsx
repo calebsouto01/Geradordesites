@@ -105,6 +105,11 @@ export default function Prospeccao() {
     if (error) return setErr("Não foi possível salvar o registro da ligação.");
     if (r.destino === "site") return toSites(l);
     setCalling(null);
+    if (r.destino === "lista") {
+      if (l.local !== "prospeccao") await move(l, { local: "prospeccao", retorno_em: null });
+      flash("Tentativa registrada: o contato continua em Para ligar");
+      return;
+    }
     if (r.destino === "sem_interesse") {
       if (await move(l, { local: "armazenado", observacao: r.note?.trim() || null, retorno_em: null })) flash("Contato guardado como sem interesse");
     } else if (r.outcome === "retorno" && r.returnDate) {
