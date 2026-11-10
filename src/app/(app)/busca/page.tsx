@@ -41,6 +41,7 @@ export default function Prospeccao() {
   const [toast, setToast] = useState<{ text: string; link?: boolean } | null>(null);
   const [next, setNext] = useState<{ token: string; params: { location: string; category: string; minRating: number } } | null>(null);
   const [calling, setCalling] = useState<Lead | null>(null);
+  const [tries, setTries] = useState<Record<number, number>>({});
 
   const flash = (text: string, link = false) => { setToast({ text, link }); setTimeout(() => setToast(null), link ? 6000 : 2500); };
 
@@ -57,6 +58,13 @@ export default function Prospeccao() {
     const { data } = await q.range(from, from + PAGE - 1);
     const list = (data as Lead[]) ?? [];
     setRows((cur) => (from === 0 ? list : [...cur, ...list]));
+    // Quantas vezes já houve contato com cada um (cada ligação registrada conta uma vez).
+    if (list.length) {
+      const { data: cs } = await supabase.from("calls").select("lead_id").in("lead_id", list.map((x) => x.id));
+      const n: Record<number, number> = {};
+      (cs ?? []).forEach((c: { lead_id: number | null }) => { if (c.lead_id) n[c.lead_id] = (n[c.lead_id] ?? 0) + 1; });
+      setTries((cur) => ({ ...(from === 0 ? {} : cur), ...n }));
+    }
     setMore(list.length === PAGE);
     setLoaded(true);
   }, [supabase]);
@@ -103,6 +111,7 @@ export default function Prospeccao() {
     const objections = r.path.filter((id) => id.startsWith("obj_") || id === "duvida_dominio");
     const { error } = await supabase.from("calls").insert({ lead_id: l.id, channel: r.channel, script: r.script, path: r.path, objections, outcome: r.outcome });
     if (error) return setErr("Não foi possível salvar o registro da ligação.");
+    setTries((cur) => ({ ...cur, [l.id]: (cur[l.id] ?? 0) + 1 }));
     if (r.destino === "site") return toSites(l);
     setCalling(null);
     if (r.destino === "lista") {
@@ -167,6 +176,7 @@ export default function Prospeccao() {
             )}
             <span className="row" style={{ gap: 6 }}>
               <span className="badge">Sem site</span>
+              {(tries[r.id] ?? 0) > 0 && <span className="badge soon" title="Quantas vezes você já tentou ou fez contato com este negócio">Contato feito {tries[r.id]}</span>}
               {r.rating !== null && <span className={`badge ${prio(r).cls}`} title="Prioridade estimada pela nota e pelo nº de avaliações">Prioridade {prio(r).label}</span>}
               {tab === "retorno" && r.retorno_em && <span className={`badge ${new Date(r.retorno_em).getTime() < Date.now() ? "late" : "soon"}`}>Retorno {when(r.retorno_em)}</span>}
             </span>
