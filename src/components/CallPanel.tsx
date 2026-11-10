@@ -180,8 +180,8 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
                   <button className="sm" onClick={() => finish("retorno")}>Agendar retorno</button>
                 </div>
                 <div className="endopt">
-                  <b>📋 Tentar depois</b>
-                  <small>Sem dia marcado. Registra a tentativa e o contato volta para a lista Para ligar.</small>
+                  <b>📵 Não atendeu</b>
+                  <small>Ninguém atendeu. Registra a tentativa e o contato volta para a lista Para ligar.</small>
                   <button className="sm" onClick={() => onFinish({ outcome: "nao_atendeu", channel, script: state.current.key, path: state.current.path, destino: "lista" })}>Voltar para a lista</button>
                 </div>
                 <div className="endopt">
