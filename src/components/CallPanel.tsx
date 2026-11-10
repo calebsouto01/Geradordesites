@@ -8,7 +8,7 @@ export type LeadMsgs = { gancho: string; primeiro_contato: string; followup: str
 export type CallLead = { id: number; name: string; phone: string | null; stage: string; messages?: LeadMsgs | null; profile?: { category?: string; mapsUrl?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
 export type CallOutcome = "falou_dono" | "atendente" | "nao_atendeu" | "retorno";
 export type CallChannel = "ligacao" | "whatsapp" | "email";
-export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string; returnTime?: string };
+export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string; returnTime?: string; destino?: "site" | "sem_interesse"; note?: string };
 
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
@@ -32,7 +32,7 @@ const CHANNELS: { id: CallChannel; label: string; icon: string }[] = [
 ];
 
 // Script de contato por cima do funil: dados do lead, canal (ligação, WhatsApp, e-mail) e encerramento do contato.
-export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, mapsUrl, onClose, onFinish, onStore, onDiscard }: { lead: CallLead; mapsUrl?: string; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void; onStore?: (note: string) => void; onDiscard?: () => void }) {
+export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, mapsUrl, onClose, onFinish, simple }: { lead: CallLead; mapsUrl?: string; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void; simple?: boolean }) {
   const [channel, setChannel] = useState<CallChannel>("ligacao");
   const [script, setScript] = useState<ScriptKey>(KEYS[0]);
   const state = useRef<{ key: ScriptKey; path: string[] }>({ key: KEYS[0], path: [] });
@@ -77,7 +77,7 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
       <div className="chat wide" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Script de contato: ${lead.name}`}>
         <div className="callhead">
           <div className="callinfo">
-            <span className="callmsgs-t">Script de contato</span>
+            <span className="callmsgs-t">{simple ? "Ligação" : "Script de contato"}</span>
             <b>{lead.name}</b>
             <div className="mut">{[p?.category, p?.rating ? `★ ${p.rating} (${p.ratingCount ?? 0})` : null].filter(Boolean).join(" · ")}</div>
             {lead.phone && <a className="wa" href={`https://wa.me/55${digits}`} target="_blank" rel="noreferrer">WhatsApp {lead.phone}</a>}
@@ -99,15 +99,15 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
             )}
           </div>
           <div className="callactions">
-            {siteId
+            {!simple && (siteId
               ? <Link href={`/sites/${siteId}`}><button className="ghost sm">Editar site</button></Link>
-              : <button className="ghost sm" onClick={onCreateSite}>✦ Criar site</button>}
-            <button className="sm" onClick={() => setEnding(true)}>Encerrar contato</button>
+              : <button className="ghost sm" onClick={onCreateSite}>✦ Criar site</button>)}
+            <button className="sm" onClick={() => setEnding(true)}>{simple ? "Finalizar ligação" : "Encerrar contato"}</button>
           </div>
           <button className="iconbtn callclose" onClick={onClose} aria-label="Fechar">✕</button>
         </div>
 
-        <div className="chantabs" role="tablist" aria-label="Canal de contato">
+        {!simple && <div className="chantabs" role="tablist" aria-label="Canal de contato">
           {CHANNELS.map((c) => (
             <button key={c.id} role="tab" aria-selected={c.id === channel} className={`chantab ${c.id === channel ? "on" : ""}`} onClick={() => openChannel(c.id)}>{c.icon} {c.label}</button>
           ))}
@@ -119,8 +119,8 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
               {genErr && <span className="err">{genErr}</span>}
             </span>
           )}
-        </div>
-        {pop && msgs && (
+        </div>}
+        {!simple && pop && msgs && (
           <div className="openpop" role="dialog" aria-label="Abertura personalizada">
             <div className="callmsgs-t">Gancho deste lead</div>
             <p style={{ margin: "0 0 10px" }}>💡 {msgs.gancho}</p>
@@ -165,7 +165,38 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
           <div className="callbody"><div className="panel"><b>Contato por e-mail</b><p className="mut" style={{ margin: "6px 0 0" }}>Em breve: modelos de e-mail. Por enquanto, use ligação ou WhatsApp.</p></div></div>
         )}
 
-        {ending && (
+        {ending && simple && (
+          <div className="endsheet" role="dialog" aria-label="Como terminou a ligação?">
+            <div className="endcard">
+              <h3>Como terminou a ligação?</h3>
+              <div className="outcomes">
+                <div className="outcome-ret">
+                  <b>🔁 Ligar de novo mais tarde</b>
+                  <small className="mut">Escolha o dia e a hora. O retorno entra na Agenda.</small>
+                  <div className="row">
+                    <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
+                    <input type="time" value={retTime} onChange={(e) => setRetTime(e.target.value)} aria-label="Hora do retorno" />
+                    <button className="sm" onClick={() => finish("retorno")}>Agendar retorno</button>
+                  </div>
+                </div>
+                <div className="outcome-ret">
+                  <b>🚫 Sem interesse por enquanto</b>
+                  <small className="mut">Guarda o contato com o motivo, para quando fizer sentido voltar.</small>
+                  <div className="row">
+                    <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="Motivo ou observação" aria-label="Motivo ou observação" />
+                    <button className="sm" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "sem_interesse", note })}>Guardar contato</button>
+                  </div>
+                </div>
+                <button className="outcome main" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "site" })}>
+                  ✅ Quer ver a prévia<small>Envia para Sites e vendas, na etapa Criar site (versão 1)</small>
+                </button>
+              </div>
+              <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar à ligação</button>
+            </div>
+          </div>
+        )}
+
+        {ending && !simple && (
           <div className="endsheet" role="dialog" aria-label="Como foi o contato?">
             <div className="endcard">
               <h3>Como foi o contato?</h3>
@@ -183,16 +214,6 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
                     <button className="sm" onClick={() => finish("retorno")}>Agendar</button>
                   </div>
                 </div>
-                {onStore && (
-                  <div className="outcome-ret">
-                    <b>🗂 Armazenar contato</b>
-                    <div className="row">
-                      <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="Observação" aria-label="Observação do contato" />
-                      <button className="sm" onClick={() => onStore(note)}>Armazenar</button>
-                    </div>
-                  </div>
-                )}
-                {onDiscard && <button className="ghost sm" onClick={() => { if (confirm(`Descartar ${lead.name}?`)) onDiscard(); }}>🗑 Descartar contato</button>}
               </div>
               <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar</button>
             </div>

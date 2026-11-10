@@ -98,30 +98,21 @@ export default function Prospeccao() {
     if (await move(l, { local: "sites", stage: "novo", retorno_em: null })) { setCalling(null); flash(`${l.name} foi para Sites e vendas`, true); }
   }
 
-  async function storeContact(l: Lead, note: string) {
-    if (await move(l, { local: "armazenado", observacao: note.trim() || null, retorno_em: null })) { setCalling(null); flash("Contato armazenado"); }
-  }
-
-  async function discard(l: Lead) {
-    if (await move(l, { local: "descartado" })) { setCalling(null); flash("Contato descartado"); }
-  }
-
-  // Resultado da ligação: fica no histórico; "retornar" marca a data e entra na Agenda.
+  // Resultado da ligação: fica no histórico e o contato segue para o destino escolhido.
   async function finishCall(l: Lead, r: CallResult) {
     const objections = r.path.filter((id) => id.startsWith("obj_") || id === "duvida_dominio");
     const { error } = await supabase.from("calls").insert({ lead_id: l.id, channel: r.channel, script: r.script, path: r.path, objections, outcome: r.outcome });
-    if (error) return setErr("Não foi possível salvar o registro do contato.");
+    if (error) return setErr("Não foi possível salvar o registro da ligação.");
+    if (r.destino === "site") return toSites(l);
     setCalling(null);
-    if (r.outcome === "retorno" && r.returnDate) {
+    if (r.destino === "sem_interesse") {
+      if (await move(l, { local: "armazenado", observacao: r.note?.trim() || null, retorno_em: null })) flash("Contato guardado como sem interesse");
+    } else if (r.outcome === "retorno" && r.returnDate) {
       const iso = startsAt(r.returnDate, r.returnTime || "09:00");
       if (await move(l, { local: "retorno", retorno_em: iso, next_contact: r.returnDate })) {
         await supabase.from("agenda_items").insert({ lead_id: l.id, kind: "retorno", title: `Retorno: ${l.name}`, starts_at: iso });
         flash("Retorno marcado e adicionado à Agenda");
       }
-    } else {
-      // Nova tentativa de contato tira o contato de "Armazenados" e o devolve à lista para ligar.
-      if (l.local === "armazenado") await move(l, { local: "prospeccao" });
-      flash("Contato registrado");
     }
   }
 
@@ -211,7 +202,7 @@ export default function Prospeccao() {
       {calling && (
         <CallPanel
           lead={calling} mapsUrl={mapsLink(calling)}
-          onCreateSite={() => toSites(calling)} onStore={(n) => storeContact(calling, n)} onDiscard={() => discard(calling)}
+          onCreateSite={() => toSites(calling)} simple
           onMessages={(m: LeadMsgs) => { setCalling({ ...calling, messages: m }); setRows((cur) => cur.map((x) => (x.id === calling.id ? { ...x, messages: m } : x))); }}
           onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)}
         />
