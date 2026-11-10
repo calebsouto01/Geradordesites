@@ -7,20 +7,23 @@ import { startsAt } from "@/lib/agenda";
 import Stars from "@/components/Stars";
 import CallPanel, { type CallLead, type CallResult, type LeadMsgs } from "@/components/CallPanel";
 
-type Local = "prospeccao" | "retorno" | "armazenado";
+type Local = "prospeccao" | "retorno" | "visita" | "armazenado";
 type Lead = CallLead & {
   place_id: string | null; address: string | null; rating: number | null; rating_count: number | null; photos: string[] | null;
-  local: string; observacao: string | null; retorno_em: string | null; tentativas: number;
+  local: string; observacao: string | null; retorno_em: string | null; tentativas: number; motivo_visita: string | null;
 };
 
 const PAGE = 30;
 const TABS: { key: Local; label: string; hint: string }[] = [
   { key: "prospeccao", label: "Para ligar", hint: "Ligue, mande WhatsApp e decida o destino de cada contato." },
   { key: "retorno", label: "Retornos", hint: "Contatos com retorno marcado, do mais próximo ao mais distante." },
+  { key: "visita", label: "Para visitar", hint: "Contatos que não deu para alcançar por telefone: visite pessoalmente, de preferência no mesmo trajeto." },
   { key: "armazenado", label: "Armazenados", hint: "Contatos guardados com uma observação, para quando fizer sentido voltar." },
 ];
 
 // Junta uma observação nova às anteriores, sem perder o que já estava anotado.
+const MOTIVO: Record<string, string> = { telefone_indisponivel: "Telefone indisponível", numero_errado: "Número errado", sem_resposta: "Chama e ninguém atende" };
+const rotaUrl = (r: Lead) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(r.address ?? r.name)}`;
 const joinObs = (old: string | null, add?: string) => (add?.trim() ? [old, add.trim()].filter(Boolean).join(" · ").slice(0, 1000) : old);
 
 // Fila de ligação: quem teve menos contatos primeiro; quem já foi ligado vai para o fim, e o mais ligado fica por último.
@@ -32,7 +35,7 @@ export default function Prospeccao() {
   const router = useRouter();
   const [tab, setTab] = useState<Local>("prospeccao");
   const [rows, setRows] = useState<Lead[]>([]);
-  const [counts, setCounts] = useState<Record<Local, number>>({ prospeccao: 0, retorno: 0, armazenado: 0 });
+  const [counts, setCounts] = useState<Record<Local, number>>({ prospeccao: 0, retorno: 0, visita: 0, armazenado: 0 });
   const [more, setMore] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [form, setForm] = useState({ location: "", category: "", minRating: "4.5" });
@@ -47,14 +50,15 @@ export default function Prospeccao() {
 
   const loadCounts = useCallback(async () => {
     const q = (local: Local) => supabase.from("leads").select("*", { count: "exact", head: true }).eq("local", local);
-    const [a, b, c] = await Promise.all([q("prospeccao"), q("retorno"), q("armazenado")]);
-    setCounts({ prospeccao: a.count ?? 0, retorno: b.count ?? 0, armazenado: c.count ?? 0 });
+    const [a, b, v, c] = await Promise.all([q("prospeccao"), q("retorno"), q("visita"), q("armazenado")]);
+    setCounts({ prospeccao: a.count ?? 0, retorno: b.count ?? 0, visita: v.count ?? 0, armazenado: c.count ?? 0 });
   }, [supabase]);
 
   const load = useCallback(async (t: Local, from = 0) => {
     let q = supabase.from("leads").select("*").eq("local", t);
     q = t === "prospeccao" ? q.order("tentativas", { ascending: true }).order("rating", { ascending: false, nullsFirst: false }).order("rating_count", { ascending: false, nullsFirst: false }).order("id")
-      : t === "retorno" ? q.order("retorno_em", { ascending: true, nullsFirst: false }).order("id") : q.order("updated_at", { ascending: false }).order("id");
+      : t === "retorno" ? q.order("retorno_em", { ascending: true, nullsFirst: false }).order("id")
+      : t === "visita" ? q.order("address", { ascending: true, nullsFirst: false }).order("id") : q.order("updated_at", { ascending: false }).order("id");
     const { data } = await q.range(from, from + PAGE - 1);
     const list = (data as Lead[]) ?? [];
     setRows((cur) => (from === 0 ? list : [...cur, ...list]));
@@ -118,6 +122,10 @@ export default function Prospeccao() {
       flash("Tentativa registrada: o contato continua em Para ligar");
       return;
     }
+    if (r.destino === "visita") {
+      if (await move(l, { local: "visita", motivo_visita: r.motivo ?? "sem_resposta", retorno_em: null, observacao: joinObs(l.observacao, r.note) })) flash("Contato enviado para Para visitar");
+      return;
+    }
     if (r.destino === "sem_interesse") {
       if (await move(l, { local: "armazenado", observacao: r.note?.trim() || null, retorno_em: null })) flash("Contato guardado como sem interesse");
     } else if (r.outcome === "retorno" && r.returnDate) {
@@ -173,6 +181,9 @@ export default function Prospeccao() {
                 ))}
               </div>
             )}
+            {tab === "visita" && r.motivo_visita && (
+              <span className="row" style={{ gap: 6 }}><span className="badge soon">{MOTIVO[r.motivo_visita] ?? r.motivo_visita}</span></span>
+            )}
             {tab === "retorno" && r.retorno_em && (
               <span className="row" style={{ gap: 6 }}><span className={`badge ${new Date(r.retorno_em).getTime() < Date.now() ? "late" : "soon"}`}>Retorno {when(r.retorno_em)}</span></span>
             )}
@@ -188,6 +199,7 @@ export default function Prospeccao() {
             {r.observacao && <div className="line pq-obs">📝 {r.observacao}</div>}
             <div className="actions pq-actions">
               <button className="call" onClick={() => setCalling(r)}>📞 Ligar</button>
+              {tab === "visita" && <a className="pq-rota" href={rotaUrl(r)} target="_blank" rel="noreferrer">📍 Abrir rota</a>}
             </div>
           </article>
         ))}

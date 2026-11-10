@@ -8,7 +8,7 @@ export type LeadMsgs = { gancho: string; primeiro_contato: string; followup: str
 export type CallLead = { id: number; name: string; phone: string | null; stage: string; messages?: LeadMsgs | null; profile?: { category?: string; mapsUrl?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
 export type CallOutcome = "falou_dono" | "atendente" | "nao_atendeu" | "retorno";
 export type CallChannel = "ligacao" | "whatsapp" | "email";
-export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string; returnTime?: string; destino?: "site" | "sem_interesse" | "lista"; note?: string };
+export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string; returnTime?: string; destino?: "site" | "sem_interesse" | "lista" | "visita"; note?: string; motivo?: string };
 
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
@@ -41,6 +41,8 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
   const [note, setNote] = useState("");
   const [noteRet, setNoteRet] = useState("");
   const [noteNa, setNoteNa] = useState("");
+  const [motivo, setMotivo] = useState("telefone_indisponivel");
+  const [noteVis, setNoteVis] = useState("");
   const [ending, setEnding] = useState(false);
   const [tpl, setTpl] = useState<string>("");
   const [msg, setMsg] = useState("");
@@ -197,6 +199,19 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
                     <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="Motivo" aria-label="Motivo ou observação" />
                   </div>
                   <button className="sm" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "sem_interesse", note })}>Guardar contato</button>
+                </div>
+                <div className="endopt">
+                  <b>🚶 Ir visitar</b>
+                  <small>Não deu para falar por telefone. Vai para a lista Para visitar.</small>
+                  <div className="endfields">
+                    <select value={motivo} onChange={(e) => setMotivo(e.target.value)} aria-label="Motivo da visita">
+                      <option value="telefone_indisponivel">Indisponível</option>
+                      <option value="numero_errado">Número errado</option>
+                      <option value="sem_resposta">Ninguém atende</option>
+                    </select>
+                    <input value={noteVis} maxLength={1000} onChange={(e) => setNoteVis(e.target.value)} placeholder="Observação" aria-label="Observação da visita" />
+                  </div>
+                  <button className="sm" onClick={() => onFinish({ outcome: "nao_atendeu", channel, script: state.current.key, path: state.current.path, destino: "visita", motivo, note: noteVis.trim() || undefined })}>Mandar para visita</button>
                 </div>
                 <div className="endopt main">
                   <b>✅ Quer ver a prévia</b>
