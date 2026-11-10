@@ -8,14 +8,14 @@ import CreateSiteDialog from "@/components/CreateSiteDialog";
 import CallPanel, { type CallLead, type CallResult } from "@/components/CallPanel";
 
 const STAGES = [
-  ["novo", "Criar site (versão 1)", "#6366f1"],
+  ["novo", "Criar prévia do site", "#6366f1"],
   ["qualificado", "Encaminhar proposta", "#a78bfa"], ["proposta_enviada", "Proposta encaminhada", "#f59e0b"],
   ["fechado", "Venda fechada", "#22c55e"], ["perdido", "Sem venda", "#ef4444"],
 ] as const;
 
 // O que fazer em cada etapa (o lead avança sozinho quando o site é gerado).
 const HINT: Record<string, string> = {
-  novo: "O dono topou ver a prévia: crie a versão 1.",
+  novo: "O dono topou ver: crie a prévia do site.",
   qualificado: "Site pronto: envie a prévia.",
   proposta_enviada: "Aguardando resposta: venda ou não?",
   fechado: "Cliente fechado.", perdido: "Registre o motivo.",
@@ -103,7 +103,7 @@ export default function Funil() {
   // Situação do lead em uma linha, a partir dos fatos do fluxo de venda.
   function statusLine(l: Lead, site?: SiteInfo) {
     const views = site?.views ? `prévia aberta ${site.views}×` : "prévia ainda não aberta";
-    if (l.stage === "novo") return "Topou ver a prévia. Falta criar a versão 1.";
+    if (l.stage === "novo") return "Topou ver a prévia. Falta criar a prévia do site.";
     if (l.stage === "qualificado") return "Prévia pronta. Ainda não enviada ao cliente.";
     if (l.stage === "proposta_enviada") return `Aguardando resposta · ${views}.`;
     if (l.stage === "fechado") return "Venda fechada.";
@@ -112,7 +112,7 @@ export default function Funil() {
 
   // Uma única ação por etapa; o resto fica no menu do card.
   function action(l: Lead) {
-    if (l.stage === "novo") return <button className="sm" onClick={() => setCreating(l)}>Criar versão 1 · 3 créditos</button>;
+    if (l.stage === "novo") return <button className="sm" onClick={() => setCreating(l)}>Criar prévia do site · 3 créditos</button>;
     if (l.stage === "qualificado") return <button className="sm" onClick={() => patch(l.id, { stage: "proposta_enviada" })}>Proposta enviada ✓</button>;
     if (l.stage === "proposta_enviada") return <button className="sm" onClick={() => { setAnswer({ kind: "venda", value: l.estimated_value ? String(l.estimated_value) : "", reason: "", date: "" }); setAnswering(l); }}>Registrar resposta</button>;
     return null;

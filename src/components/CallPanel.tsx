@@ -188,7 +188,7 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
                   </div>
                 </div>
                 <button className="outcome main" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "site" })}>
-                  ✅ Quer ver a prévia<small>Envia para Sites e vendas, na etapa Criar site (versão 1)</small>
+                  ✅ Quer ver a prévia<small>Envia para Sites e vendas, na etapa Criar prévia do site</small>
                 </button>
               </div>
               <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar à ligação</button>

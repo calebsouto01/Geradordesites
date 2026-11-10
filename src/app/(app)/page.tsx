@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 // Etapas em ordem (rampa ordinal de uma só cor); fechado/perdido são estados finais, mostrados como status.
 const FLOW: [string, string][] = [
-  ["novo", "Criar site (versão 1)"], ["qualificado", "Encaminhar proposta"], ["proposta_enviada", "Proposta encaminhada"],
+  ["novo", "Criar prévia do site"], ["qualificado", "Encaminhar proposta"], ["proposta_enviada", "Proposta encaminhada"],
 ];
 
 type Lead = { id: number; name: string; phone: string | null; stage: string; next_contact: string | null; origin: string; estimated_value: number | null };
