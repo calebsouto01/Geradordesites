@@ -20,6 +20,9 @@ const TABS: { key: Local; label: string; hint: string }[] = [
   { key: "armazenado", label: "Armazenados", hint: "Contatos guardados com uma observação, para quando fizer sentido voltar." },
 ];
 
+// Junta uma observação nova às anteriores, sem perder o que já estava anotado.
+const joinObs = (old: string | null, add?: string) => (add?.trim() ? [old, add.trim()].filter(Boolean).join(" · ").slice(0, 1000) : old);
+
 // Fila de ligação: quem teve menos contatos primeiro; quem já foi ligado vai para o fim, e o mais ligado fica por último.
 const fila = (a: Lead, b: Lead) => a.tentativas - b.tentativas || (b.rating ?? 0) - (a.rating ?? 0) || (b.rating_count ?? 0) - (a.rating_count ?? 0) || a.id - b.id;
 const when = (iso: string) => new Date(iso).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -106,7 +109,12 @@ export default function Prospeccao() {
     if (r.destino === "site") return toSites(l);
     setCalling(null);
     if (r.destino === "lista") {
-      if (l.local !== "prospeccao") await move(l, { local: "prospeccao", retorno_em: null });
+      if (l.local !== "prospeccao") await move(l, { local: "prospeccao", retorno_em: null, observacao: joinObs(l.observacao, r.note) });
+      else if (r.note) {
+        const obs = joinObs(l.observacao, r.note);
+        await supabase.from("leads").update({ observacao: obs }).eq("id", l.id);
+        setRows((cur) => cur.map((x) => (x.id === l.id ? { ...x, observacao: obs } : x)));
+      }
       flash("Tentativa registrada: o contato continua em Para ligar");
       return;
     }
@@ -114,8 +122,8 @@ export default function Prospeccao() {
       if (await move(l, { local: "armazenado", observacao: r.note?.trim() || null, retorno_em: null })) flash("Contato guardado como sem interesse");
     } else if (r.outcome === "retorno" && r.returnDate) {
       const iso = startsAt(r.returnDate, r.returnTime || "09:00");
-      if (await move(l, { local: "retorno", retorno_em: iso, next_contact: r.returnDate })) {
-        await supabase.from("agenda_items").insert({ lead_id: l.id, kind: "retorno", title: `Retorno: ${l.name}`, starts_at: iso });
+      if (await move(l, { local: "retorno", retorno_em: iso, next_contact: r.returnDate, observacao: joinObs(l.observacao, r.note) })) {
+        await supabase.from("agenda_items").insert({ lead_id: l.id, kind: "retorno", title: `Retorno: ${l.name}`, notes: r.note ?? null, starts_at: iso });
         flash("Retorno marcado e adicionado à Agenda");
       }
     }

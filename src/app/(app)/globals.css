@@ -540,3 +540,9 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .endopt > button { width:100%; margin-top:auto; }
 @media (max-width:640px){ .endgrid { grid-template-columns:1fr; } .endfields.two { grid-template-columns:1fr 1fr; } }
 .pq-phone { min-height:26px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+
+/* finalizar ligação: quatro opções lado a lado */
+.endgrid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.endfields.two { grid-template-columns:1fr; }
+@media (max-width:700px){ .endgrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:460px){ .endgrid { grid-template-columns:1fr; } }

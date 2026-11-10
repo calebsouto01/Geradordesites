@@ -39,6 +39,8 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
   const [ret, setRet] = useState(tomorrow());
   const [retTime, setRetTime] = useState("09:00");
   const [note, setNote] = useState("");
+  const [noteRet, setNoteRet] = useState("");
+  const [noteNa, setNoteNa] = useState("");
   const [ending, setEnding] = useState(false);
   const [tpl, setTpl] = useState<string>("");
   const [msg, setMsg] = useState("");
@@ -62,7 +64,7 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
     { id: "p2", label: "✨ Follow-up (personalizado)", text: () => msgs.followup },
   ] : [];
   const vars = (): Vars => ({ neg: lead.name, nota: p?.rating ? String(p.rating).replace(".", ",") : "", link: siteSlug ? `${window.location.origin}/p/${siteSlug}` : "[link da prévia]" });
-  const finish = (outcome: CallOutcome) => onFinish({ outcome, channel, script: state.current.key, path: channel === "ligacao" ? state.current.path : [], returnDate: outcome === "retorno" ? ret : undefined, returnTime: outcome === "retorno" ? retTime : undefined });
+  const finish = (outcome: CallOutcome) => onFinish({ outcome, channel, script: state.current.key, path: channel === "ligacao" ? state.current.path : [], returnDate: outcome === "retorno" ? ret : undefined, returnTime: outcome === "retorno" ? retTime : undefined, note: outcome === "retorno" && noteRet.trim() ? noteRet.trim() : undefined });
 
   function pick(t: Tpl) { setTpl(t.id); setCopied(false); setMsg(t.text(vars())); }
   function openChannel(c: CallChannel) {
@@ -173,22 +175,26 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
                 <div className="endopt">
                   <b>🔁 Agendar retorno</b>
                   <small>Escolha o dia e a hora. O retorno entra na Agenda.</small>
-                  <div className="endfields two">
+                  <div className="endfields">
                     <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
                     <input type="time" value={retTime} onChange={(e) => setRetTime(e.target.value)} aria-label="Hora do retorno" />
+                    <input value={noteRet} maxLength={1000} onChange={(e) => setNoteRet(e.target.value)} placeholder="Observação" aria-label="Observação do retorno" />
                   </div>
                   <button className="sm" onClick={() => finish("retorno")}>Agendar retorno</button>
                 </div>
                 <div className="endopt">
                   <b>📵 Não atendeu</b>
                   <small>Ninguém atendeu. Registra a tentativa e o contato volta para a lista Para ligar.</small>
-                  <button className="sm" onClick={() => onFinish({ outcome: "nao_atendeu", channel, script: state.current.key, path: state.current.path, destino: "lista" })}>Voltar para a lista</button>
+                  <div className="endfields">
+                    <input value={noteNa} maxLength={1000} onChange={(e) => setNoteNa(e.target.value)} placeholder="Observação" aria-label="Observação da tentativa" />
+                  </div>
+                  <button className="sm" onClick={() => onFinish({ outcome: "nao_atendeu", channel, script: state.current.key, path: state.current.path, destino: "lista", note: noteNa.trim() || undefined })}>Voltar para a lista</button>
                 </div>
                 <div className="endopt">
                   <b>🚫 Sem interesse por enquanto</b>
                   <small>Guarda o contato com o motivo, para quando fizer sentido voltar.</small>
                   <div className="endfields">
-                    <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="Motivo ou observação" aria-label="Motivo ou observação" />
+                    <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="Motivo" aria-label="Motivo ou observação" />
                   </div>
                   <button className="sm" onClick={() => onFinish({ outcome: "falou_dono", channel, script: state.current.key, path: state.current.path, destino: "sem_interesse", note })}>Guardar contato</button>
                 </div>
