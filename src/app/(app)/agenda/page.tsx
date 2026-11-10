@@ -108,7 +108,6 @@ export default function Agenda() {
   };
 
   // Grade semanal: dias em colunas, horas em linhas. Clicar em um horário vazio cria o compromisso ali.
-  const HOUR = 64;
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, n) => { const d = new Date(weekStart); d.setDate(weekStart.getDate() + n); return d; }), [weekStart]);
   const weekItems = useMemo(() => items.filter((i) => { const t = new Date(i.starts_at).getTime(); return t >= weekDays[0].getTime() && t < weekDays[0].getTime() + 7 * 86400000; }), [items, weekDays]);
   const [h0, h1] = useMemo(() => {
@@ -116,6 +115,10 @@ export default function Agenda() {
     weekItems.forEach((i) => { const d = new Date(i.starts_at); const m = d.getHours() * 60 + d.getMinutes(); a = Math.min(a, Math.floor(m / 60)); b = Math.max(b, Math.ceil((m + i.duration_min) / 60)); });
     return [a, Math.min(24, b)];
   }, [weekItems]);
+  // A grade se ajusta à altura da janela: cabe sem rolagem da página (mínimo de 26 px por hora).
+  const [vh, setVh] = useState(800);
+  useEffect(() => { const f = () => setVh(window.innerHeight); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, []);
+  const HOUR = Math.max(26, Math.min(64, Math.floor((vh - 330) / Math.max(1, h1 - h0))));
   function Week() {
     const hours = Array.from({ length: h1 - h0 }, (_, n) => h0 + n);
     const now = new Date(), nowTop = ((now.getHours() * 60 + now.getMinutes()) / 60 - h0) * HOUR;
@@ -154,7 +157,7 @@ export default function Agenda() {
                     {place.map(({ i, lane, nl }) => {
                       const d2 = new Date(i.starts_at), top = ((d2.getHours() * 60 + d2.getMinutes()) / 60 - h0) * HOUR, l = leadOf(i.lead_id);
                       return (
-                        <button key={i.id} className={`ag-ev ${i.kind} ${i.done_at ? "done" : ""}`} onClick={() => edit(i)} title={`${timeOf(i.starts_at)} · ${i.title}${l ? ` · ${l.name}` : ""}`}
+                        <button key={i.id} className={`ag-ev ${i.kind} ${i.done_at ? "done" : ""} ${(i.duration_min / 60) * HOUR < 40 ? "tiny" : ""}`} onClick={() => edit(i)} title={`${timeOf(i.starts_at)} · ${i.title}${l ? ` · ${l.name}` : ""}`}
                           style={{ top, height: Math.max(22, (i.duration_min / 60) * HOUR - 2), left: `calc(${(lane / nl) * 100}% + 2px)`, width: `calc(${100 / nl}% - 4px)` }}>
                           <b>{timeOf(i.starts_at)}</b> {KINDS[i.kind].icon} {i.title}
                         </button>
