@@ -539,3 +539,4 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .endfields input { width:100%; min-width:0; }
 .endopt > button { width:100%; margin-top:auto; }
 @media (max-width:640px){ .endgrid { grid-template-columns:1fr; } .endfields.two { grid-template-columns:1fr 1fr; } }
+.pq-phone { min-height:26px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
