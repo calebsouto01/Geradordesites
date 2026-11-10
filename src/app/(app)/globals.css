@@ -528,3 +528,4 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 .pq-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; } .pq-obs { color:var(--mut); font-size:13px; }
 .pq-actions .sm { white-space:nowrap; } .searchbar + .ag-tabs { margin-top:16px; }
 .ag-ev.tiny { white-space:nowrap; text-overflow:ellipsis; font-size:11px; padding:1px 6px; line-height:1.5; } .ag-wk-head { padding-block:0; } .ag-wk-h { padding:4px 0; } .ag-wk-h b { font-size:16px; }
+.pq-actions .call { width:100%; padding:12px 16px; }

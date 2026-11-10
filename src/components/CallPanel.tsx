@@ -8,7 +8,7 @@ export type LeadMsgs = { gancho: string; primeiro_contato: string; followup: str
 export type CallLead = { id: number; name: string; phone: string | null; stage: string; messages?: LeadMsgs | null; profile?: { category?: string; mapsUrl?: string; rating?: number; ratingCount?: number; prospeccao?: { observacao?: string; presenca?: string } } | null };
 export type CallOutcome = "falou_dono" | "atendente" | "nao_atendeu" | "retorno";
 export type CallChannel = "ligacao" | "whatsapp" | "email";
-export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string };
+export type CallResult = { outcome: CallOutcome; channel: CallChannel; script: ScriptKey; path: string[]; returnDate?: string; returnTime?: string };
 
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
@@ -32,11 +32,13 @@ const CHANNELS: { id: CallChannel; label: string; icon: string }[] = [
 ];
 
 // Script de contato por cima do funil: dados do lead, canal (ligação, WhatsApp, e-mail) e encerramento do contato.
-export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, mapsUrl, onClose, onFinish }: { lead: CallLead; mapsUrl?: string; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void }) {
+export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMessages, mapsUrl, onClose, onFinish, onStore, onDiscard }: { lead: CallLead; mapsUrl?: string; siteSlug?: string | null; siteId?: number | null; onCreateSite?: () => void; onMessages?: (m: LeadMsgs) => void; onClose: () => void; onFinish: (r: CallResult) => void; onStore?: (note: string) => void; onDiscard?: () => void }) {
   const [channel, setChannel] = useState<CallChannel>("ligacao");
   const [script, setScript] = useState<ScriptKey>(KEYS[0]);
   const state = useRef<{ key: ScriptKey; path: string[] }>({ key: KEYS[0], path: [] });
   const [ret, setRet] = useState(tomorrow());
+  const [retTime, setRetTime] = useState("09:00");
+  const [note, setNote] = useState("");
   const [ending, setEnding] = useState(false);
   const [tpl, setTpl] = useState<string>("");
   const [msg, setMsg] = useState("");
@@ -60,7 +62,7 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
     { id: "p2", label: "✨ Follow-up (personalizado)", text: () => msgs.followup },
   ] : [];
   const vars = (): Vars => ({ neg: lead.name, nota: p?.rating ? String(p.rating).replace(".", ",") : "", link: siteSlug ? `${window.location.origin}/p/${siteSlug}` : "[link da prévia]" });
-  const finish = (outcome: CallOutcome) => onFinish({ outcome, channel, script: state.current.key, path: channel === "ligacao" ? state.current.path : [], returnDate: outcome === "retorno" ? ret : undefined });
+  const finish = (outcome: CallOutcome) => onFinish({ outcome, channel, script: state.current.key, path: channel === "ligacao" ? state.current.path : [], returnDate: outcome === "retorno" ? ret : undefined, returnTime: outcome === "retorno" ? retTime : undefined });
 
   function pick(t: Tpl) { setTpl(t.id); setCopied(false); setMsg(t.text(vars())); }
   function openChannel(c: CallChannel) {
@@ -169,7 +171,7 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
               <h3>Como foi o contato?</h3>
               <div className="outcomes">
                 <button className="outcome main" onClick={() => finish("falou_dono")}>
-                  ✅ Falei com o dono<small>{lead.stage === "novo" ? "Avança para Contato iniciado" : "Registra no histórico"}</small>
+                  ✅ Falei com o dono<small>Registra no histórico</small>
                 </button>
                 <button className="outcome" onClick={() => finish("atendente")}>🧑‍💼 Falei com atendente<small>Tentar chegar ao responsável</small></button>
                 <button className="outcome" onClick={() => finish("nao_atendeu")}>📵 Não atendeu<small>Registra a tentativa</small></button>
@@ -177,9 +179,20 @@ export default function CallPanel({ lead, siteSlug, siteId, onCreateSite, onMess
                   <b>🔁 Pediu retorno</b>
                   <div className="row">
                     <input type="date" value={ret} onChange={(e) => setRet(e.target.value)} aria-label="Data do retorno" />
+                    <input type="time" value={retTime} onChange={(e) => setRetTime(e.target.value)} aria-label="Hora do retorno" />
                     <button className="sm" onClick={() => finish("retorno")}>Agendar</button>
                   </div>
                 </div>
+                {onStore && (
+                  <div className="outcome-ret">
+                    <b>🗂 Armazenar contato</b>
+                    <div className="row">
+                      <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="Observação" aria-label="Observação do contato" />
+                      <button className="sm" onClick={() => onStore(note)}>Armazenar</button>
+                    </div>
+                  </div>
+                )}
+                {onDiscard && <button className="ghost sm" onClick={() => { if (confirm(`Descartar ${lead.name}?`)) onDiscard(); }}>🗑 Descartar contato</button>}
               </div>
               <button className="ghost sm" style={{ marginTop: 12 }} onClick={() => setEnding(false)}>← Voltar</button>
             </div>

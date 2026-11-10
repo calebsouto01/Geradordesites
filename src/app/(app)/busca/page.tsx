@@ -12,7 +12,6 @@ type Lead = CallLead & {
   place_id: string | null; address: string | null; rating: number | null; rating_count: number | null; photos: string[] | null;
   local: string; observacao: string | null; retorno_em: string | null;
 };
-type Dialog = { kind: "retorno" | "armazenar"; lead: Lead; date: string; time: string; note: string } | null;
 
 const PAGE = 30;
 const TABS: { key: Local; label: string; hint: string }[] = [
@@ -25,7 +24,6 @@ const prio = (r: Lead) => {
   const n = r.rating_count ?? 0, s = r.rating ?? 0;
   return s >= 4.7 && n >= 100 ? { label: "alta", cls: "" } : s >= 4.5 && n >= 30 ? { label: "média", cls: "soon" } : { label: "baixa", cls: "late" };
 };
-const tomorrow = () => new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 const when = (iso: string) => new Date(iso).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export default function Prospeccao() {
@@ -43,8 +41,6 @@ export default function Prospeccao() {
   const [toast, setToast] = useState<{ text: string; link?: boolean } | null>(null);
   const [next, setNext] = useState<{ token: string; params: { location: string; category: string; minRating: number } } | null>(null);
   const [calling, setCalling] = useState<Lead | null>(null);
-  const [dialog, setDialog] = useState<Dialog>(null);
-  const [saving, setSaving] = useState(false);
 
   const flash = (text: string, link = false) => { setToast({ text, link }); setTimeout(() => setToast(null), link ? 6000 : 2500); };
 
@@ -102,22 +98,12 @@ export default function Prospeccao() {
     if (await move(l, { local: "sites", stage: "novo", retorno_em: null })) { setCalling(null); flash(`${l.name} foi para Sites e vendas`, true); }
   }
 
-  async function saveDialog() {
-    if (!dialog) return;
-    setSaving(true);
-    const { kind, lead, date, time, note } = dialog;
-    if (kind === "retorno") {
-      if (!date) { setSaving(false); return setErr("Escolha a data do retorno."); }
-      const iso = startsAt(date, time || "09:00");
-      const ok = await move(lead, { local: "retorno", retorno_em: iso, next_contact: date, ...(note.trim() ? { observacao: note.trim() } : {}) });
-      if (ok) {
-        await supabase.from("agenda_items").insert({ lead_id: lead.id, kind: "retorno", title: `Retorno: ${lead.name}`, notes: note.trim() || null, starts_at: iso });
-        flash("Retorno marcado e adicionado à Agenda");
-      }
-    } else {
-      if (await move(lead, { local: "armazenado", observacao: note.trim() || null, retorno_em: null })) flash("Contato armazenado");
-    }
-    setSaving(false); setDialog(null); setErr("");
+  async function storeContact(l: Lead, note: string) {
+    if (await move(l, { local: "armazenado", observacao: note.trim() || null, retorno_em: null })) { setCalling(null); flash("Contato armazenado"); }
+  }
+
+  async function discard(l: Lead) {
+    if (await move(l, { local: "descartado" })) { setCalling(null); flash("Contato descartado"); }
   }
 
   // Resultado da ligação: fica no histórico; "retornar" marca a data e entra na Agenda.
@@ -127,12 +113,16 @@ export default function Prospeccao() {
     if (error) return setErr("Não foi possível salvar o registro do contato.");
     setCalling(null);
     if (r.outcome === "retorno" && r.returnDate) {
-      const iso = startsAt(r.returnDate);
+      const iso = startsAt(r.returnDate, r.returnTime || "09:00");
       if (await move(l, { local: "retorno", retorno_em: iso, next_contact: r.returnDate })) {
         await supabase.from("agenda_items").insert({ lead_id: l.id, kind: "retorno", title: `Retorno: ${l.name}`, starts_at: iso });
         flash("Retorno marcado e adicionado à Agenda");
       }
-    } else flash("Contato registrado");
+    } else {
+      // Nova tentativa de contato tira o contato de "Armazenados" e o devolve à lista para ligar.
+      if (l.local === "armazenado") await move(l, { local: "prospeccao" });
+      flash("Contato registrado");
+    }
   }
 
   const mapsLink = (l: Lead) => (l.place_id ? `https://www.google.com/maps/place/?q=place_id:${l.place_id}` : undefined);
@@ -192,15 +182,7 @@ export default function Prospeccao() {
             <div className="line">📞 {r.phone ?? "Sem telefone"}</div>
             {r.observacao && <div className="line pq-obs">📝 {r.observacao}</div>}
             <div className="actions pq-actions">
-              <button onClick={() => toSites(r)}>Criar site</button>
-              <button className="ghost" onClick={() => setCalling(r)}>📞 Ligar</button>
-            </div>
-            <div className="actions pq-actions">
-              <button className="ghost sm" onClick={() => setDialog({ kind: "retorno", lead: r, date: tomorrow(), time: "09:00", note: r.observacao ?? "" })}>Retornar contato</button>
-              {tab === "armazenado"
-                ? <button className="ghost sm" onClick={() => move(r, { local: "prospeccao" })}>Voltar para a lista</button>
-                : <button className="ghost sm" onClick={() => setDialog({ kind: "armazenar", lead: r, date: "", time: "", note: r.observacao ?? "" })}>Armazenar contato</button>}
-              <button className="iconbtn" onClick={() => move(r, { local: "descartado" })} aria-label="Descartar" title="Descartar contato">🗑</button>
+              <button className="call" onClick={() => setCalling(r)}>📞 Ligar</button>
             </div>
           </article>
         ))}
@@ -229,33 +211,10 @@ export default function Prospeccao() {
       {calling && (
         <CallPanel
           lead={calling} mapsUrl={mapsLink(calling)}
-          onCreateSite={() => toSites(calling)}
+          onCreateSite={() => toSites(calling)} onStore={(n) => storeContact(calling, n)} onDiscard={() => discard(calling)}
           onMessages={(m: LeadMsgs) => { setCalling({ ...calling, messages: m }); setRows((cur) => cur.map((x) => (x.id === calling.id ? { ...x, messages: m } : x))); }}
           onClose={() => setCalling(null)} onFinish={(r) => finishCall(calling, r)}
         />
-      )}
-
-      {dialog && (
-        <div className="modal" onClick={() => !saving && setDialog(null)}>
-          <div className="chat" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={dialog.kind === "retorno" ? "Retornar contato" : "Armazenar contato"}>
-            <div className="chathead"><b>{dialog.kind === "retorno" ? "Retornar contato" : "Armazenar contato"}: {dialog.lead.name}</b><button className="iconbtn" onClick={() => setDialog(null)} aria-label="Fechar">✕</button></div>
-            <div style={{ padding: 16, display: "grid", gap: 12 }}>
-              {dialog.kind === "retorno" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 10 }}>
-                  <label className="f">Data<input type="date" value={dialog.date} onChange={(e) => setDialog({ ...dialog, date: e.target.value })} /></label>
-                  <label className="f">Hora<input type="time" value={dialog.time} onChange={(e) => setDialog({ ...dialog, time: e.target.value })} /></label>
-                </div>
-              )}
-              <label className="f">Observação{dialog.kind === "retorno" ? " (opcional)" : ""}
-                <textarea rows={4} maxLength={1000} value={dialog.note} onChange={(e) => setDialog({ ...dialog, note: e.target.value })}
-                  placeholder={dialog.kind === "retorno" ? "Ex.: dono pediu para ligar depois das 14h" : "Ex.: sem interesse agora, tem site em construção, voltar em março"} />
-              </label>
-              {dialog.kind === "retorno" && <p className="mut" style={{ margin: 0 }}>O retorno entra na sua <Link href="/agenda">Agenda</Link> e o contato fica na aba Retornos.</p>}
-              {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
-              <button disabled={saving} onClick={saveDialog}>{saving ? "Salvando…" : dialog.kind === "retorno" ? "Marcar retorno" : "Armazenar"}</button>
-            </div>
-          </div>
-        </div>
       )}
 
       {toast && <div className="toast">{toast.text}{toast.link && <> · <Link href="/funil" style={{ color: "inherit", textDecoration: "underline" }}>abrir</Link></>}</div>}
