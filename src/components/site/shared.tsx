@@ -1,0 +1,221 @@
+import type { ReactNode } from "react";
+import type { LayoutKey, SectionKey, SiteContent } from "@/lib/site/types";
+import { differentialsOf, hasData, numbersOf, resolveSections } from "@/lib/site/sections";
+import LeadForm from "./LeadForm";
+
+export type Ctx = { c: SiteContent; photo: (i: number) => string; slug?: string };
+
+export const stars = (n: number) => "★".repeat(Math.round(n)) + "☆".repeat(5 - Math.round(n));
+
+export const waLink = (c: SiteContent) =>
+  c.business.whatsapp ? `https://wa.me/${c.business.whatsapp}?text=${encodeURIComponent(`Olá! Vi o site da ${c.business.name} e gostaria de mais informações.`)}` : "";
+
+const NAV_LABELS: Partial<Record<SectionKey, string>> = {
+  sobre: "Sobre", servicos: "Serviços", diferenciais: "Diferenciais", comofunciona: "Como funciona", planos: "Planos", catalogo: "Catálogo",
+  equipe: "Equipe", galeria: "Galeria", depoimentos: "Depoimentos", faq: "Dúvidas", contato: "Contato",
+};
+
+// Links do menu: só as seções que aparecem no site, na ordem em que aparecem (no máximo 6; "Contato" sempre por último).
+export function navItems(c: SiteContent, layout: LayoutKey) {
+  const on = resolveSections(c, layout).filter((s) => s.on && hasData(s.key, c) && NAV_LABELS[s.key]);
+  const items = on.filter((s) => s.key !== "contato").slice(0, 5).map((s) => ({ href: `#s-${s.key}`, label: NAV_LABELS[s.key]! }));
+  if (on.some((s) => s.key === "contato")) items.push({ href: "#s-contato", label: "Contato" });
+  return items;
+}
+
+export function Nav({ c, layout }: { c: SiteContent; layout: LayoutKey }) {
+  const wa = waLink(c);
+  const items = navItems(c, layout);
+  return (
+    <nav className="st-nav" aria-label="Principal">
+      <div className="st-wrap st-navin">
+        <a className="st-home" href="#topo">{c.logoUrl ? <img className="st-logo" src={c.logoUrl} alt={c.business.name} /> : <b className="st-brand">{c.business.name}</b>}</a>
+        {items.length > 0 && <div className="st-links">{items.map((i) => <a key={i.href} href={i.href}>{i.label}</a>)}</div>}
+        <div className="st-navend">
+          {wa && <a className="st-btn sm" href={wa} data-mag>WhatsApp</a>}
+          {items.length > 0 && (
+            <details className="st-menu">
+              <summary aria-label="Abrir menu"><span /><span /><span /></summary>
+              <div className="st-drop">{items.map((i) => <a key={i.href} href={i.href}>{i.label}</a>)}</div>
+            </details>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// Números com contagem animada (o texto final já vem no HTML, então funciona sem JavaScript).
+export function Rating({ c }: { c: SiteContent }) {
+  const b = c.business;
+  if (!b.rating) return null;
+  return (
+    <div className="st-rating">
+      <span>{stars(b.rating)}</span> <b data-count={b.rating} data-dec="1">{b.rating}</b> no Google
+      {b.ratingCount ? <> · <b data-count={b.ratingCount}>{b.ratingCount}</b> avaliações</> : null}
+    </div>
+  );
+}
+
+export function Acc({ c }: { c: SiteContent }) {
+  return (
+    <>
+      {(c.faq ?? []).map((f, i) => (
+        <div key={i} className="fq" data-rv>
+          <button type="button" className="fq-q" aria-expanded="false"><span>{f.q}</span><i aria-hidden /></button>
+          <div className="fq-a"><div><p>{f.a}</p></div></div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+export function Footer({ c, slug }: { c: SiteContent; slug?: string }) {
+  const authors = [...new Set((c.photos ?? []).map((p) => p.author))].slice(0, 4);
+  const fromGoogle = (c.photos ?? []).some((p) => !p.url);
+  return (
+    <footer className="st-foot">
+      <div>© {new Date().getFullYear()} {c.business.name}</div>
+      {authors.length > 0 && <div className="st-attr">Imagens: {authors.join(", ")}{fromGoogle ? " · via Google Maps" : ""}</div>}
+      {slug && slug !== "rascunho" && <div className="st-attr"><a href={`/denuncia?slug=${encodeURIComponent(slug)}`} style={{ color: "inherit" }}>Denunciar este site</a></div>}
+    </footer>
+  );
+}
+
+/* ===== Seções configuráveis ===== */
+
+// Título de seção: cada layout usa o seu estilo (etiqueta, número em caixa alta ou marca-texto).
+export function Heading({ layout, eyebrow, children }: { layout: LayoutKey; eyebrow?: string; children: ReactNode }) {
+  if (layout === "moderno") return <div className="mo-head" data-rv><h2>{children}</h2></div>;
+  if (layout === "vitrine") return <h2 className="vi-title" data-rv><mark>{children}</mark></h2>;
+  return <>{eyebrow && <span className="cl-eyebrow" data-rv>{eyebrow}</span>}<h2 data-rv>{children}</h2></>;
+}
+
+type G = { c: SiteContent; layout: LayoutKey };
+const Sec = ({ alt, children, id }: { alt?: boolean; children: ReactNode; id?: string }) => (
+  <section className={`st-sec ${alt ? "alt" : ""}`} id={id}><div className="st-wrap">{children}</div></section>
+);
+const initials = (n: string) => n.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
+
+export function Numeros({ c }: G) {
+  return (
+    <section className="st-sec sx-num"><div className="st-wrap"><div className="sx-nums">
+      {numbersOf(c).map((n, i) => (
+        <div key={i} data-rv><b data-count={n.value} data-dec={n.dec ?? 0}>{n.value.toFixed(n.dec ?? 0)}</b><span>{n.label}</span></div>
+      ))}
+    </div></div></section>
+  );
+}
+
+export function Diferenciais({ c, layout }: G) {
+  return (
+    <Sec alt><Heading layout={layout} eyebrow="Por que nos escolher">Nossos diferenciais</Heading>
+      <div className="sx-diff">{differentialsOf(c).map((d, i) => <div key={i} className="sx-card" data-rv><i>✓</i><h3>{d.title}</h3><p>{d.text}</p></div>)}</div>
+    </Sec>
+  );
+}
+
+export function ComoFunciona({ c, layout }: G) {
+  return (
+    <Sec><Heading layout={layout} eyebrow="Passo a passo">Como funciona</Heading>
+      <ol className="sx-steps">{(c.steps ?? []).map((s, i) => <li key={i} data-rv><span>{i + 1}</span><div><h3>{s.title}</h3><p>{s.text}</p></div></li>)}</ol>
+    </Sec>
+  );
+}
+
+export function Planos({ c, layout }: G) {
+  const wa = waLink(c);
+  return (
+    <Sec alt><Heading layout={layout} eyebrow="Investimento">Planos e preços</Heading>
+      <div className="sx-plans">{(c.plans ?? []).map((p, i) => (
+        <div key={i} className="sx-plan" data-rv><h3>{p.name}</h3>{p.price && <div className="sx-price">{p.price}</div>}{p.text && <p>{p.text}</p>}{wa && <a className="st-btn" href={wa}>Quero este</a>}</div>
+      ))}</div>
+    </Sec>
+  );
+}
+
+export function Catalogo({ c, layout }: G) {
+  return (
+    <Sec><Heading layout={layout} eyebrow="Nossas opções">Cardápio e catálogo</Heading>
+      <ul className="sx-cat">{(c.catalog ?? []).map((p, i) => (
+        <li key={i} data-rv>{c.media?.catalogo?.[i] && <img src={c.media.catalogo[i]} alt={p.name} loading="lazy" data-full={c.media.catalogo[i]} />}<div><b>{p.name}</b>{p.text && <p>{p.text}</p>}</div>{p.price && <span>{p.price}</span>}</li>
+      ))}</ul>
+    </Sec>
+  );
+}
+
+export function Promo({ c }: G) {
+  const wa = waLink(c);
+  return (
+    <section className="st-sec sx-promo-wrap"><div className="st-wrap"><div className={`sx-promo ${c.media?.promo ? "hasimg" : ""}`} data-rv style={c.media?.promo ? { backgroundImage: `linear-gradient(135deg,color-mix(in srgb,var(--accent) 80%,#000 20%),color-mix(in srgb,var(--accent2) 65%,transparent)),url(${c.media.promo})` } : undefined}>
+      <span>Promoção</span><h2>{c.promo?.title}</h2>{c.promo?.text && <p>{c.promo.text}</p>}{wa && <a className="st-btn inv" href={wa} data-confetti>Aproveitar</a>}
+    </div></div></section>
+  );
+}
+
+export function Equipe({ c, layout }: G) {
+  return (
+    <Sec alt><Heading layout={layout} eyebrow="Quem atende você">Nossa equipe</Heading>
+      <div className="sx-team">{(c.team ?? []).map((m, i) => <div key={i} className="sx-member" data-rv>{c.media?.equipe?.[i] ? <img src={c.media.equipe[i]} alt={m.name} loading="lazy" /> : <i>{initials(m.name)}</i>}<b>{m.name}</b><span>{m.role}</span></div>)}</div>
+    </Sec>
+  );
+}
+
+export function Formulario({ layout, slug }: G & { slug?: string }) {
+  return (
+    <Sec><Heading layout={layout} eyebrow="Fale conosco">Envie uma mensagem</Heading>
+      <div className="sx-formwrap" data-rv><LeadForm slug={slug ?? "rascunho"} /></div>
+    </Sec>
+  );
+}
+
+export function CtaBand({ c }: G) {
+  const wa = waLink(c);
+  return (
+    <section className="st-cta"><div className="st-wrap"><h2 data-rv>Peça pelo WhatsApp</h2><p data-rv>Mande uma mensagem e responderemos o quanto antes.</p>{wa && <a className="st-btn inv" href={wa} data-confetti>{c.hero.cta}</a>}</div></section>
+  );
+}
+
+// Cartão de mapa: o Google recusa incorporar o mapa sem chave ("www.google.com recusou a conexão"), então abrimos o Maps em outra aba.
+export function MapEmbed({ c }: { c: SiteContent }) {
+  const q = c.business.address || c.business.name;
+  if (!q) return null;
+  const href = c.business.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  return (
+    <a className="st-map" href={href} target="_blank" rel="noopener noreferrer" aria-label="Abrir no Google Maps">
+      <span className="st-pin" aria-hidden="true">📍</span>
+      <b>{q}</b>
+      <span className="st-maplink">Ver no Google Maps →</span>
+    </a>
+  );
+}
+
+export function Contato({ c, layout }: G) {
+  const b = c.business;
+  return (
+    <Sec alt id="contato"><Heading layout={layout} eyebrow="Contato">Onde estamos</Heading>
+      <div className="st-two sx-contact">
+        <div data-rv>
+          <p className="st-lead">{b.address || "Endereço em breve."}</p>
+          {b.phone && <p><b>Telefone:</b> {b.phone}</p>}
+          {c.hours.length > 0 && <ul className="st-hours">{c.hours.map((h, i) => <li key={i}>{h}</li>)}</ul>}
+          <a className="st-btn" href={b.mapsUrl}>Abrir no mapa</a>
+        </div>
+        <div data-rv><MapEmbed c={c} /></div>
+      </div>
+    </Sec>
+  );
+}
+
+// Percorre as seções na ordem do layout (ou do usuário), pulando as desligadas e as sem dados.
+export function renderSections(c: SiteContent, layout: LayoutKey, custom: Partial<Record<SectionKey, () => ReactNode>>, slug?: string) {
+  const generic: Partial<Record<SectionKey, () => ReactNode>> = {
+    numeros: () => <Numeros c={c} layout={layout} />, diferenciais: () => <Diferenciais c={c} layout={layout} />,
+    comofunciona: () => <ComoFunciona c={c} layout={layout} />, planos: () => <Planos c={c} layout={layout} />,
+    catalogo: () => <Catalogo c={c} layout={layout} />, promo: () => <Promo c={c} layout={layout} />,
+    equipe: () => <Equipe c={c} layout={layout} />, formulario: () => <Formulario c={c} layout={layout} slug={slug} />, cta: () => <CtaBand c={c} layout={layout} />, contato: () => <Contato c={c} layout={layout} />,
+  };
+  return resolveSections(c, layout)
+    .filter((s) => s.on && hasData(s.key, c))
+    .map((s) => { const r = custom[s.key] ?? generic[s.key]; return r ? <div key={s.key} id={`s-${s.key}`} className={`sec-${s.key} st-anchor`}>{r()}</div> : null; });
+}
