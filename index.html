@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MS Centro Automotivo · Oficina mecânica em Feira de Santana</title>
+  <meta name="description" content="MS Centro Automotivo: oficina mecânica na Rua Quito, 801, Santo Antônio dos Prazeres, Feira de Santana (BA). Segunda a sexta, 7h30 às 17h30.">
+  <meta property="og:title" content="MS Centro Automotivo">
+  <meta property="og:description" content="Oficina mecânica em Feira de Santana (BA). Segunda a sexta, 7h30 às 17h30.">
+  <meta property="og:image" content="assets/frames/desktop/f_0001.webp">
+  <meta name="theme-color" content="#0e0f10">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..700&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/frames/desktop/f_0001.webp">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<header class="topo">
+  <a href="#inicio" class="marca" aria-label="MS Centro Automotivo"><span class="marca-texto"><b>MS</b> Centro Automotivo</span></a>
+  <nav class="menu" aria-label="Seções">
+    <a href="#sobre">A oficina</a>
+    <a href="#servicos">Serviços</a>
+    <a href="#processo">Onde estamos</a>
+    <a href="#contato" class="menu-cta">Fale conosco</a>
+  </nav>
+</header>
+<main>
+  <section id="inicio" class="cine" style="--altura: 420vh">
+    <div class="cine-palco">
+      <canvas class="cine-canvas" aria-hidden="true"></canvas>
+      <div class="cine-vinheta"></div>
+      <div class="momento" data-de="0" data-ate="0.28">
+        <div class="painel painel--vidro">
+          <h1 class="titulo-abertura">MS Centro Automotivo</h1>
+          <p class="apoio">Oficina mecânica no Santo Antônio dos Prazeres, em Feira de Santana.</p>
+        </div>
+      </div>
+      <div class="momento momento--direita" data-de="0.36" data-ate="0.64">
+        <div class="painel painel--vidro"><p class="destaque">Rua Quito, 801. Segunda a sexta, das 7h30 às 17h30.</p></div>
+      </div>
+      <div class="momento momento--centro" data-de="0.72" data-ate="1">
+        <div class="painel painel--vidro">
+          <p class="destaque">Chame no WhatsApp e agende o horário do seu carro.</p>
+          <a href="#contato" class="botao js-whats">Agendar pelo WhatsApp</a>
+        </div>
+      </div>
+      <div class="cine-dica" aria-hidden="true"><span></span>role</div>
+    </div>
+  </section>
+
+  <section id="sobre" class="secao">
+    <img class="arte arte--direita" src="assets/img/sobre.webp" alt="" loading="lazy">
+    <div class="secao-grade">
+      <div class="painel revelar">
+        <span class="rotulo">01</span>
+        <h2>A oficina</h2>
+        <p>Centro automotivo no bairro Santo Antônio dos Prazeres, em Feira de Santana, com atendimento de segunda a sexta.</p>
+        <span class="pendente">Pendente: história da oficina e o diferencial, na palavra do dono</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="servicos" class="secao secao--larga">
+    <img class="arte arte--fundo" src="assets/img/servicos.webp" alt="" loading="lazy">
+    <div class="painel painel--cabecalho revelar"><span class="rotulo">02</span><h2>Serviços</h2></div>
+    <div class="cartoes">
+      <article class="painel cartao revelar"><span class="pendente">Pendente</span><h3>Serviço 1</h3><p>O que inclui e o preço, ou "sob consulta".</p></article>
+      <article class="painel cartao revelar"><span class="pendente">Pendente</span><h3>Serviço 2</h3><p>O que inclui e o preço, ou "sob consulta".</p></article>
+      <article class="painel cartao revelar"><span class="pendente">Pendente</span><h3>Serviço 3</h3><p>O que inclui e o preço, ou "sob consulta".</p></article>
+    </div>
+  </section>
+
+  <section id="processo" class="secao">
+    <img class="arte arte--esquerda" src="assets/img/freio.webp" alt="" loading="lazy">
+    <div class="secao-grade secao-grade--direita">
+      <div class="painel revelar">
+        <span class="rotulo">03</span>
+        <h2>Onde estamos</h2>
+        <ul class="dados">
+          <li><small>Endereço</small><span>Rua Quito, 801, Santo Antônio dos Prazeres, Feira de Santana (BA), 40301-110</span></li>
+          <li><small>Horário</small><span>Segunda a sexta, das 7h30 às 17h30. Sábado e domingo fechado.</span></li>
+          <li><small>Telefone</small><span>(75) 99128-4359</span></li>
+          <li><small>Mapa</small><a href="https://www.google.com/maps/place/?q=place_id:ChIJfx6PLwA5FAcRXxKWtrR8HB4" target="_blank" rel="noopener">Abrir no Google Maps</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="contato" class="secao secao--contato">
+    <img class="arte arte--fundo arte--suave" src="assets/img/contato.webp" alt="" loading="lazy">
+    <div class="painel painel--form revelar">
+      <span class="rotulo">04</span>
+      <h2>Fale com a oficina</h2>
+      <p>Deixe sua mensagem ou chame direto no WhatsApp: (75) 99128-4359.</p>
+      <form class="form" novalidate>
+        <div class="campo"><label for="f-nome">Nome</label><input id="f-nome" name="nome" autocomplete="name" required></div>
+        <div class="campo"><label for="f-email">E-mail</label><input id="f-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="campo"><label for="f-tel">WhatsApp</label><input id="f-tel" name="telefone" type="tel" autocomplete="tel" inputmode="tel" required></div>
+        <div class="campo"><label for="f-carro">Carro e ano</label><input id="f-carro" name="carro" autocomplete="off"></div>
+        <div class="campo campo--inteiro"><label for="f-msg">O que o carro está apresentando?</label><textarea id="f-msg" name="mensagem" rows="4"></textarea></div>
+        <input type="text" name="_honey" class="pote" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button type="submit" class="botao campo--inteiro">Enviar</button>
+        <p class="form-status campo--inteiro" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+<footer class="rodape">
+  <div class="painel rodape-painel">
+    <span class="marca-texto"><b>MS</b> Centro Automotivo</span>
+    <span>Rua Quito, 801 · Feira de Santana (BA)</span>
+    <span>© <span data-ano></span> MS Centro Automotivo</span>
+  </div>
+</footer>
+<p class="previa">Prévia para aprovação · itens tracejados aguardam informações do cliente</p>
+<a class="whats" target="_blank" rel="noopener" aria-label="Conversar no WhatsApp">
+  <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3C9 3 3.3 8.6 3.3 15.6c0 2.4.7 4.7 1.9 6.7L3 29l6.9-2.1c1.9 1 4 1.6 6.1 1.6 7 0 12.7-5.6 12.7-12.6S23 3 16 3Zm0 23.1c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-4.1 1.2 1.3-4-.3-.4a10.4 10.4 0 0 1-1.6-5.6C5.5 9.8 10.2 5.2 16 5.2s10.5 4.6 10.5 10.4S21.8 26.1 16 26.1Zm5.8-7.8c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.6-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.2 1.4 3.4c.2.2 2.4 3.6 5.7 5 .8.4 1.4.6 1.9.7.8.3 1.6.2 2.2.1.7-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.3-.6-.4Z"/></svg>
+</a>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
