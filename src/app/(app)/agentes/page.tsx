@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TONS, type Agente } from "@/lib/agentes/prompt";
+import ConnectWhatsApp from "@/components/agentes/ConnectWhatsApp";
 
 type Draft = { id?: number; nome: string; empresa: string; tom: string; instrucoes: string; conhecimento: string };
 type Msg = { role: "user" | "assistant"; text: string };
@@ -132,14 +133,19 @@ export default function Agentes() {
           ) : wa ? (
             <div className="formwrap">
               <h2>WhatsApp · {wa.nome} {waForm.connected && <span className="badge">conectado</span>}</h2>
+              <ConnectWhatsApp agenteId={wa.id} resposta={waForm.resposta} onDone={() => openWa(wa)} />
+              <details>
+                <summary className="mut">Conexão manual (avançado)</summary>
               <p className="mut">No <b>Meta for Developers</b> (app com o produto WhatsApp), em <b>Configuração da API</b>, copie o <b>ID do número de telefone</b> e gere um <b>token de acesso permanente</b>. Depois, em <b>Configuração → Webhook</b>, cole a URL e o token de verificação abaixo e assine o campo <code>messages</code>.</p>
               <label>URL do webhook<input readOnly value={typeof window === "undefined" ? "" : `${window.location.origin}/api/whatsapp/webhook`} onFocus={(e) => e.currentTarget.select()} /></label>
               <label>ID do número de telefone<input value={waForm.phone} inputMode="numeric" onChange={(e) => setWaForm({ ...waForm, phone: e.target.value })} placeholder="Ex.: 123456789012345" /></label>
               <label>Token de acesso{waForm.connected && " (deixe vazio para manter o atual)"}<input type="password" autoComplete="off" value={waForm.token} onChange={(e) => setWaForm({ ...waForm, token: e.target.value })} placeholder={waForm.connected ? "••••••••" : "EAAG…"} /></label>
+                {!waForm.connected && <div className="actions"><button onClick={saveWa}>Conectar manualmente</button></div>}
+              </details>
               <label>Resposta padrão (usada enquanto a IA não está ligada)<textarea rows={3} maxLength={1000} value={waForm.resposta} onChange={(e) => setWaForm({ ...waForm, resposta: e.target.value })} placeholder="Olá! Recebemos sua mensagem e já vamos responder." /></label>
               {waMsg && <p className={waMsg.startsWith("WhatsApp") ? "mut" : "err"}>{waMsg}</p>}
               <div className="actions">
-                <button onClick={saveWa}>{waForm.connected ? "Atualizar" : "Conectar"}</button>
+                {waForm.connected && <button onClick={saveWa}>Salvar</button>}
                 {waForm.connected && <button className="ghost" onClick={disconnectWa}>Desconectar</button>}
                 <button className="ghost" onClick={() => setWa(null)}>Fechar</button>
               </div>
