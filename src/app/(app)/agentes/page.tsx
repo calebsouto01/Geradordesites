@@ -19,6 +19,10 @@ export default function Agentes() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const end = useRef<HTMLDivElement>(null);
+  const [wa, setWa] = useState<Agente | null>(null);
+  const [waForm, setWaForm] = useState({ phone: "", token: "", resposta: "", connected: false });
+  const [waMsg, setWaMsg] = useState("");
+  const [log, setLog] = useState<{ id: number; contato: string; direcao: string; texto: string; created_at: string }[]>([]);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.from("agentes").select("id, nome, empresa, tom, instrucoes, conhecimento, ativo").order("created_at", { ascending: false });
@@ -44,6 +48,31 @@ export default function Agentes() {
     await supabase.from("agentes").delete().eq("id", a.id);
     if (test?.id === a.id) setTest(null);
     load();
+  }
+
+  async function openWa(a: Agente) {
+    setWa(a); setTest(null); setDraft(null); setWaMsg("");
+    const [c, m] = await Promise.all([
+      supabase.from("agente_whatsapp").select("phone_number_id, resposta_padrao").eq("agente_id", a.id).maybeSingle(),
+      supabase.from("whatsapp_mensagens").select("id, contato, direcao, texto, created_at").eq("agente_id", a.id).order("created_at", { ascending: false }).limit(30),
+    ]);
+    setWaForm({ phone: c.data?.phone_number_id ?? "", token: "", resposta: c.data?.resposta_padrao ?? "", connected: Boolean(c.data) });
+    setLog((m.data as typeof log) ?? []);
+  }
+
+  async function saveWa() {
+    if (!wa) return;
+    setWaMsg("");
+    const res = await fetch("/api/agentes/whatsapp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente_id: wa.id, phone_number_id: waForm.phone, access_token: waForm.token, resposta_padrao: waForm.resposta }) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) { setWaMsg(out.error ?? "Não foi possível salvar."); return; }
+    setWaMsg("WhatsApp conectado."); openWa(wa);
+  }
+
+  async function disconnectWa() {
+    if (!wa || !confirm("Desconectar o WhatsApp deste agente?")) return;
+    await fetch(`/api/agentes/whatsapp?agente_id=${wa.id}`, { method: "DELETE" });
+    openWa(wa);
   }
 
   async function send() {
@@ -73,7 +102,8 @@ export default function Agentes() {
               <b>{a.nome}</b>
               <span className="mut">{a.empresa ?? "Sem empresa"} · {TONS[a.tom]}</span>
               <div className="actions">
-                <button className="sm" onClick={() => { setTest(a); setMsgs([]); }}>Testar</button>
+                <button className="sm" onClick={() => { setTest(a); setWa(null); setMsgs([]); }}>Testar</button>
+                <button className="ghost sm" onClick={() => openWa(a)}>WhatsApp</button>
                 <button className="ghost sm" onClick={() => setDraft({ id: a.id, nome: a.nome, empresa: a.empresa ?? "", tom: a.tom, instrucoes: a.instrucoes ?? "", conhecimento: a.conhecimento ?? "" })}>Editar</button>
                 <button className="iconbtn" onClick={() => remove(a)} aria-label="Excluir" title="Excluir">🗑</button>
               </div>
@@ -98,6 +128,28 @@ export default function Agentes() {
                 <button onClick={save} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</button>
                 <button className="ghost" onClick={() => setDraft(null)}>Cancelar</button>
               </div>
+            </div>
+          ) : wa ? (
+            <div className="formwrap">
+              <h2>WhatsApp · {wa.nome} {waForm.connected && <span className="badge">conectado</span>}</h2>
+              <p className="mut">No <b>Meta for Developers</b> (app com o produto WhatsApp), em <b>Configuração da API</b>, copie o <b>ID do número de telefone</b> e gere um <b>token de acesso permanente</b>. Depois, em <b>Configuração → Webhook</b>, cole a URL e o token de verificação abaixo e assine o campo <code>messages</code>.</p>
+              <label>URL do webhook<input readOnly value={typeof window === "undefined" ? "" : `${window.location.origin}/api/whatsapp/webhook`} onFocus={(e) => e.currentTarget.select()} /></label>
+              <label>ID do número de telefone<input value={waForm.phone} inputMode="numeric" onChange={(e) => setWaForm({ ...waForm, phone: e.target.value })} placeholder="Ex.: 123456789012345" /></label>
+              <label>Token de acesso{waForm.connected && " (deixe vazio para manter o atual)"}<input type="password" autoComplete="off" value={waForm.token} onChange={(e) => setWaForm({ ...waForm, token: e.target.value })} placeholder={waForm.connected ? "••••••••" : "EAAG…"} /></label>
+              <label>Resposta padrão (usada enquanto a IA não está ligada)<textarea rows={3} maxLength={1000} value={waForm.resposta} onChange={(e) => setWaForm({ ...waForm, resposta: e.target.value })} placeholder="Olá! Recebemos sua mensagem e já vamos responder." /></label>
+              {waMsg && <p className={waMsg.startsWith("WhatsApp") ? "mut" : "err"}>{waMsg}</p>}
+              <div className="actions">
+                <button onClick={saveWa}>{waForm.connected ? "Atualizar" : "Conectar"}</button>
+                {waForm.connected && <button className="ghost" onClick={disconnectWa}>Desconectar</button>}
+                <button className="ghost" onClick={() => setWa(null)}>Fechar</button>
+              </div>
+              {waForm.connected && (
+                <>
+                  <h3>Últimas mensagens</h3>
+                  {!log.length && <p className="mut">Nenhuma mensagem recebida ainda.</p>}
+                  {log.map((l) => <div key={l.id} className={`bubble ${l.direcao === "saida" ? "" : "me"}`}><span className="mut">{l.contato} · {l.direcao === "saida" ? "agente" : "cliente"}</span><br />{l.texto}</div>)}
+                </>
+              )}
             </div>
           ) : test ? (
             <div className="chat">
