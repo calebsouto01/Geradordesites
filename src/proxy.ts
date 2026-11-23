@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Rotas abertas: sites públicos, páginas legais, login e endpoints públicos com limite próprio.
-const PUBLIC = [/^\/login/, /^\/agencia/, /^\/plataforma/, /^\/p\//, /^\/preview/, /^\/termos/, /^\/privacidade/, /^\/denuncia/, /^\/api\/photo/, /^\/api\/site\//, /^\/api\/billing\/webhook/, /^\/sitemap/, /^\/robots/];
+const PUBLIC = [/^\/login/, /^\/agencia/, /^\/plataforma/, /^\/p\//, /^\/preview/, /^\/termos/, /^\/privacidade/, /^\/denuncia/, /^\/api\/photo/, /^\/api\/site\//, /^\/api\/billing\/webhook/, /^\/api\/whatsapp\/webhook/, /^\/sitemap/, /^\/robots/];
 
 // Domínio próprio → slug do site (consulta ao banco com cache curto).
 const domainCache = new Map<string, { slug: string | null; at: number }>();

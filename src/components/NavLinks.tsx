@@ -9,6 +9,7 @@ const items = [
   ["/funil", "Sites e vendas", "▦", "Sites"],
   ["/agenda", "Agenda", "▣", "Agenda"],
   ["/scripts", "Scripts de ligação", "☏", "Scripts"],
+  ["/agentes", "Agentes de IA", "✧", "Agentes"],
   ["/operador", "Operador", "◔", "Operador"],
 ] as const;
 
