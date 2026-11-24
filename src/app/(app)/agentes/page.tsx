@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TONS, type Agente } from "@/lib/agentes/prompt";
+import ConnectWhatsApp from "@/components/agentes/ConnectWhatsApp";
 
 type Draft = { id?: number; nome: string; empresa: string; tom: string; instrucoes: string; conhecimento: string };
 type Msg = { role: "user" | "assistant"; text: string };
@@ -11,6 +12,7 @@ export default function Agentes() {
   const supabase = createClient();
   const [list, setList] = useState<Agente[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [connected, setConnected] = useState<number[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -22,10 +24,14 @@ export default function Agentes() {
   const [wa, setWa] = useState<Agente | null>(null);
   const [waForm, setWaForm] = useState({ phone: "", token: "", resposta: "", connected: false });
   const [waMsg, setWaMsg] = useState("");
-  const [log, setLog] = useState<{ id: number; contato: string; direcao: string; texto: string; created_at: string }[]>([]);
+  const [log, setLog] = useState<{ id: number; contato: string; direcao: string; texto: string; erro: string | null; created_at: string }[]>([]);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase.from("agentes").select("id, nome, empresa, tom, instrucoes, conhecimento, ativo").order("created_at", { ascending: false });
+    const [{ data, error }, conns] = await Promise.all([
+      supabase.from("agentes").select("id, nome, empresa, tom, instrucoes, conhecimento, ativo").order("created_at", { ascending: false }),
+      supabase.from("agente_whatsapp").select("agente_id"),
+    ]);
+    setConnected(((conns.data as { agente_id: number }[]) ?? []).map((c) => c.agente_id));
     if (error) setErr("Não foi possível carregar os agentes.");
     setList((data as Agente[]) ?? []);
     setLoaded(true);
@@ -47,6 +53,7 @@ export default function Agentes() {
     if (!confirm(`Excluir o agente "${a.nome}"?`)) return;
     await supabase.from("agentes").delete().eq("id", a.id);
     if (test?.id === a.id) setTest(null);
+    if (wa?.id === a.id) setWa(null);
     load();
   }
 
@@ -54,7 +61,7 @@ export default function Agentes() {
     setWa(a); setTest(null); setDraft(null); setWaMsg("");
     const [c, m] = await Promise.all([
       supabase.from("agente_whatsapp").select("phone_number_id, resposta_padrao").eq("agente_id", a.id).maybeSingle(),
-      supabase.from("whatsapp_mensagens").select("id, contato, direcao, texto, created_at").eq("agente_id", a.id).order("created_at", { ascending: false }).limit(30),
+      supabase.from("whatsapp_mensagens").select("id, contato, direcao, texto, erro, created_at").eq("agente_id", a.id).order("created_at", { ascending: false }).limit(30),
     ]);
     setWaForm({ phone: c.data?.phone_number_id ?? "", token: "", resposta: c.data?.resposta_padrao ?? "", connected: Boolean(c.data) });
     setLog((m.data as typeof log) ?? []);
@@ -91,6 +98,11 @@ export default function Agentes() {
         <h1>Agentes de IA</h1>
         <span className="mut">Crie atendentes virtuais para WhatsApp: defina o tom, as regras e a base de conhecimento do negócio e teste a conversa antes de ativar.</span>
       </div>
+      <ol className="onb" aria-label="Primeiros passos">
+        <li className={list.length ? "done" : "now"}><b>1. Crie um agente</b><span className="mut">Nome, tom de voz e o que ele sabe sobre o seu negócio.</span></li>
+        <li className={list.some((a) => connected.includes(a.id)) ? "done" : list.length ? "now" : ""}><b>2. Conecte o WhatsApp</b><span className="mut">Clique em WhatsApp no agente e depois em Conectar WhatsApp.</span></li>
+        <li className={list.some((a) => connected.includes(a.id)) ? "now" : ""}><b>3. Teste</b><span className="mut">Mande uma mensagem para o seu número e veja a resposta.</span></li>
+      </ol>
       {err && <p className="err">{err}</p>}
       <div className="twocol">
         <section className="panel">
@@ -100,7 +112,7 @@ export default function Agentes() {
           {list.map((a) => (
             <div key={a.id} className="citem">
               <b>{a.nome}</b>
-              <span className="mut">{a.empresa ?? "Sem empresa"} · {TONS[a.tom]}</span>
+              <span className="mut">{a.empresa ?? "Sem empresa"} · {TONS[a.tom]} · {connected.includes(a.id) ? "WhatsApp conectado" : "WhatsApp não conectado"}</span>
               <div className="actions">
                 <button className="sm" onClick={() => { setTest(a); setWa(null); setMsgs([]); }}>Testar</button>
                 <button className="ghost sm" onClick={() => openWa(a)}>WhatsApp</button>
@@ -132,14 +144,19 @@ export default function Agentes() {
           ) : wa ? (
             <div className="formwrap">
               <h2>WhatsApp · {wa.nome} {waForm.connected && <span className="badge">conectado</span>}</h2>
+              <ConnectWhatsApp agenteId={wa.id} resposta={waForm.resposta} onDone={() => openWa(wa)} />
+              <details>
+                <summary className="mut">Conexão manual (avançado)</summary>
               <p className="mut">No <b>Meta for Developers</b> (app com o produto WhatsApp), em <b>Configuração da API</b>, copie o <b>ID do número de telefone</b> e gere um <b>token de acesso permanente</b>. Depois, em <b>Configuração → Webhook</b>, cole a URL e o token de verificação abaixo e assine o campo <code>messages</code>.</p>
               <label>URL do webhook<input readOnly value={typeof window === "undefined" ? "" : `${window.location.origin}/api/whatsapp/webhook`} onFocus={(e) => e.currentTarget.select()} /></label>
               <label>ID do número de telefone<input value={waForm.phone} inputMode="numeric" onChange={(e) => setWaForm({ ...waForm, phone: e.target.value })} placeholder="Ex.: 123456789012345" /></label>
               <label>Token de acesso{waForm.connected && " (deixe vazio para manter o atual)"}<input type="password" autoComplete="off" value={waForm.token} onChange={(e) => setWaForm({ ...waForm, token: e.target.value })} placeholder={waForm.connected ? "••••••••" : "EAAG…"} /></label>
+                {!waForm.connected && <div className="actions"><button onClick={saveWa}>Conectar manualmente</button></div>}
+              </details>
               <label>Resposta padrão (usada enquanto a IA não está ligada)<textarea rows={3} maxLength={1000} value={waForm.resposta} onChange={(e) => setWaForm({ ...waForm, resposta: e.target.value })} placeholder="Olá! Recebemos sua mensagem e já vamos responder." /></label>
               {waMsg && <p className={waMsg.startsWith("WhatsApp") ? "mut" : "err"}>{waMsg}</p>}
               <div className="actions">
-                <button onClick={saveWa}>{waForm.connected ? "Atualizar" : "Conectar"}</button>
+                {waForm.connected && <button onClick={saveWa}>Salvar</button>}
                 {waForm.connected && <button className="ghost" onClick={disconnectWa}>Desconectar</button>}
                 <button className="ghost" onClick={() => setWa(null)}>Fechar</button>
               </div>
@@ -147,7 +164,7 @@ export default function Agentes() {
                 <>
                   <h3>Últimas mensagens</h3>
                   {!log.length && <p className="mut">Nenhuma mensagem recebida ainda.</p>}
-                  {log.map((l) => <div key={l.id} className={`bubble ${l.direcao === "saida" ? "" : "me"}`}><span className="mut">{l.contato} · {l.direcao === "saida" ? "agente" : "cliente"}</span><br />{l.texto}</div>)}
+                  {log.map((l) => <div key={l.id} className={`bubble ${l.direcao === "saida" ? "" : "me"}`}><span className="mut">{l.contato} · {l.direcao === "saida" ? "agente" : "cliente"}</span><br />{l.texto}{l.erro && <><br /><span className="err">Não enviada: {l.erro}</span></>}</div>)}
                 </>
               )}
             </div>

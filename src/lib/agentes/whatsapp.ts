@@ -10,11 +10,19 @@ export function verifySignature(raw: string, header: string | null, secret: stri
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-export async function sendText(phoneNumberId: string, token: string, to: string, body: string) {
-  const res = await fetch(`${GRAPH}/${phoneNumberId}/messages`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body: body.slice(0, 4000) } }),
-  });
-  return res.ok;
+// Devolve ok ou o motivo da recusa da Meta (sem expor o token).
+export async function sendText(phoneNumberId: string, token: string, to: string, body: string): Promise<{ ok: true } | { ok: false; erro: string }> {
+  try {
+    const res = await fetch(`${GRAPH}/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body: body.slice(0, 4000) } }),
+    });
+    if (res.ok) return { ok: true };
+    const j = await res.json().catch(() => ({}));
+    const e = j?.error as { message?: string; code?: number } | undefined;
+    return { ok: false, erro: `Meta ${res.status}${e?.code ? ` (código ${e.code})` : ""}: ${e?.message ?? "envio recusado"}`.slice(0, 300) };
+  } catch {
+    return { ok: false, erro: "Não foi possível falar com a Meta." };
+  }
 }

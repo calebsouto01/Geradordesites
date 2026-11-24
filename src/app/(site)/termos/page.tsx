@@ -20,11 +20,13 @@ export default function Termos() {
       <p>Informações como avaliações, horários e fotos podem vir do Google e são exibidas conforme os termos do Google, podendo mudar ou deixar de estar disponíveis. Não garantimos que esses dados estejam completos ou atualizados.</p>
       <h2>6. Texto gerado por IA</h2>
       <p>Parte do texto é escrita por inteligência artificial a partir dos dados informados. O usuário deve revisar o conteúdo antes de apresentar ou publicar e responde por ele.</p>
-      <h2>7. Denúncias e remoção</h2>
+      <h2>7. Atendimento por WhatsApp</h2>
+      <p>O usuário pode conectar um número do WhatsApp Business a um agente de atendimento. Ao fazer isso, declara ser o titular ou ter autorização para usar o número, e é o responsável por cumprir os <a href="https://www.whatsapp.com/legal/business-policy" target="_blank" rel="noreferrer">termos e políticas do WhatsApp Business</a> e da Meta, incluindo o consentimento dos contatos e a proibição de envio de spam. As respostas do agente são geradas por inteligência artificial e podem conter erros; o usuário deve configurar bem as instruções do agente e acompanhar as conversas. Os custos de mensagens cobrados pela Meta, quando houver, são do usuário. A conexão pode ser desfeita a qualquer momento no painel.</p>
+      <h2>8. Denúncias e remoção</h2>
       <p>Qualquer pessoa pode denunciar um site pelo link “Denunciar este site”. Podemos bloquear ou remover sites e contas que violem estes termos, sem aviso prévio em casos graves.</p>
-      <h2>8. Limitação de responsabilidade</h2>
+      <h2>9. Limitação de responsabilidade</h2>
       <p>O serviço é oferecido “como está”. Não garantimos resultados de vendas nem disponibilidade ininterrupta. Na medida permitida em lei, nossa responsabilidade se limita ao valor pago nos últimos 3 meses.</p>
-      <h2>9. Alterações e contato</h2>
+      <h2>10. Alterações e contato</h2>
       <p>Podemos atualizar estes termos e avisaremos por e-mail ou no painel. Dúvidas: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
     </main>
   );
