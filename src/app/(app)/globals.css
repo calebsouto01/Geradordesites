@@ -552,3 +552,11 @@ a.quota { text-decoration:none; color:inherit; } .ok { color:var(--ok); }
 @media (max-width:460px){ .endgrid { grid-template-columns:1fr; } }
 .pq-rota { display:block; width:100%; text-align:center; padding:9px 12px; border:1px solid var(--line2); border-radius:10px; color:var(--fg); text-decoration:none; font-weight:600; font-size:14px; } .pq-rota:hover { background:var(--card2); }
 .endopt select { width:100%; min-width:0; }
+
+/* Primeiros passos dos Agentes de IA */
+.onb { list-style:none; display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:0; margin:0 0 20px; }
+.onb li { display:flex; flex-direction:column; gap:4px; padding:12px 14px; background:var(--card); border:1px solid var(--line); border-radius:12px; font-size:14px; opacity:.6; }
+.onb li.now { opacity:1; border-color:var(--accent, #6c5ce7); }
+.onb li.done { opacity:1; }
+.onb li.done b::after { content:" ✓"; color:#2ecc71; }
+@media (max-width: 720px) { .onb { grid-template-columns:1fr; } }

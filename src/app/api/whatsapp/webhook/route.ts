@@ -20,9 +20,9 @@ type WaMessage = { id: string; from: string; type: string; text?: { body?: strin
 
 export async function POST(request: Request) {
   const secret = process.env.WHATSAPP_APP_SECRET, admin = createAdminClient();
-  if (!secret || !admin) return NextResponse.json({ error: "Webhook não configurado." }, { status: 503 });
+  if (!secret || !admin) { console.error("whatsapp-webhook: não configurado (faltam WHATSAPP_APP_SECRET ou SUPABASE_SERVICE_ROLE_KEY)"); return NextResponse.json({ error: "Webhook não configurado." }, { status: 503 }); }
   const raw = await request.text();
-  if (!verifySignature(raw, request.headers.get("x-hub-signature-256"), secret)) return NextResponse.json({ error: "Assinatura inválida." }, { status: 401 });
+  if (!verifySignature(raw, request.headers.get("x-hub-signature-256"), secret)) { console.error("whatsapp-webhook: assinatura inválida (confira WHATSAPP_APP_SECRET)"); return NextResponse.json({ error: "Assinatura inválida." }, { status: 401 }); }
 
   let payload: { entry?: { changes?: { value?: { metadata?: { phone_number_id?: string }; messages?: WaMessage[] } }[] }[] };
   try { payload = JSON.parse(raw); } catch { return NextResponse.json({ error: "Corpo inválido." }, { status: 400 }); }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       const phoneId = change.value?.metadata?.phone_number_id;
       if (!phoneId) continue;
       const { data: conn } = await admin.from("agente_whatsapp").select("agente_id, user_id, access_token, resposta_padrao, ativo").eq("phone_number_id", phoneId).maybeSingle();
-      if (!conn || !conn.ativo) continue;
+      if (!conn || !conn.ativo) { console.warn(`whatsapp-webhook: nenhuma conexão ativa para o número ${phoneId}`); continue; }
       const { data: agente } = await admin.from("agentes").select("nome, empresa, tom, instrucoes, conhecimento, ativo").eq("id", conn.agente_id).maybeSingle();
       if (!agente || !agente.ativo) continue;
 
@@ -53,9 +53,10 @@ export async function POST(request: Request) {
 }
 
 async function reply(admin: NonNullable<ReturnType<typeof createAdminClient>>, conn: { agente_id: number; user_id: string; access_token: string }, phoneId: string, to: string, text: string) {
-  if (await sendText(phoneId, conn.access_token, to, text)) {
-    await admin.from("whatsapp_mensagens").insert({ user_id: conn.user_id, agente_id: conn.agente_id, contato: to, direcao: "saida", texto: text });
-  }
+  const sent = await sendText(phoneId, conn.access_token, to, text);
+  if (!sent.ok) console.error(`whatsapp-webhook: falha ao responder (agente ${conn.agente_id}): ${sent.erro}`);
+  // Grava a resposta; se o envio falhou, grava também o motivo para aparecer no painel.
+  await admin.from("whatsapp_mensagens").insert({ user_id: conn.user_id, agente_id: conn.agente_id, contato: to, direcao: "saida", texto: text, erro: sent.ok ? null : sent.erro });
 }
 
 // Sem chave da IA, responde com a mensagem padrão configurada (ou um aviso genérico).

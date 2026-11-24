@@ -12,6 +12,7 @@ export default function Agentes() {
   const supabase = createClient();
   const [list, setList] = useState<Agente[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [connected, setConnected] = useState<number[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -23,10 +24,14 @@ export default function Agentes() {
   const [wa, setWa] = useState<Agente | null>(null);
   const [waForm, setWaForm] = useState({ phone: "", token: "", resposta: "", connected: false });
   const [waMsg, setWaMsg] = useState("");
-  const [log, setLog] = useState<{ id: number; contato: string; direcao: string; texto: string; created_at: string }[]>([]);
+  const [log, setLog] = useState<{ id: number; contato: string; direcao: string; texto: string; erro: string | null; created_at: string }[]>([]);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase.from("agentes").select("id, nome, empresa, tom, instrucoes, conhecimento, ativo").order("created_at", { ascending: false });
+    const [{ data, error }, conns] = await Promise.all([
+      supabase.from("agentes").select("id, nome, empresa, tom, instrucoes, conhecimento, ativo").order("created_at", { ascending: false }),
+      supabase.from("agente_whatsapp").select("agente_id"),
+    ]);
+    setConnected(((conns.data as { agente_id: number }[]) ?? []).map((c) => c.agente_id));
     if (error) setErr("Não foi possível carregar os agentes.");
     setList((data as Agente[]) ?? []);
     setLoaded(true);
@@ -48,6 +53,7 @@ export default function Agentes() {
     if (!confirm(`Excluir o agente "${a.nome}"?`)) return;
     await supabase.from("agentes").delete().eq("id", a.id);
     if (test?.id === a.id) setTest(null);
+    if (wa?.id === a.id) setWa(null);
     load();
   }
 
@@ -55,7 +61,7 @@ export default function Agentes() {
     setWa(a); setTest(null); setDraft(null); setWaMsg("");
     const [c, m] = await Promise.all([
       supabase.from("agente_whatsapp").select("phone_number_id, resposta_padrao").eq("agente_id", a.id).maybeSingle(),
-      supabase.from("whatsapp_mensagens").select("id, contato, direcao, texto, created_at").eq("agente_id", a.id).order("created_at", { ascending: false }).limit(30),
+      supabase.from("whatsapp_mensagens").select("id, contato, direcao, texto, erro, created_at").eq("agente_id", a.id).order("created_at", { ascending: false }).limit(30),
     ]);
     setWaForm({ phone: c.data?.phone_number_id ?? "", token: "", resposta: c.data?.resposta_padrao ?? "", connected: Boolean(c.data) });
     setLog((m.data as typeof log) ?? []);
@@ -92,6 +98,11 @@ export default function Agentes() {
         <h1>Agentes de IA</h1>
         <span className="mut">Crie atendentes virtuais para WhatsApp: defina o tom, as regras e a base de conhecimento do negócio e teste a conversa antes de ativar.</span>
       </div>
+      <ol className="onb" aria-label="Primeiros passos">
+        <li className={list.length ? "done" : "now"}><b>1. Crie um agente</b><span className="mut">Nome, tom de voz e o que ele sabe sobre o seu negócio.</span></li>
+        <li className={list.some((a) => connected.includes(a.id)) ? "done" : list.length ? "now" : ""}><b>2. Conecte o WhatsApp</b><span className="mut">Clique em WhatsApp no agente e depois em Conectar WhatsApp.</span></li>
+        <li className={list.some((a) => connected.includes(a.id)) ? "now" : ""}><b>3. Teste</b><span className="mut">Mande uma mensagem para o seu número e veja a resposta.</span></li>
+      </ol>
       {err && <p className="err">{err}</p>}
       <div className="twocol">
         <section className="panel">
@@ -101,7 +112,7 @@ export default function Agentes() {
           {list.map((a) => (
             <div key={a.id} className="citem">
               <b>{a.nome}</b>
-              <span className="mut">{a.empresa ?? "Sem empresa"} · {TONS[a.tom]}</span>
+              <span className="mut">{a.empresa ?? "Sem empresa"} · {TONS[a.tom]} · {connected.includes(a.id) ? "WhatsApp conectado" : "WhatsApp não conectado"}</span>
               <div className="actions">
                 <button className="sm" onClick={() => { setTest(a); setWa(null); setMsgs([]); }}>Testar</button>
                 <button className="ghost sm" onClick={() => openWa(a)}>WhatsApp</button>
@@ -153,7 +164,7 @@ export default function Agentes() {
                 <>
                   <h3>Últimas mensagens</h3>
                   {!log.length && <p className="mut">Nenhuma mensagem recebida ainda.</p>}
-                  {log.map((l) => <div key={l.id} className={`bubble ${l.direcao === "saida" ? "" : "me"}`}><span className="mut">{l.contato} · {l.direcao === "saida" ? "agente" : "cliente"}</span><br />{l.texto}</div>)}
+                  {log.map((l) => <div key={l.id} className={`bubble ${l.direcao === "saida" ? "" : "me"}`}><span className="mut">{l.contato} · {l.direcao === "saida" ? "agente" : "cliente"}</span><br />{l.texto}{l.erro && <><br /><span className="err">Não enviada: {l.erro}</span></>}</div>)}
                 </>
               )}
             </div>
